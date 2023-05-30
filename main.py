@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from data import ISIC_DATA_PATH, ISIC_YLABELS
 from data.dataset import FamilyHistoryDataSet
 from utils.evaluation import check_accuracy
-from utils.training import basic_training_loop
+from utils.training import basic_training_loop, single_batch_test
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -23,8 +23,8 @@ model = False
 dataset = FamilyHistoryDataSet(ylabels=ISIC_YLABELS,
                                root_dir = ISIC_DATA_PATH,
                                transforms=transforms.Compose(
-                                   [transforms.Resize(img_size), transforms.ToTensor()]
-                                   )
+                                   [transforms.Resize((img_size)), transforms.ToTensor()] # prefer cropping imgs vs. resizing + get minimum crop that includes all imgs
+                                   ) # check normalization
                                    )
 
 train_split, test_split = dataset.get_splits()
@@ -40,6 +40,10 @@ if not model:
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
 
+# better not, better slow training and better models
+single_batch_test(epochs, train_loader, model, criterion, optimizer, device)
+
+'''
 basic_training_loop(epochs, train_loader, model, criterion, optimizer, device)
 print('Finished Training')
 
@@ -47,4 +51,4 @@ print("Checking accuracy on Training Set")
 check_accuracy(train_loader, model, device)
 
 print("Checking accuracy on Test Set")
-check_accuracy(test_loader, model, device)
+check_accuracy(test_loader, model, device)'''
