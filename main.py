@@ -4,7 +4,7 @@ import torch.optim as optim
 import torchvision
 import torchvision.transforms as transforms
 
-from data import ISIC_DATA_PATH
+from data import ISIC_DATA_PATH, ISIC_YLABELS
 from data.dataset import FamilyHistoryDataSet
 from utils.evaluation import check_accuracy
 from utils.training import basic_training_loop
@@ -14,13 +14,13 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparams
 learning_rate = 1e-3
-batch_size = 32
+batch_size = 4
 epochs = 1
 img_size = 300
 model = False
 
 
-dataset = FamilyHistoryDataSet(csv_file= 'family_history.csv',
+dataset = FamilyHistoryDataSet(ylabels=ISIC_YLABELS,
                                root_dir = ISIC_DATA_PATH,
                                transforms=transforms.Compose(
                                    [transforms.Resize(img_size), transforms.ToTensor()]

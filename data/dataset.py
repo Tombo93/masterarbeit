@@ -1,13 +1,12 @@
 import os
 import torch
 import pandas as pd
-import numpy as np
 from PIL import Image
 
 
 class FamilyHistoryDataSet(torch.utils.data.Dataset):
-  def __init__(self, csv_file, root_dir, transforms=None):
-    self.annotations = pd.read_csv(os.path.join(root_dir, csv_file))
+  def __init__(self, ylabels, root_dir, transforms=None):
+    self.annotations = pd.read_csv(ylabels)
     self.root_dir = root_dir
     self.transforms = transforms
 
@@ -16,7 +15,7 @@ class FamilyHistoryDataSet(torch.utils.data.Dataset):
 
   def __getitem__(self, index):
     img_path = os.path.join(self.root_dir, self.annotations.iloc[index, 0])
-    image = np.array(Image.open(img_path), copy=False, dtype='uint8') # das war das Problem?? kein Tensor?
+    image = Image.open(img_path)
     y_label = torch.tensor(int(self.annotations.iloc[index, 1]))
 
     if self.transforms:

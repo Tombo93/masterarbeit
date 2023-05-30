@@ -1,5 +1,5 @@
-import os
+from pathlib import Path
 
 
-ISIC_DATA_PATH = os.path.abspath('ISIC/data')
-ISIC_YLABELS = os.path.abspath('ISIC/family_history.csv')
+ISIC_DATA_PATH = Path('data/ISIC/data').absolute()
+ISIC_YLABELS = Path('data/ISIC/family_history.csv').absolute()
