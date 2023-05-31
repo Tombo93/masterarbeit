@@ -50,10 +50,12 @@ def get_mean_std(dataloader):
       images = images.view(batch_samples, images.size(1), -1)
       mean += images.mean(2).sum(0)
   mean = mean / len(dataloader.dataset)
+  print(mean)
   var = 0.0
   for images, _ in tqdm(dataloader, leave=False):
       batch_samples = images.size(0)
       images = images.view(batch_samples, images.size(1), -1)
       var += ((images - mean.unsqueeze(1))**2).sum([0,2])
   std = torch.sqrt(var / (len(dataloader.dataset)*224*224))
+  print(std)
   return mean, std

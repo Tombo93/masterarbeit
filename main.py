@@ -19,7 +19,7 @@ batch_size = 32
 epochs = 1
 img_crop_size = 85
 n_classes = 4
-in_features = img_crop_size
+in_features = 3
 model = CNN(n_classes, in_features)
 
 """
@@ -41,18 +41,17 @@ dataset = FamilyHistoryDataSet(
 train_split, test_split = dataset.get_splits()
 train_set, test_set = torch.utils.data.random_split(dataset, [train_split, test_split])
 
-all_loader = torch.utils.data.DataLoader(
-    dataset=dataset, batch_size=batch_size, shuffle=True)
+# all_loader = torch.utils.data.DataLoader(
+#     dataset=dataset, batch_size=batch_size, shuffle=True)
 train_loader = torch.utils.data.DataLoader(
     dataset=train_set, batch_size=batch_size, shuffle=True)
 test_loader = torch.utils.data.DataLoader(
     dataset=test_set, batch_size=batch_size, shuffle=True)
 
-mean, std = get_mean_std(all_loader)
 
-if not model:
-    model = torchvision.models.googlenet(pretrained=True)
-    model.to(device)
+# if not model:
+#     model = torchvision.models.googlenet(pretrained=True)
+#     model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate)
