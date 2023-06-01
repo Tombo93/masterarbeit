@@ -17,7 +17,7 @@ class OptimizationLoop:
                 self.train_loader, self.model,
                 self.loss_func, self.optimizer, self.device)
             self.validation(
-                self.train_loader, self.model,
+                self.test_loader, self.model,
                 self.loss_func, self.device)
 
 
