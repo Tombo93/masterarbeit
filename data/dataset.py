@@ -1,23 +1,31 @@
 import os
 import torch
+import torch.nn.functional as F
 import pandas as pd
 from PIL import Image
 from tqdm import tqdm
 
 
 class FamilyHistoryDataSet(torch.utils.data.Dataset):
-  def __init__(self, ylabels, root_dir, transforms=None):
-    self.annotations = pd.read_csv(ylabels)
+  def __init__(self, metadata, root_dir, transforms=None, data_col=None, ylabel_col=None):
     self.root_dir = root_dir
     self.transforms = transforms
+
+    self.annotations = pd.read_csv(metadata)
+
+    self.xdata_col = self.annotations.get_loc(data_col)
+    self.ylabel_col = self.annotations.get_loc(ylabel_col)
+
+    self.n_classes = self.annotations[ylabel_col].unique()
+    self.encoding = F.one_hot(torch.arange(0, len(self.n_classes)))
 
   def __len__(self):
     return len(self.annotations)
 
   def __getitem__(self, index):
-    img_path = os.path.join(self.root_dir, self.annotations.iloc[index, 0])
+    img_path = os.path.join(self.root_dir, self.annotations.iloc[index, self.xdata_col])
     image = Image.open(img_path)
-    y_label = torch.tensor(int(self.annotations.iloc[index, 1]))
+    y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
 
     if self.transforms:
       image = self.transforms(image)
