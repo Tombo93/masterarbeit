@@ -13,20 +13,23 @@ class FamilyHistoryDataSet(torch.utils.data.Dataset):
 
     self.annotations = pd.read_csv(metadata)
 
-    self.xdata_col = self.annotations.get_loc(data_col)
-    self.ylabel_col = self.annotations.get_loc(ylabel_col)
+    self.xdata_col = self.annotations.columns.get_loc(data_col)
+    self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
 
-    self.n_classes = self.annotations[ylabel_col].unique()
-    self.encoding = F.one_hot(torch.arange(0, len(self.n_classes)))
+    self.class_encoding = {label : torch.tensor(idx) for idx, label in enumerate(self.annotations[ylabel_col].unique())}
+    # self.class_encoding = lambda x : torch.tensor(int(x))
+    self.encoding = F.one_hot(torch.arange(0, len(self.class_encoding)))
 
   def __len__(self):
     return len(self.annotations)
 
   def __getitem__(self, index):
-    img_path = os.path.join(self.root_dir, self.annotations.iloc[index, self.xdata_col])
+    img_path = os.path.join(self.root_dir, self.annotations.iloc[index, self.xdata_col] + '.JPG')
     image = Image.open(img_path)
-    y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
-
+    y_label = self.annotations.iloc[index, self.ylabel_col]
+    # y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
+    if self.encoding is not None:
+      y_label = self.encoding[self.class_encoding[y_label]]
     if self.transforms:
       image = self.transforms(image)
 
