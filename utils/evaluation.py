@@ -1,5 +1,10 @@
 import torch
 
+"""
+1. use other metrics, i.e. auc, roc, precision
+2. better ro have false positives
+
+"""
 def basic_validation(test_loader, model, loss_func, device):
     num_correct, num_samples = 0, 0
     test_loss = 0

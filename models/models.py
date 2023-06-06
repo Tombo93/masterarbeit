@@ -27,6 +27,10 @@ class CNN(nn.Module):
     
 
 class SimpleCNN(nn.Module):
+    """
+    I use flatten. this leads to a huge layer,
+    but is this costing me performance?
+    """
     def __init__(self, n_classes, in_features):
         super().__init__()
         self.conv1 = nn.Conv2d(in_features, 10, kernel_size=5)

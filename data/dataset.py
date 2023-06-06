@@ -7,6 +7,10 @@ from tqdm import tqdm
 
 
 class FamilyHistoryDataSet(torch.utils.data.Dataset):
+  """
+  encoding: for multiclass, would you recommend a specific encoding?
+  
+  """
   def __init__(self, metadata, root_dir, transforms=None, data_col=None, ylabel_col=None):
     self.root_dir = root_dir
     self.transforms = transforms
