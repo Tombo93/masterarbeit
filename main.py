@@ -18,7 +18,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Hyperparams
 learning_rate = 1e-3
 batch_size = 8
-epochs = 1
+epochs = 3
 img_crop_size = 85
 n_classes = 2
 in_features = 3
