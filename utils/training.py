@@ -10,15 +10,24 @@ class OptimizationLoop:
         self.loss_func = params['loss']
         self.optimizer = params['optim']
         self.device = params['device']
+        self.train_metrics = params['metrics']['train'].to(self.device)
+        self.valid_metrics = params['metrics']['valid'].to(self.device)
 
     def optimize(self) -> None:
-        for _ in range(self.n_epochs):
+        for epoch in range(self.n_epochs):
             self.training(
                 self.train_loader, self.model,
-                self.loss_func, self.optimizer, self.device)
+                self.loss_func, self.optimizer,
+                self.train_metrics, self.device)
             self.validation(
                 self.test_loader, self.model,
-                self.loss_func, self.device)
+                self.valid_metrics, self.device)
+            total_train_metrics = self.train_metrics.compute()
+            total_valid_metrics = self.valid_metrics.compute()
+            print(f"Training acc for epoch {epoch}: {total_train_metrics}")
+            print(f"Validation acc for epoch {epoch}: {total_valid_metrics}")
+            self.train_metrics.reset()
+            self.valid_metrics.reset()
 
 
 def basic_training_loop(
@@ -26,6 +35,7 @@ def basic_training_loop(
         model,
         loss_func,
         optimizer,
+        metrics,
         device: str
         ) -> None:
     """
@@ -47,12 +57,18 @@ def basic_training_loop(
     for batch_idx, (data, labels) in enumerate(train_loader):
         data = data.to(device)
         labels = labels.to(device)
-        scores = model(data)
-        loss = loss_func(scores, labels)
+        prediction = model(data)
+        loss = loss_func(prediction, labels)
         
+        _, pred_labels = prediction.max(dim=1)
+        metrics.update(pred_labels, labels)
+
         loss.backward()
         optimizer.step()
         optimizer.zero_grad()
+
+        if batch_idx > 1:
+            break
 
 
 def single_batch_test(
@@ -71,8 +87,8 @@ def single_batch_test(
         data = data.to(device)
         labels = labels.to(device)
         # predict classes and calculate loss
-        scores = model(data)
-        loss = criterion(scores, labels)
+        prediction = model(data)
+        loss = criterion(prediction, labels)
         # zero the parameter gradients
         optimizer.zero_grad()
         loss.backward()
