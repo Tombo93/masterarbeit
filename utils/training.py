@@ -36,9 +36,9 @@ class OptimizationLoop:
             print(f"Validation acc for epoch {epoch}: {total_valid_metrics}")
 
             for metric, value in total_train_metrics.items():
-                self.writer.add_scalar(f'{metric}/train', value, epoch)
+                self.writer.add_scalar(f'Train/{metric}', value, epoch)
             for metric, value in total_valid_metrics.items():
-                self.writer.add_scalar(f'{metric}/test', value, epoch)
+                self.writer.add_scalar(f'Test/{metric}', value, epoch)
 
             self.train_metrics.reset()
             self.valid_metrics.reset()
