@@ -1,4 +1,5 @@
 from torch.cuda.amp import autocast, GradScaler
+from torch.utils.tensorboard import SummaryWriter
 
 
 class OptimizationLoop:
@@ -17,6 +18,7 @@ class OptimizationLoop:
         self.valid_metrics = params['metrics']['valid'].to(self.device)
 
         self.scaler = GradScaler()
+        self.writer = SummaryWriter()
 
     def optimize(self) -> None:
         for epoch in range(self.n_epochs):
@@ -32,6 +34,12 @@ class OptimizationLoop:
             total_valid_metrics = self.valid_metrics.compute()
             print(f"Training acc for epoch {epoch}: {total_train_metrics}")
             print(f"Validation acc for epoch {epoch}: {total_valid_metrics}")
+
+            for metric, value in total_train_metrics.items():
+                self.writer.add_scalar(f'{metric}/train', value, epoch)
+            for metric, value in total_valid_metrics.items():
+                self.writer.add_scalar(f'{metric}/test', value, epoch)
+
             self.train_metrics.reset()
             self.valid_metrics.reset()
 
