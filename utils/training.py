@@ -1,3 +1,6 @@
+from torch.cuda.amp import autocast, GradScaler
+
+
 class OptimizationLoop:
     def __init__(self, params) -> None:
         self.n_epochs = params['n_epochs']
@@ -13,12 +16,15 @@ class OptimizationLoop:
         self.train_metrics = params['metrics']['train'].to(self.device)
         self.valid_metrics = params['metrics']['valid'].to(self.device)
 
+        self.scaler = GradScaler()
+
     def optimize(self) -> None:
         for epoch in range(self.n_epochs):
             self.training(
                 self.train_loader, self.model,
                 self.loss_func, self.optimizer,
-                self.train_metrics, self.device)
+                self.train_metrics, 
+                self.scaler, self.device)
             self.validation(
                 self.test_loader, self.model,
                 self.valid_metrics, self.device)
@@ -36,6 +42,7 @@ def basic_training_loop(
         loss_func,
         optimizer,
         metrics,
+        scaler,
         device: str
         ) -> None:
     """
@@ -57,14 +64,18 @@ def basic_training_loop(
     for batch_idx, (data, labels) in enumerate(train_loader):
         data = data.to(device)
         labels = labels.to(device)
-        prediction = model(data)
-        loss = loss_func(prediction, labels)
+        with autocast():
+            prediction = model(data)
+            loss = loss_func(prediction, labels)
         
         _, pred_labels = prediction.max(dim=1)
         metrics.update(pred_labels, labels)
 
-        loss.backward()
-        optimizer.step()
+        scaler.scale(loss).backward()
+        scaler.step(optimizer)
+        scaler.update()
+        # loss.backward()
+        # optimizer.step()
         optimizer.zero_grad()
 
         if batch_idx > 1:
