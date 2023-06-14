@@ -69,6 +69,7 @@ params = {
             AUROC(task='binary'),
             Precision(task='binary')])
     },
+    'logdir' : './runs',
     'device': device
 }
 optim_loop = OptimizationLoop(params)
