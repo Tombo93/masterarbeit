@@ -17,8 +17,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparams
 learning_rate = 1e-3
-batch_size = 32
-epochs = 3
+batch_size = 256
+epochs = 100
 img_crop_size = 85
 n_classes = 2
 in_features = 3
@@ -47,9 +47,11 @@ train_split, test_split = dataset.get_splits()
 train_set, test_set = torch.utils.data.random_split(dataset, [train_split, test_split])
 
 train_loader = torch.utils.data.DataLoader(
-    dataset=train_set, batch_size=batch_size, shuffle=True)
+    dataset=train_set, batch_size=batch_size, shuffle=True,
+    pin_memory=True, num_workers=4)
 test_loader = torch.utils.data.DataLoader(
-    dataset=test_set, batch_size=batch_size, shuffle=True)
+    dataset=test_set, batch_size=batch_size, shuffle=True,
+    pin_memory=True, num_workers=4)
 
 params = {
     'n_epochs': epochs,
