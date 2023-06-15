@@ -17,7 +17,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparams
 learning_rate = 1e-3
-batch_size = 8
+batch_size = 32
 epochs = 3
 img_crop_size = 85
 n_classes = 2
@@ -25,6 +25,7 @@ in_features = 3
 
 # Model
 model = SimpleCNN(n_classes, in_features)
+model.to(device)
 
 """
 # prefer cropping images vs. resizing to not loose details
@@ -39,8 +40,8 @@ dataset = FamilyHistoryDataSet(
     	ToTensor(),
         Normalize(ISIC_MEAN, ISIC_STD)]
         ),
-    data_col='filename',
-    ylabel_col='family_history')
+    data_col='isic_id',
+    ylabel_col='family_hx_mm')
 
 train_split, test_split = dataset.get_splits()
 train_set, test_set = torch.utils.data.random_split(dataset, [train_split, test_split])
@@ -69,7 +70,7 @@ params = {
             AUROC(task='binary'),
             Precision(task='binary')])
     },
-    'logdir' : './runs',
+    'logdir' : None,
     'device': device
 }
 optim_loop = OptimizationLoop(params)

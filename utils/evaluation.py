@@ -1,22 +1,15 @@
 import torch
 
-"""
-1. use other metrics, i.e. auc, roc, precision
-2. better ro have false positives
 
-"""
 def metrics_validation(test_loader, model, metrics, device):
     model.eval()
     with torch.no_grad():
-        for batch_idx, (x, y) in enumerate(test_loader):
+        for _, (x, y) in enumerate(test_loader):
             x = x.to(device=device)
             y = y.to(device=device)
             pred = model(x)
             _, pred_labels = pred.max(dim=1)
-            metrics.update(pred_labels, y)
-            if batch_idx > 1:
-                break
-   
+            metrics.update(pred_labels, y)   
     model.train()
 
 
