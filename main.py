@@ -16,15 +16,15 @@ from utils.training import OptimizationLoop, basic_training_loop
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Hyperparams
-learning_rate = 1e-3
-batch_size = 256
+learning_rate = 0.01
+batch_size = 32
 epochs = 100
 img_crop_size = 85
 n_classes = 2
-in_features = 3
+in_channels = 3
 
 # Model
-model = SimpleCNN(n_classes, in_features)
+model = SimpleCNN(n_classes, in_channels)
 model.to(device)
 
 """
@@ -60,7 +60,7 @@ params = {
     'model': model,
     'train_loader': train_loader,
     'test_loader': test_loader,
-    'loss': nn.CrossEntropyLoss(),
+    'loss': nn.BCELoss(), # nn.CrossEntropyLoss(),
     'optim': optim.SGD(model.parameters(), lr=learning_rate),
     'metrics' : {
         'train' : MetricCollection([

@@ -51,8 +51,8 @@ class OptimizationLoop:
                 self.valid_metrics, self.device)
             total_train_metrics = self.train_metrics.compute()
             total_valid_metrics = self.valid_metrics.compute()
-            print(f"Training acc for epoch {epoch}: {total_train_metrics}")
-            print(f"Validation acc for epoch {epoch}: {total_valid_metrics}")
+            print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
+            print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
 
             if self.logdir is None:
                 for metric, value in total_train_metrics.items():
@@ -78,23 +78,7 @@ class OptimizationLoop:
             self.valid_metrics.reset()
 
 
-def faster_training_loop(train_loader, model, loss_func, optimizer, metrics, scaler, device: str) -> None:
-    """
-        use autocast for all forward passes:
-        with torch.cuda.amp.autocast():
-            scores = model(data)
-            loss = criterion(scores, labels)
-        use a scaler for stabilizing learning (https://github.com/vahidk/EffectivePyTorch#gradscalar):
-        scaler = torch.cuda.amp.GradScaler()
-
-        loss = ...
-        optimizer = ...  # an instance torch.optim.Optimizer
-
-        scaler.scale(loss).backward()
-        scaler.step(optimizer)
-        scaler.update()
-    
-    """
+def faster_training_loop(train_loader, model, loss_func, optimizer, metrics, scaler, device):
     for _, (data, labels) in enumerate(train_loader):
         data = data.to(device)
         labels = labels.to(device)
@@ -108,8 +92,6 @@ def faster_training_loop(train_loader, model, loss_func, optimizer, metrics, sca
         scaler.scale(loss).backward()
         scaler.step(optimizer)
         scaler.update()
-        # loss.backward()
-        # optimizer.step()
         optimizer.zero_grad()
 
 
@@ -117,9 +99,8 @@ def basic_training_loop(train_loader, model, loss_func, optimizer, metrics, devi
     for _, (data, labels) in enumerate(train_loader):
         data = data.to(device)
         labels = labels.to(device)
-        with autocast():
-            prediction = model(data)
-            loss = loss_func(prediction, labels)
+        prediction = model(data)
+        loss = loss_func(prediction, labels)
         
         _, pred_labels = prediction.max(dim=1)
         metrics.update(pred_labels, labels)
@@ -158,3 +139,42 @@ def single_batch_test(
             print(f'[{epoch + 1}] loss: {running_loss / 2000:.3f}')
             running_loss = 0.0
         return running_loss / 10
+    
+
+
+# class BasicTrainer:
+#     def __init__(train_loader, model, loss_func, optimizer, metrics, device) -> None:
+#         pass
+
+#     def run():
+#         for _, (data, labels) in enumerate(train_loader):
+#             data = data.to(device)
+#             labels = labels.to(device)
+#             prediction = model(data)
+#             loss = loss_func(prediction, labels)
+
+#             _, pred_labels = prediction.max(dim=1)
+#             metrics.update(pred_labels, labels)
+
+#             loss.backward()
+#             optimizer.step()
+#             optimizer.zero_grad()
+
+
+# class MetricTrainer(BasicTrainer):
+#     def __init__(train_loader, model, loss_func, optimizer, metrics, device) -> None:
+#         super.__init__()
+    
+#     def run():
+#         for _, (data, labels) in enumerate(train_loader):
+#             data = data.to(device)
+#             labels = labels.to(device)
+#             prediction = model(data)
+#             loss = loss_func(prediction, labels)
+
+#             _, pred_labels = prediction.max(dim=1)
+#             metrics.update(pred_labels, labels)
+
+#             loss.backward()
+#             optimizer.step()
+#             optimizer.zero_grad()
