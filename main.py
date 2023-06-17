@@ -20,7 +20,7 @@ learning_rate = 0.01
 batch_size = 32
 epochs = 100
 img_crop_size = 85
-n_classes = 2
+n_classes = 1
 in_channels = 3
 
 # Model
@@ -60,7 +60,7 @@ params = {
     'model': model,
     'train_loader': train_loader,
     'test_loader': test_loader,
-    'loss': nn.BCELoss(), # nn.CrossEntropyLoss(),
+    'loss': nn.BCEWithLogitsLoss(), # nn.CrossEntropyLoss(),
     'optim': optim.SGD(model.parameters(), lr=learning_rate),
     'metrics' : {
         'train' : MetricCollection([

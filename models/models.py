@@ -27,10 +27,6 @@ class CNN(nn.Module):
     
 
 class SimpleCNN(nn.Module):
-    """
-    I use flatten. this leads to a huge layer,
-    but is this costing me performance?
-    """
     def __init__(self, n_classes, in_features):
         super().__init__()
         self.conv1 = nn.Conv2d(in_features, 10, kernel_size=5)
@@ -46,4 +42,4 @@ class SimpleCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = F.dropout(x, training=True)
         x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
+        return x # F.log_softmax(x, dim=1)

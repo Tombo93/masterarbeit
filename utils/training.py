@@ -1,3 +1,4 @@
+import torch
 from torch.cuda.amp import autocast, GradScaler
 from torch.utils.tensorboard import SummaryWriter
 import csv
@@ -100,7 +101,7 @@ def basic_training_loop(train_loader, model, loss_func, optimizer, metrics, devi
         data = data.to(device)
         labels = labels.to(device)
         prediction = model(data)
-        loss = loss_func(prediction, labels)
+        loss = loss_func(prediction, torch.unsqueeze(labels, 1).float())
         
         _, pred_labels = prediction.max(dim=1)
         metrics.update(pred_labels, labels)
