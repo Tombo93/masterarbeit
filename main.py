@@ -10,8 +10,8 @@ from data import ISIC_DATA_PATH, ISIC_YLABELS, ISIC_MEAN, ISIC_STD, ISIC_METADAT
 from data.dataset import FamilyHistoryDataSet
 from models.models import SimpleCNN
 from utils.evaluation import metrics_validation
-from utils.training import OptimizationLoop, basic_training_loop
-
+from utils.training import basic_training_loop, BasicTraining
+from utils.optimizer import OptimizationLoop
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -75,5 +75,5 @@ params = {
     'logdir' : None,
     'device': device
 }
-optim_loop = OptimizationLoop(params)
+optim_loop = OptimizationLoop(params, BasicTraining)
 optim_loop.optimize()
