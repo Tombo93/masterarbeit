@@ -1,17 +1,30 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
 
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision
 
-from data import ISIC_DATA_PATH, ISIC_YLABELS, ISIC_MEAN, ISIC_STD, ISIC_METADATA
+from pathlib import Path
+
 from data.dataset import FamilyHistoryDataSet
-from models.models import SimpleCNN
-from utils.evaluation import metrics_validation
-from utils.training import basic_training_loop, BasicTraining
+from models.models import CNN
 from utils.optimizer import OptimizationLoop
+from utils.training import BasicTraining
+from utils.evaluation import MetricValidation
+
+
+# data
+ISIC_DATA_PATH = Path('data/ISIC/data').absolute()
+ISIC_YLABELS = Path('data/ISIC/family_history.csv').absolute()
+ISIC_METADATA = Path('data/ISIC/metadata_combined.csv').absolute()
+ISIC_ROOT_DIR = Path('data/ISIC').absolute()
+
+# Mean & std for 85x85 cropped images
+ISIC_MEAN = [1.2721, 0.3341, -0.0479]
+ISIC_STD = [0.2508, 0.2654, 0.3213]
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -22,9 +35,11 @@ epochs = 100
 img_crop_size = 85
 n_classes = 1
 in_channels = 3
+n_workers = 4
 
 # Model
-model = SimpleCNN(n_classes, in_channels)
+model = CNN(n_classes, in_channels)
+# model = SimpleCNN(n_classes, in_channels)
 model.to(device)
 
 """
@@ -44,19 +59,19 @@ dataset = FamilyHistoryDataSet(
     ylabel_col='family_hx_mm')
 
 train_split, test_split = dataset.get_splits()
-train_set, test_set = torch.utils.data.random_split(dataset, [train_split, test_split])
+train_set, test_set = random_split(dataset, [train_split, test_split])
 
-train_loader = torch.utils.data.DataLoader(
+train_loader = DataLoader(
     dataset=train_set, batch_size=batch_size, shuffle=True,
-    pin_memory=True, num_workers=4)
-test_loader = torch.utils.data.DataLoader(
+    pin_memory=True, num_workers=n_workers)
+test_loader = DataLoader(
     dataset=test_set, batch_size=batch_size, shuffle=True,
-    pin_memory=True, num_workers=4)
+    pin_memory=True, num_workers=n_workers)
 
 params = {
     'n_epochs': epochs,
-    'train_loop': basic_training_loop,
-    'validation_loop': metrics_validation,
+    'train_loop': None,
+    'validation_loop': None,
     'model': model,
     'train_loader': train_loader,
     'test_loader': test_loader,
@@ -75,5 +90,5 @@ params = {
     'logdir' : None,
     'device': device
 }
-optim_loop = OptimizationLoop(params, BasicTraining)
+optim_loop = OptimizationLoop(params, BasicTraining(), MetricValidation())
 optim_loop.optimize()

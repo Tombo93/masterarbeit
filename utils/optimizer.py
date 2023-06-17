@@ -1,14 +1,21 @@
-from torch.utils.tensorboard import SummaryWriter
 import csv
 from datetime import datetime
+
 from utils.training import Training
+from utils.evaluation import Validation
+
+from torch.utils.tensorboard import SummaryWriter
 
 
 class OptimizationLoop:
-    def __init__(self, params, training: Training) -> None:
+    def __init__(self,
+                 params,
+                 training: Training,
+                 validation: Validation) -> None:
+        
         self.n_epochs = params['n_epochs']
-        self.training = training() # params['train_loop']
-        self.validation = params['validation_loop']
+        self.training = training
+        self.validation = validation
         
         self.model = params['model']
         self.train_loader = params['train_loader']
@@ -20,8 +27,6 @@ class OptimizationLoop:
         self.valid_metrics = params['metrics']['valid'].to(self.device)
         self.logdir = params['logdir']
 
-        # if params['scaler'] is not None:
-        #     self.scaler = GradScaler()
         if self.logdir is None:
             self.writer = SummaryWriter()
 
@@ -47,7 +52,7 @@ class OptimizationLoop:
                 self.train_loader, self.model,
                 self.loss_func, self.optimizer,
                 self.train_metrics, self.device)
-            self.validation(
+            self.validation.run(
                 self.test_loader, self.model,
                 self.valid_metrics, self.device)
             total_train_metrics = self.train_metrics.compute()
