@@ -7,7 +7,7 @@ from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision
 
-from data.dataset import FamilyHistoryDataSet
+from data.dataset import FamilyHistoryDataSet, batch_mean_and_sd
 from models.models import CNN
 from utils.optimizer import OptimizationLoop
 from utils.training import BasicTraining
@@ -28,7 +28,7 @@ def main(cfg: IsicConfig):
 
     # data
     ISIC_DATA_PATH = cfg.isic_paths.isic_data_path
-    ISIC_YLABELS = cfg.experiment.metadata
+    ISIC_YLABELS = cfg.family_history_experiment.metadata
     ISIC_METADATA = cfg.isic_paths.isic_metadata
     ISIC_ROOT_DIR = cfg.isic_paths.isic_root_dir
 
@@ -50,7 +50,6 @@ def main(cfg: IsicConfig):
  
     # Model
     model = CNN(n_classes, in_channels)
-    # model = SimpleCNN(n_classes, in_channels)
     model.to(device)
 
     """
@@ -71,7 +70,7 @@ def main(cfg: IsicConfig):
 
     train_split, test_split = dataset.get_splits()
     train_set, test_set = random_split(dataset, [train_split, test_split])
-
+    
     train_loader = DataLoader(
         dataset=train_set, batch_size=batch_size, shuffle=True,
         pin_memory=True, num_workers=n_workers)

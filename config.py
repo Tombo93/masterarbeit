@@ -26,7 +26,7 @@ class IsicPaths:
 
 ############################ Experiments ############################
 @dataclass
-class BEnignMalignantExperiment:
+class BenignMalignantExperiment:
     label_col: str
     metadata: str
 
@@ -41,4 +41,4 @@ class IsicConfig:
     hyper_params: IsicHyperParams
     data_params: IsicDataParams
     isic_paths: IsicPaths
-    experiment: FamilyHistoryExperiment
+    family_history_experiment: FamilyHistoryExperiment

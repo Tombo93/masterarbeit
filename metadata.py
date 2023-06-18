@@ -21,24 +21,26 @@ def create_metadata(
     metadata = pd.read_csv(os.path.join(metadata_dir, filename))
     metadata = metadata[cols]
     metadata[cols[0]] = metadata[cols[0]].astype(str) + '.JPG'
-    metadata[cols[1]] = metadata[cols[1]].map(class_mapping)
+    metadata[cols[1]] = metadata[cols[1]].map(class_mapping, na_action='ignore')
     with open(os.path.join(metadata_dir, outname), 'w', encoding='utf-8') as f:
         metadata.to_csv(f)
 
 
 if __name__ == '__main__':
     # create_fam_hx_metadata('metadata_combined.csv', '/home/bay1989/masterarbeit/data/ISIC')
-    class_mapping = {'benign': 0,
-               'malignant': 1,
-               'indeterminate/malignant': 1,
-               'indeterminate/benign': 0,
-               'indeterminate': 0}
+    class_mapping = {
+        'benign': '0',
+        'malignant': '1',
+        'indeterminate/malignant': '1',
+        'indeterminate/benign': '0',
+        'indeterminate': '0'}
     create_metadata('metadata_combined.csv',
                     '/home/bay1989/masterarbeit/data/ISIC',
                     ['isic_id', 'benign_malignant'],
                     class_mapping,
                     'benign_malignant.csv')
-
+    # df1 = pd.read_csv(os.path.join('data/ISIC', 'benign_malignant.csv'))
+    # print(df1.benign_malignant.dropna().unique())
     create_metadata = False
     if create_metadata:
         download_cmd_fx_true = "isic metadata download --search 'family_hx_mm:true' > metadata_fx_true.csv"
