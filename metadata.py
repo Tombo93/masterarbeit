@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from typing import List, Dict
 
 
 def create_fam_hx_metadata(filename, metadata_dir, outname='family_history.csv'):
@@ -11,8 +12,32 @@ def create_fam_hx_metadata(filename, metadata_dir, outname='family_history.csv')
         fx_metadata.to_csv(f)
 
 
+def create_metadata(
+        filename: str,
+        metadata_dir: str,
+        cols: List[str],
+        class_mapping: Dict[str, int],
+        outname: str) -> None:
+    metadata = pd.read_csv(os.path.join(metadata_dir, filename))
+    metadata = metadata[cols]
+    metadata[cols[0]] = metadata[cols[0]].astype(str) + '.JPG'
+    metadata[cols[1]] = metadata[cols[1]].map(class_mapping)
+    with open(os.path.join(metadata_dir, outname), 'w', encoding='utf-8') as f:
+        metadata.to_csv(f)
+
+
 if __name__ == '__main__':
-    create_fam_hx_metadata('metadata_combined.csv', '/home/bay1989/masterarbeit/data/ISIC')
+    # create_fam_hx_metadata('metadata_combined.csv', '/home/bay1989/masterarbeit/data/ISIC')
+    class_mapping = {'benign': 0,
+               'malignant': 1,
+               'indeterminate/malignant': 1,
+               'indeterminate/benign': 0,
+               'indeterminate': 0}
+    create_metadata('metadata_combined.csv',
+                    '/home/bay1989/masterarbeit/data/ISIC',
+                    ['isic_id', 'benign_malignant'],
+                    class_mapping,
+                    'benign_malignant.csv')
 
     create_metadata = False
     if create_metadata:

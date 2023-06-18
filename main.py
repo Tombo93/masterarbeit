@@ -7,14 +7,11 @@ from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision
 
-from pathlib import Path
-
 from data.dataset import FamilyHistoryDataSet
 from models.models import CNN
 from utils.optimizer import OptimizationLoop
 from utils.training import BasicTraining
 from utils.evaluation import MetricValidation
-
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -31,25 +28,26 @@ def main(cfg: IsicConfig):
 
     # data
     ISIC_DATA_PATH = cfg.isic_paths.isic_data_path
-    ISIC_YLABELS = cfg.isic_paths.isic_ylabels
+    ISIC_YLABELS = cfg.experiment.metadata
     ISIC_METADATA = cfg.isic_paths.isic_metadata
     ISIC_ROOT_DIR = cfg.isic_paths.isic_root_dir
 
     # Mean & std for 85x85 cropped images
     ISIC_MEAN = cfg.data_params.isic_mean
     ISIC_STD = cfg.data_params.isic_std
-    return
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Hyperparams
-    learning_rate = 0.01
-    batch_size = 32
-    epochs = 100
-    img_crop_size = 85
-    n_classes = 1
-    in_channels = 3
-    n_workers = 4
+    learning_rate = cfg.hyper_params.learning_rate
+    batch_size = cfg.hyper_params.batch_size
+    epochs = cfg.hyper_params.epochs
+    n_workers = cfg.hyper_params.num_workers
 
+    img_crop_size = cfg.data_params.img_crop_size
+    n_classes = cfg.data_params.classes
+    in_channels = cfg.data_params.channels
+ 
     # Model
     model = CNN(n_classes, in_channels)
     # model = SimpleCNN(n_classes, in_channels)
