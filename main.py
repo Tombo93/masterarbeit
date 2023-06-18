@@ -17,23 +17,28 @@ from utils.evaluation import MetricValidation
 
 
 import hydra
+from hydra.core.config_store import ConfigStore
+from config import IsicConfig
+
+
+cs = ConfigStore.instance()
+cs.store(name='isic_config', node=IsicConfig)
 
 
 @hydra.main(version_base=None, config_path='conf', config_name='config')
-def main(cfg):
+def main(cfg: IsicConfig):
     print(cfg)
 
-    return
     # data
-    ISIC_DATA_PATH = Path('data/ISIC/data').absolute()
-    ISIC_YLABELS = Path('data/ISIC/family_history.csv').absolute()
-    ISIC_METADATA = Path('data/ISIC/metadata_combined.csv').absolute()
-    ISIC_ROOT_DIR = Path('data/ISIC').absolute()
+    ISIC_DATA_PATH = cfg.isic_paths.isic_data_path
+    ISIC_YLABELS = cfg.isic_paths.isic_ylabels
+    ISIC_METADATA = cfg.isic_paths.isic_metadata
+    ISIC_ROOT_DIR = cfg.isic_paths.isic_root_dir
 
     # Mean & std for 85x85 cropped images
-    ISIC_MEAN = [1.2721, 0.3341, -0.0479]
-    ISIC_STD = [0.2508, 0.2654, 0.3213]
-
+    ISIC_MEAN = cfg.data_params.isic_mean
+    ISIC_STD = cfg.data_params.isic_std
+    return
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Hyperparams

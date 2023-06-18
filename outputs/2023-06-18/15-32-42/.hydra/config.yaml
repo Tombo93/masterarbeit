@@ -1,17 +1,13 @@
-hyper_params:
+hyperparams:
   epochs: 100
   learning_rate: 0.01
   batch_size: 32
   num_workers: 4
-
-data_params:
+dataparams:
   img_crop_size: 85
   channels: 3
   classes: 1
-  isic_mean: [1.2721, 0.3341, -0.0479]
-  isic_std: [0.2508, 0.2654, 0.3213]
-
-isic_paths:
+isicpaths:
   isic_data_path: ${hydra:runtime.cwd}/data/ISIC/data
   isic_ylabels: ${hydra:runtime.cwd}/data/ISIC/family_history.csv
   isic_metadata: ${hydra:runtime.cwd}/data/ISIC/metadata_combined.csv
