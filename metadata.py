@@ -22,6 +22,7 @@ def create_metadata(
     metadata = metadata[cols]
     metadata[cols[0]] = metadata[cols[0]].astype(str) + '.JPG'
     metadata[cols[1]] = metadata[cols[1]].map(class_mapping, na_action='ignore')
+    metadata = metadata[metadata[cols[1]].notna()]
     with open(os.path.join(metadata_dir, outname), 'w', encoding='utf-8') as f:
         metadata.to_csv(f)
 

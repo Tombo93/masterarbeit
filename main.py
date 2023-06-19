@@ -10,8 +10,8 @@ from torchmetrics.classification import Accuracy, AUROC, Precision
 from data.dataset import FamilyHistoryDataSet
 from models.models import CNN
 from utils.optimizer import OptimizationLoop
-from utils.training import BasicTraining
-from utils.evaluation import MetricValidation
+from utils.training import BasicTraining, PlotLossTraining
+from utils.evaluation import MetricValidation, MetricAndLossValidation
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -24,6 +24,9 @@ cs.store(name='isic_config', node=IsicConfig)
 
 @hydra.main(version_base=None, config_path='conf', config_name='config')
 def main(cfg: IsicConfig):
+    print(f'Experiment {cfg.benign_malignant_experiment.label_col} parameters:')
+    print(cfg.hyper_params)
+
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     # Hyperparams
@@ -71,9 +74,9 @@ def main(cfg: IsicConfig):
 
     optim_loop = OptimizationLoop(
         model=model,
-        training=BasicTraining(nn.BCEWithLogitsLoss(),
+        training= PlotLossTraining(nn.BCEWithLogitsLoss(),
                                optim.SGD(model.parameters(), lr=learning_rate)),
-        validation=MetricValidation(),
+        validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
         train_loader=train_loader,
         test_loader=test_loader,
         train_metrics=MetricCollection([Accuracy(task='binary'),
@@ -85,7 +88,11 @@ def main(cfg: IsicConfig):
         epochs=epochs,
         device=device
         )
-    optim_loop.optimize()
+    # optim_loop.optimize()
+    optim_loop.overfit_batch_test(
+        nn.BCEWithLogitsLoss(),
+        optim.SGD(model.parameters(), lr=learning_rate),
+        4)
 
 
 if __name__ == '__main__':

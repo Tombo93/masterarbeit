@@ -64,3 +64,65 @@ class OptimizationLoop:
 
             self.train_metrics.reset()
             self.valid_metrics.reset()
+
+    def overfit_batch_test(self, loss_func, optim, n_batches: int) -> None:
+        train_data = [next(iter(self.train_loader)) for _ in range(n_batches)]
+        valid_data = [next(iter(self.test_loader)) for _ in range(n_batches)]
+        
+        for epoch in range(self.n_epochs):
+            
+            # Training Phase
+            running_loss = 0.0
+            for data, labels in train_data:
+                data = data.to(self.device)
+                labels = labels.to(self.device)
+                prediction = self.model(data)
+                loss = loss_func(prediction, torch.unsqueeze(labels, 1).float())
+
+                running_loss += loss.item() * data.size(0)
+
+                 # _, pred_labels = prediction.max(dim=1)
+                pred_labels = torch.flatten((prediction>0.5).int())
+                self.train_metrics.update(pred_labels, labels)
+
+                loss.backward()
+                optim.step()
+                optim.zero_grad()
+            print(f'Training Loss: {running_loss / len(train_data)}')
+            
+            # Validation Phase
+            self.model.eval()
+            with torch.no_grad():
+                running_loss = 0.0
+                for x, y in valid_data:
+                    x, y = x.to(device=self.device), y.to(device=self.device)
+                    pred = self.model(x)
+
+                    loss = loss_func(pred, torch.unsqueeze(y, 1).float())
+                    running_loss += loss.item() * x.size(0)
+
+                    # _, pred_labels = pred.max(dim=1)
+                    pred_labels = torch.flatten((pred>0.5).int())
+                    self.valid_metrics.update(pred_labels, y)
+                print(f'Validation Loss: {running_loss / len(valid_data)}')   
+            self.model.train()
+            
+            # Metrics
+            total_train_metrics = self.train_metrics.compute()
+            total_valid_metrics = self.valid_metrics.compute()
+            print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
+            print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
+
+            if self.logger is None:
+                for metric, value in total_train_metrics.items():
+                    self.writer.add_scalar(f'Train/{metric}', value, epoch)
+                for metric, value in total_valid_metrics.items():
+                    self.writer.add_scalar(f'Test/{metric}', value, epoch)
+            
+            if self.logger is not None:
+                self.logger.log(epoch,
+                                total_train_metrics,
+                                total_valid_metrics)
+
+            self.train_metrics.reset()
+            self.valid_metrics.reset()
