@@ -12,14 +12,14 @@ from torch.utils.data import DataLoader
 
 class FamilyHistoryDataSet(torch.utils.data.Dataset):
   def __init__(self,
-               metadata: str,
-               root_dir: str,
+               metadata_path: str,
+               data_dir: str,
                data_col: str,
                ylabel_col: str,
                transforms: Compose = None) -> None:
-    self.root_dir = root_dir
+    self.data_dir = data_dir
     self.transforms = transforms
-    self.annotations = pd.read_csv(metadata)
+    self.annotations = pd.read_csv(metadata_path)
     self.xdata_col = self.annotations.columns.get_loc(data_col)
     self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
 
@@ -27,7 +27,7 @@ class FamilyHistoryDataSet(torch.utils.data.Dataset):
     return len(self.annotations)
 
   def __getitem__(self, index) -> Tuple[torch.TensorType, torch.TensorType]:
-    img_path = os.path.join(self.root_dir, self.annotations.iloc[index, self.xdata_col])
+    img_path = os.path.join(self.data_dir, self.annotations.iloc[index, self.xdata_col])
     image = Image.open(img_path)
     y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
     if self.transforms is not None:
@@ -43,7 +43,7 @@ class FamilyHistoryDataSet(torch.utils.data.Dataset):
     '''Computes the smalles width/heigt of the images of the dataset'''
     height, width = float('inf'), float('inf')
     for index in range(len(self.annotations)):
-      img_path = os.path.join(self.root_dir, self.annotations.iloc[index, 0])
+      img_path = os.path.join(self.data_dir, self.annotations.iloc[index, 0])
       image = Image.open(img_path)
       if image.width < width:
         width = image.width

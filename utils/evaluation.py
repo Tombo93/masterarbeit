@@ -13,7 +13,7 @@ class Validation(ABC):
         """Implement a validation loop"""
 
 
-class MetricValidation:
+class MetricValidation(Validation):
     def run(self,
             test_loader: DataLoader[Any],
             model: torch.nn.Module,

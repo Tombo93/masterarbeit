@@ -1,56 +1,47 @@
-import csv
-from datetime import datetime
+import torch
 
 from utils.training import Training
 from utils.evaluation import Validation
+from utils.logger import Logger
 
 from torch.utils.tensorboard import SummaryWriter
+
+from torch.utils.data import DataLoader
+from torchmetrics import MetricCollection
+from torchmetrics.metric import Metric
+from typing import Union
 
 
 class OptimizationLoop:
     def __init__(self,
-                 params,
+                 model: torch.nn.Module,
                  training: Training,
-                 validation: Validation) -> None:
-        
-        self.n_epochs = params['n_epochs']
+                 validation: Validation,
+                 train_loader: DataLoader,
+                 test_loader: DataLoader,
+                 train_metrics: Union[Metric, MetricCollection],
+                 test_metrics: Union[Metric, MetricCollection],
+                 epochs: int,
+                 device: torch.DeviceObjType,
+                 logger: Union[Logger, None] = None
+                 ) -> None:
+        self.n_epochs = epochs
+        self.device = device
         self.training = training
         self.validation = validation
-        
-        self.model = params['model']
-        self.train_loader = params['train_loader']
-        self.test_loader = params['test_loader']
-        self.loss_func = params['loss']
-        self.optimizer = params['optim']
-        self.device = params['device']
-        self.train_metrics = params['metrics']['train'].to(self.device)
-        self.valid_metrics = params['metrics']['valid'].to(self.device)
-        self.logdir = params['logdir']
-
-        if self.logdir is None:
-            self.writer = SummaryWriter()
-
-        if self.logdir is not None:
-            self.logfilename_train = f'{self.logdir}/logs_{datetime.now()}_train.csv'
-            self.logfilename_test = f'{self.logdir}/logs_{datetime.now()}_test.csv'
-            with open(self.logfilename_train, 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(
-                    ['epoch'] +
-                    [key for key, _ in sorted(self.train_metrics.items(), key=lambda x: x[0])]
-                    )
-            with open(self.logfilename_test, 'w') as f:
-                writer = csv.writer(f)
-                writer.writerow(
-                    ['epoch'] +
-                    [key for key, _ in sorted(self.valid_metrics.items(), key=lambda x: x[0])]
-                    )
+        self.model = model
+        self.train_loader = train_loader
+        self.test_loader = test_loader
+        self.train_metrics = train_metrics.to(self.device)
+        self.valid_metrics = test_metrics.to(self.device)
+        self.logger = logger
+        if self.logger is None:
+            self.writer = SummaryWriter()        
 
     def optimize(self) -> None:
         for epoch in range(self.n_epochs):
             self.training.run(
                 self.train_loader, self.model,
-                self.loss_func, self.optimizer,
                 self.train_metrics, self.device)
             self.validation.run(
                 self.test_loader, self.model,
@@ -60,25 +51,16 @@ class OptimizationLoop:
             print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
             print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
 
-            if self.logdir is None:
+            if self.logger is None:
                 for metric, value in total_train_metrics.items():
                     self.writer.add_scalar(f'Train/{metric}', value, epoch)
                 for metric, value in total_valid_metrics.items():
                     self.writer.add_scalar(f'Test/{metric}', value, epoch)
             
-            if self.logdir is not None:
-                with open(self.logfilename_train, 'a') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(
-                    [str(epoch)] +
-                    [value.item() for _, value in sorted(total_train_metrics.items(), key=lambda x: x[0])]
-                    )
-                with open(self.logfilename_test, 'a') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(
-                    [epoch] +
-                    [value.item() for _, value in sorted(total_valid_metrics.items(), key=lambda x: x[0])]
-                    )
+            if self.logger is not None:
+                self.logger.log(epoch,
+                                total_train_metrics,
+                                total_valid_metrics)
 
             self.train_metrics.reset()
             self.valid_metrics.reset()

@@ -41,4 +41,5 @@ class IsicConfig:
     hyper_params: IsicHyperParams
     data_params: IsicDataParams
     isic_paths: IsicPaths
+    benign_malignant_experiment: BenignMalignantExperiment
     family_history_experiment: FamilyHistoryExperiment
