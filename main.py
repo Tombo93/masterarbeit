@@ -12,6 +12,7 @@ from models.models import CNN
 from utils.optimizer import OptimizationLoop
 from utils.training import BasicTraining, PlotLossTraining
 from utils.evaluation import MetricValidation, MetricAndLossValidation
+from utils.metrics import AverageMeterCollection
 
 import hydra
 from hydra.core.config_store import ConfigStore
@@ -79,12 +80,8 @@ def main(cfg: IsicConfig):
         validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
         train_loader=train_loader,
         test_loader=test_loader,
-        train_metrics=MetricCollection([Accuracy(task='binary'),
-                                        AUROC(task='binary'),
-                                        Precision(task='binary')]),
-        test_metrics=MetricCollection([Accuracy(task='binary'),
-                                       AUROC(task='binary'),
-                                       Precision(task='binary')]),
+        train_metrics=None,
+        test_metrics=None,
         epochs=epochs,
         device=device
         )

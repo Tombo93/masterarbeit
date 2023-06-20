@@ -7,7 +7,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 from torch.utils.data import DataLoader
 
-from utils.metrics import AverageMeter
+from utils.metrics import AverageMeterCollection, AverageLoss
 
 class Training(ABC):
     @abstractmethod
@@ -84,8 +84,8 @@ class PlotLossTraining(Training):
     def run(self,
             train_loader: DataLoader[Any],
             model: torch.nn.Module,
-            metrics: Union[Metric, MetricCollection],
-            device: torch.DeviceObjType) -> None:
+            metrics: Any,
+            device: torch.DeviceObjType) -> float:
         
         running_loss = 0.0
         for _, (data, labels) in enumerate(train_loader):
@@ -97,14 +97,15 @@ class PlotLossTraining(Training):
             running_loss += loss.item() * data.size(0)
 
              # _, pred_labels = prediction.max(dim=1)
-            pred_labels = torch.flatten((prediction>0.5).int())
-            metrics.update(pred_labels, labels)
+            # pred_labels = torch.flatten((prediction>0.5).int())
+            # metrics.update(pred_labels, labels)
 
             loss.backward()
             self.optim.step()
             self.optim.zero_grad()
 
-        print(f'Training Loss: {running_loss / len(train_loader.dataset)}') 
+        # print(f'Training Loss: {running_loss / len(train_loader.dataset)}')
+        return running_loss / len(train_loader.dataset)
 
 
 class BatchOverfittingTraining(Training):

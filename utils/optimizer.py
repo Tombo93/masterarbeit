@@ -3,13 +3,14 @@ import torch
 from utils.training import Training
 from utils.evaluation import Validation
 from utils.logger import Logger
+from utils.metrics import AverageMeterCollection
 
 from torch.utils.tensorboard import SummaryWriter
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
-from typing import Union
+from typing import Union, Any
 
 
 class OptimizationLoop:
@@ -19,8 +20,8 @@ class OptimizationLoop:
                  validation: Validation,
                  train_loader: DataLoader,
                  test_loader: DataLoader,
-                 train_metrics: Union[Metric, MetricCollection],
-                 test_metrics: Union[Metric, MetricCollection],
+                 train_metrics: Any,
+                 test_metrics: Any,
                  epochs: int,
                  device: torch.DeviceObjType,
                  logger: Union[Logger, None] = None
@@ -32,38 +33,41 @@ class OptimizationLoop:
         self.model = model
         self.train_loader = train_loader
         self.test_loader = test_loader
-        self.train_metrics = train_metrics.to(self.device)
-        self.valid_metrics = test_metrics.to(self.device)
+        self.train_metrics = AverageMeterCollection('train').to(device) # train_metrics.to(self.device)
+        self.valid_metrics = AverageMeterCollection('valid').to(device) # test_metrics.to(self.device)
         self.logger = logger
         if self.logger is None:
             self.writer = SummaryWriter()        
 
     def optimize(self) -> None:
         for epoch in range(self.n_epochs):
-            self.training.run(
+            train_loss = self.training.run(
                 self.train_loader, self.model,
                 self.train_metrics, self.device)
-            self.validation.run(
+            valid_loss = self.validation.run(
                 self.test_loader, self.model,
                 self.valid_metrics, self.device)
-            total_train_metrics = self.train_metrics.compute()
-            total_valid_metrics = self.valid_metrics.compute()
-            print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
-            print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
+            # total_train_metrics = self.train_metrics.compute()
+            # total_valid_metrics = self.valid_metrics.compute()
+            # print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
+            # print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
 
             if self.logger is None:
-                for metric, value in total_train_metrics.items():
-                    self.writer.add_scalar(f'Train/{metric}', value, epoch)
-                for metric, value in total_valid_metrics.items():
-                    self.writer.add_scalar(f'Test/{metric}', value, epoch)
-            
-            if self.logger is not None:
-                self.logger.log(epoch,
-                                total_train_metrics,
-                                total_valid_metrics)
+            #     for metric, value in total_train_metrics.items():
+            #         self.writer.add_scalar(f'Train/{metric}', value, epoch)
+            #     for metric, value in total_valid_metrics.items():
+            #         self.writer.add_scalar(f'Test/{metric}', value, epoch)
 
-            self.train_metrics.reset()
-            self.valid_metrics.reset()
+                self.writer.add_scalar(f'Train/Loss', train_loss, epoch)
+                self.writer.add_scalar(f'Validation/Loss', valid_loss, epoch)
+            
+            # if self.logger is not None:
+            #     self.logger.log(epoch,
+            #                     total_train_metrics,
+            #                     total_valid_metrics)
+
+            # self.train_metrics.reset()
+            # self.valid_metrics.reset()
 
     def overfit_batch_test(self, loss_func, optim, n_batches: int) -> None:
         train_data = [next(iter(self.train_loader)) for _ in range(n_batches)]
