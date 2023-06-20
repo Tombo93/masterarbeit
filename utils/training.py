@@ -7,6 +7,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 from torch.utils.data import DataLoader
 
+from utils.metrics import AverageMeter
 
 class Training(ABC):
     @abstractmethod

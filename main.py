@@ -43,8 +43,8 @@ def main(cfg: IsicConfig):
 
     # data
     ISIC_DATA_PATH = cfg.isic_paths.isic_data_path
-    EXPERIMENT_METADATA = cfg.benign_malignant_experiment.metadata
-    EXPERIMENT_LABELS = cfg.benign_malignant_experiment.label_col
+    EXPERIMENT_METADATA = cfg.family_history_experiment.metadata
+    EXPERIMENT_LABELS = cfg.family_history_experiment.label_col
     DATA_COL = cfg.isic_paths.data_col
 
     # Mean & std for 85x85 cropped images
@@ -88,11 +88,11 @@ def main(cfg: IsicConfig):
         epochs=epochs,
         device=device
         )
-    # optim_loop.optimize()
-    optim_loop.overfit_batch_test(
-        nn.BCEWithLogitsLoss(),
-        optim.SGD(model.parameters(), lr=learning_rate),
-        4)
+    optim_loop.optimize()
+    # optim_loop.overfit_batch_test(
+    #     nn.BCEWithLogitsLoss(),
+    #     optim.SGD(model.parameters(), lr=learning_rate),
+    #     4)
 
 
 if __name__ == '__main__':
