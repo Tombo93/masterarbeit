@@ -7,7 +7,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 from torch.utils.data import DataLoader
 
-from utils.metrics import AverageMeterCollection, AverageLoss
+from utils.metrics import AverageMeterCollection, AverageMeter
 
 class Training(ABC):
     @abstractmethod
@@ -96,9 +96,9 @@ class PlotLossTraining(Training):
             
             running_loss += loss.item() * data.size(0)
 
-             # _, pred_labels = prediction.max(dim=1)
-            # pred_labels = torch.flatten((prediction>0.5).int())
-            # metrics.update(pred_labels, labels)
+            # _, pred_labels = prediction.max(dim=1)
+            pred_labels = torch.flatten((prediction>0.5).int())
+            metrics.update(pred_labels, labels)
 
             loss.backward()
             self.optim.step()
