@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader, random_split
 from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
 
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Accuracy, AUROC, Precision
+from torchmetrics.classification import Accuracy, AUROC, Precision, Recall, ROC
 
 from data.dataset import FamilyHistoryDataSet
 from models.models import CNN
@@ -25,7 +25,7 @@ cs.store(name='isic_config', node=IsicConfig)
 
 @hydra.main(version_base=None, config_path='conf', config_name='config')
 def main(cfg: IsicConfig):
-    print(f'Experiment {cfg.benign_malignant_experiment.label_col} parameters:')
+    print(f'Experiment {cfg.family_history_experiment.label_col} parameters:')
     print(cfg.hyper_params)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -80,16 +80,24 @@ def main(cfg: IsicConfig):
         validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
         train_loader=train_loader,
         test_loader=test_loader,
-        train_metrics=None,
-        test_metrics=None,
+        train_metrics=MetricCollection([Recall(task='binary', validate_args=True),
+                                        Accuracy(task='binary', validate_args=True),
+                                        AUROC(task='binary', validate_args=True),
+                                        Precision(task='binary', validate_args=True)]),
+        test_metrics=MetricCollection([Recall(task='binary', validate_args=True),
+                                       Accuracy(task='binary', validate_args=True),
+                                       AUROC(task='binary', validate_args=True),
+                                       Precision(task='binary', validate_args=True)]),
         epochs=epochs,
         device=device
         )
+
     optim_loop.optimize()
     # optim_loop.overfit_batch_test(
     #     nn.BCEWithLogitsLoss(),
     #     optim.SGD(model.parameters(), lr=learning_rate),
-    #     4)
+    #     4,
+    #     cfg.hyper_params.batch_size)
 
 
 if __name__ == '__main__':

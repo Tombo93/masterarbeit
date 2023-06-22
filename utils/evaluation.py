@@ -53,41 +53,8 @@ class MetricAndLossValidation(Validation):
                 running_loss += loss.item() * x.size(0)
 
                 # _, pred_labels = pred.max(dim=1)
-                # pred_labels = torch.flatten((pred>0.5).int())
-                # metrics.update(pred_labels, y)
+                pred_labels = torch.flatten(pred)
+                metrics.update(pred_labels, y)  
             print(f'Validation Loss: {running_loss / len(test_loader.dataset)}')   
-        model.train()
-        return running_loss / len(test_loader.dataset)
-
-
-class BatchOverfittingValidation(Validation):
-    def __init__(self,
-                 loss_func: torch.nn.Module,
-                 n_batches: int) -> None:
-        super().__init__()
-        self.loss = loss_func
-        self.n_batches = n_batches
-
-    def run(self,
-            test_loader: DataLoader[Any],
-            model: torch.nn.Module,
-            metrics: Union[Metric, MetricCollection],
-            device: torch.DeviceObjType) -> float:
-
-        model.eval()
-        with torch.no_grad():
-            running_loss = 0.0
-            for _ in range(self.n_batches):
-                x, y = next(iter(test_loader))
-                x, y = x.to(device=device), y.to(device=device)
-                pred = model(x)
-
-                loss = self.loss(pred, torch.unsqueeze(y, 1).float())
-                running_loss += loss.item() * x.size(0)
-
-                # _, pred_labels = pred.max(dim=1)
-                pred_labels = torch.flatten((pred>0.5).int())
-                metrics.update(pred_labels, y)
-            # print(f'Validation Loss: {running_loss / len(test_loader.dataset)}')   
         model.train()
         return running_loss / len(test_loader.dataset)
