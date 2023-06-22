@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 
 
 @dataclass
-class AverageLoss:
+class AverageMetric:
     name: str
     val: float = 0
     avg: float = 0
@@ -26,6 +26,9 @@ class AverageLoss:
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
+
+    def compute(self):
+        return self.name, self.avg
 
 
 @dataclass
