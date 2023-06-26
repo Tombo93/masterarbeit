@@ -13,7 +13,9 @@ class MedMnistDataloader:
     shuffle: bool = True
     pin_memory: bool = True
 
-    def get_medmnist_dataloaders(self) -> Tuple[DataLoader, DataLoader, DataLoader]:
+    def get_medmnist_dataloaders(
+        self,
+    ) -> Tuple[DataLoader[Any], DataLoader[Any], DataLoader[Any]]:
         return (
             DataLoader(
                 self.dataset(split="train", transform=self.transforms),
@@ -51,7 +53,7 @@ class FamilyHistoryDataloader:
     shuffle: bool = True
     pin_memory: bool = True
 
-    def get_dataloaders(self) -> Tuple[DataLoader, DataLoader]:
+    def get_dataloaders(self) -> Tuple[DataLoader[Any], DataLoader[Any]]:
         dataset = FamilyHistoryDataSet(
             metadata_path=self.metadata,
             data_dir=self.datapath,

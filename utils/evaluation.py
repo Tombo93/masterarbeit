@@ -1,5 +1,6 @@
 import torch
 
+from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Any, Union
 from torch.utils.data import DataLoader
@@ -9,7 +10,13 @@ from torchmetrics.metric import Metric
 
 class Validation(ABC):
     @abstractmethod
-    def run(self, *args, **kwargs):
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.device,
+    ) -> Union[float, None]:
         """Implement a validation loop"""
 
 
@@ -19,7 +26,7 @@ class MetricValidation(Validation):
         test_loader: DataLoader[Any],
         model: torch.nn.Module,
         metrics: Union[Metric, MetricCollection],
-        device: torch.DeviceObjType,
+        device: torch.device,
     ) -> None:
         model.eval()
         with torch.no_grad():
@@ -28,22 +35,21 @@ class MetricValidation(Validation):
                 y = y.to(device=device)
                 pred = model(x)
                 _, pred_labels = pred.max(dim=1)
-                # metrics.update(pred_labels, y)
+                metrics.update(pred_labels, y)
         model.train()
 
 
+@dataclass
 class MetricAndLossValidation(Validation):
-    def __init__(self, loss_func: torch.nn.Module) -> None:
-        super().__init__()
-        self.loss = loss_func
+    loss: torch.nn.Module
 
     def run(
         self,
         test_loader: DataLoader[Any],
         model: torch.nn.Module,
         metrics: Union[Metric, MetricCollection],
-        device: torch.DeviceObjType,
-    ) -> None:
+        device: torch.device,
+    ) -> float:
         model.eval()
         with torch.no_grad():
             running_loss = 0.0

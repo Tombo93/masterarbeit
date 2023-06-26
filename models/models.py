@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class CNN(nn.Module):
-    def __init__(self, n_classes, in_channels):
+    def __init__(self, n_classes: int, in_channels: int):
         super().__init__()
         self.net = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=10, kernel_size=5),
@@ -28,7 +30,7 @@ class CNN(nn.Module):
 
 
 class BatchNormCNN(nn.Module):
-    def __init__(self, n_classes, in_channels):
+    def __init__(self, n_classes: int, in_channels: int):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 10, kernel_size=5)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5)
@@ -38,7 +40,7 @@ class BatchNormCNN(nn.Module):
         self.fc1 = nn.Linear(6480, 32)
         self.fc2 = nn.Linear(32, n_classes)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor):
         x = F.relu(F.max_pool2d(self.dropout2d(self.conv1(x)), 2))
         x = self.dropout2d(self.conv2(x))
         x = F.max_pool2d(x, 2)
