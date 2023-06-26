@@ -14,11 +14,13 @@ class Validation(ABC):
 
 
 class MetricValidation(Validation):
-    def run(self,
-            test_loader: DataLoader[Any],
-            model: torch.nn.Module,
-            metrics: Union[Metric, MetricCollection],
-            device: torch.DeviceObjType) -> None:
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.DeviceObjType,
+    ) -> None:
         model.eval()
         with torch.no_grad():
             for _, (x, y) in enumerate(test_loader):
@@ -26,21 +28,22 @@ class MetricValidation(Validation):
                 y = y.to(device=device)
                 pred = model(x)
                 _, pred_labels = pred.max(dim=1)
-                # metrics.update(pred_labels, y)   
+                # metrics.update(pred_labels, y)
         model.train()
 
 
 class MetricAndLossValidation(Validation):
-    def __init__(self,
-                 loss_func: torch.nn.Module) -> None:
+    def __init__(self, loss_func: torch.nn.Module) -> None:
         super().__init__()
         self.loss = loss_func
 
-    def run(self,
-            test_loader: DataLoader[Any],
-            model: torch.nn.Module,
-            metrics: Union[Metric, MetricCollection],
-            device: torch.DeviceObjType) -> None:
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.DeviceObjType,
+    ) -> None:
         model.eval()
         with torch.no_grad():
             running_loss = 0.0
@@ -54,7 +57,7 @@ class MetricAndLossValidation(Validation):
 
                 # _, pred_labels = pred.max(dim=1)
                 pred_labels = torch.flatten(pred)
-                metrics.update(pred_labels, y)  
-            print(f'Validation Loss: {running_loss / len(test_loader.dataset)}')   
+                metrics.update(pred_labels, y)
+            print(f"Validation Loss: {running_loss / len(test_loader.dataset)}")
         model.train()
         return running_loss / len(test_loader.dataset)

@@ -2,6 +2,7 @@
 
 outputs
 data/ISIC/
+data/MEDMNIST
 
 # Jupyter Notebook
 .ipynb_checkpoints
