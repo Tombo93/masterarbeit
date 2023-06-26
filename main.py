@@ -53,15 +53,16 @@ def main(cfg: IsicConfig):
     ISIC_MEAN = cfg.data_params.isic_mean
     ISIC_STD = cfg.data_params.isic_std
 
+    # transforms = Compose([CenterCrop(IMG_CROP_SIZE), ToTensor(), Normalize(ISIC_MEAN, ISIC_STD)])
+    transforms = Compose([CenterCrop(IMG_CROP_SIZE), ToTensor()])
+
     dataset = FamilyHistoryDataSet(
         metadata_path=EXPERIMENT_METADATA,
         data_dir= ISIC_DATA_PATH,
         data_col=DATA_COL,
         ylabel_col=EXPERIMENT_LABELS,
-        transforms=Compose([CenterCrop(IMG_CROP_SIZE),
-                            ToTensor(),
-                            Normalize(ISIC_MEAN, ISIC_STD)])
-            )
+        transforms=transforms
+        )
 
     train_split, test_split = dataset.get_splits()
     train_set, test_set = random_split(dataset, [train_split, test_split])
@@ -92,12 +93,13 @@ def main(cfg: IsicConfig):
         device=device
         )
 
-    optim_loop.optimize()
-    # optim_loop.overfit_batch_test(
-    #     nn.BCEWithLogitsLoss(),
-    #     optim.SGD(model.parameters(), lr=learning_rate),
-    #     4,
-    #     cfg.hyper_params.batch_size)
+    # optim_loop.optimize()
+    for lr in [0.1, 0.01, 0.001]:
+        optim_loop.overfit_batch_test(
+            nn.BCEWithLogitsLoss(),
+            optim.SGD(model.parameters(), lr=lr),
+            4,
+            cfg.hyper_params.batch_size)
 
 
 if __name__ == '__main__':
