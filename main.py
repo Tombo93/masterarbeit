@@ -74,7 +74,8 @@ def main(cfg: IsicConfig):
         dataset=test_set, batch_size=batch_size, shuffle=True,
         pin_memory=True, num_workers=n_workers)
 
-    optim_loop = OptimizationLoop(
+    for learning_rate in [0.1, 0.01, 0.001]:
+        optim_loop = OptimizationLoop(
         model=model,
         training= PlotLossTraining(nn.BCEWithLogitsLoss(),
                                optim.SGD(model.parameters(), lr=learning_rate)),
@@ -93,11 +94,10 @@ def main(cfg: IsicConfig):
         device=device
         )
 
-    # optim_loop.optimize()
-    for lr in [0.1, 0.01, 0.001]:
+        # optim_loop.optimize()
         optim_loop.overfit_batch_test(
             nn.BCEWithLogitsLoss(),
-            optim.SGD(model.parameters(), lr=lr),
+            optim.SGD(model.parameters(), lr=learning_rate),
             4,
             cfg.hyper_params.batch_size)
 
