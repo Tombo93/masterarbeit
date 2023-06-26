@@ -34,6 +34,7 @@ def main(cfg: IsicConfig):
 
     # Model
     model = CNN(cfg.data_params.classes, cfg.data_params.channels)
+    # model = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
     model.to(device)
 
     # Mean & std for 85x85 cropped images
