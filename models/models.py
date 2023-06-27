@@ -37,9 +37,9 @@ class BatchNormCNN(nn.Module):
         self.dropout2d = nn.Dropout2d()
         self.dropout = nn.Dropout()
         self.max_pool2d = nn.MaxPool2d(2)
-        self.batch_norm2d1 = nn.BatchNorm2d(20)
+        self.batch_norm2d1 = nn.BatchNorm2d(10)
         self.batch_norm2d2 = nn.BatchNorm2d(20)
-        self.fc1 = nn.Linear(320, 32)  # nn.Linear(6480, 32)
+        self.fc1 = nn.Linear(6480, 32)  # nn.Linear(320, 32)
         self.fc2 = nn.Linear(32, n_classes)
         self.relu = nn.ReLU()
 

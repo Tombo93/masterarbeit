@@ -134,4 +134,6 @@ class PlotLossTraining(Training):
             loss.backward()
             self.optim.step()
             self.optim.zero_grad()
+            # print(metrics.compute().items())
+            # print(f"batch loss: {running_loss / len(train_loader.dataset)}")
         return running_loss / len(train_loader.dataset)

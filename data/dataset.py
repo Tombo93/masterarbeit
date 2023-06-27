@@ -1,6 +1,7 @@
 import os
 import torch
 import pandas as pd
+import numpy as np
 from PIL import Image
 from tqdm import tqdm
 
@@ -9,6 +10,41 @@ from torchvision.transforms import Compose
 
 from typing import Tuple, Union, List, Any
 from torch.utils.data import DataLoader
+
+
+class FXDataset:
+    def __init__(
+        self,
+        split: str,
+        npz_folder: str,
+        npz_file_name: str,
+        transforms: Union[Compose, None] = None,
+    ) -> None:
+        if not os.path.exists(os.path.join(npz_folder, f"{npz_file_name}.npz")):
+            raise RuntimeError("Dataset not found. ")
+        npz_file = np.load(os.path.join(npz_folder, f"{npz_file_name}.npz"))
+        self.transforms = transforms
+        self.split = split
+        if self.split == "train":
+            self.imgs = npz_file["train_images"]
+            self.labels = npz_file["train_labels"]
+        elif self.split == "test":
+            self.imgs = npz_file["test_images"]
+            self.labels = npz_file["test_labels"]
+        else:
+            raise ValueError
+
+    def __len__(self):
+        return self.imgs.shape[0]
+
+    def __getitem__(self, index):
+        img, target = self.imgs[index], self.labels[index].astype(int)
+        if self.transforms:
+            img = self.transforms(img)
+        return (
+            torch.permute(img, (1, 0, 2)),
+            torch.unsqueeze(torch.tensor(target), -1),
+        )  # [batch, 85, 3, 85], [32(no batch)]
 
 
 class FamilyHistoryDataSet(Dataset[Any]):

@@ -7,7 +7,8 @@ from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision, Recall
 from medmnist import PneumoniaMNIST
 
-from data.dataloader import FamilyHistoryDataloader, MedMnistDataloader
+from data.create_npz import CreateNpz
+from data.dataloader import FamilyHistoryDataloader, MedMnistDataloader, FXNpzDataloader
 from models.models import CNN, BatchNormCNN
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
@@ -38,9 +39,9 @@ def main(cfg: IsicConfig):
     model.to(device)
 
     # Mean & std for 85x85 cropped images
-    # IMG_CROP_SIZE = cfg.data_params.img_crop_size
-    # ISIC_MEAN = cfg.data_params.isic_mean
-    # ISIC_STD = cfg.data_params.isic_std
+    IMG_CROP_SIZE = cfg.data_params.img_crop_size
+    ISIC_MEAN = cfg.data_params.isic_mean
+    ISIC_STD = cfg.data_params.isic_std
 
     # fx_data = FamilyHistoryDataloader(
     #     metadata=cfg.family_history_experiment.metadata,
@@ -54,9 +55,11 @@ def main(cfg: IsicConfig):
     #     num_workers=cfg.hyper_params.num_workers,
     # )
     # train_loader, test_loader = fx_data.get_dataloaders()
-    train_loader, test_loader, _ = MedMnistDataloader(
-        PneumoniaMNIST, ToTensor()
-    ).get_medmnist_dataloaders()
+    # train_loader, test_loader, _ = MedMnistDataloader(
+    #     PneumoniaMNIST, ToTensor()
+    # ).get_medmnist_dataloaders()
+    data = FXNpzDataloader(transforms=ToTensor())
+    train_loader, test_loader = data.get_dataloaders()
 
     optim_loop = OptimizationLoop(
         model=model,
