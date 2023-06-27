@@ -127,11 +127,9 @@ class PlotLossTraining(Training):
             data = data.to(device)
             labels = labels.to(device)
             prediction = model(data)
-            loss = self.loss(prediction, torch.unsqueeze(labels, 1).float())
+            loss = self.loss(prediction, labels.float())
             running_loss += loss.item() * data.size(0)
-
-            pred_labels = torch.flatten(prediction)
-            metrics.update(pred_labels, labels)
+            metrics.update(prediction, labels)
 
             loss.backward()
             self.optim.step()

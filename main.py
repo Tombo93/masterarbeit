@@ -5,9 +5,10 @@ from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
 
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision, Recall
+from medmnist import PneumoniaMNIST
 
-from data.dataloader import FamilyHistoryDataloader
-from models.models import CNN
+from data.dataloader import FamilyHistoryDataloader, MedMnistDataloader
+from models.models import CNN, BatchNormCNN
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
@@ -33,26 +34,29 @@ def main(cfg: IsicConfig):
     epochs = cfg.hyper_params.epochs
 
     # Model
-    model = CNN(cfg.data_params.classes, cfg.data_params.channels)
+    model = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
     model.to(device)
 
     # Mean & std for 85x85 cropped images
-    IMG_CROP_SIZE = cfg.data_params.img_crop_size
-    ISIC_MEAN = cfg.data_params.isic_mean
-    ISIC_STD = cfg.data_params.isic_std
+    # IMG_CROP_SIZE = cfg.data_params.img_crop_size
+    # ISIC_MEAN = cfg.data_params.isic_mean
+    # ISIC_STD = cfg.data_params.isic_std
 
-    fx_data = FamilyHistoryDataloader(
-        metadata=cfg.family_history_experiment.metadata,
-        datapath=cfg.isic_paths.isic_data_path,
-        data_col=cfg.isic_paths.data_col,
-        labels=cfg.family_history_experiment.label_col,
-        transforms=Compose(
-            [CenterCrop(IMG_CROP_SIZE), ToTensor(), Normalize(ISIC_MEAN, ISIC_STD)]
-        ),
-        batch_size=cfg.hyper_params.batch_size,
-        num_workers=cfg.hyper_params.num_workers,
-    )
-    train_loader, test_loader = fx_data.get_dataloaders()
+    # fx_data = FamilyHistoryDataloader(
+    #     metadata=cfg.family_history_experiment.metadata,
+    #     datapath=cfg.isic_paths.isic_data_path,
+    #     data_col=cfg.isic_paths.data_col,
+    #     labels=cfg.family_history_experiment.label_col,
+    #     transforms=Compose(
+    #         [CenterCrop(IMG_CROP_SIZE), ToTensor(), Normalize(ISIC_MEAN, ISIC_STD)]
+    #     ),
+    #     batch_size=cfg.hyper_params.batch_size,
+    #     num_workers=cfg.hyper_params.num_workers,
+    # )
+    # train_loader, test_loader = fx_data.get_dataloaders()
+    train_loader, test_loader, _ = MedMnistDataloader(
+        PneumoniaMNIST, ToTensor()
+    ).get_medmnist_dataloaders()
 
     optim_loop = OptimizationLoop(
         model=model,
@@ -69,7 +73,7 @@ def main(cfg: IsicConfig):
                 AUROC(task="binary"),
                 Precision(task="binary"),
             ]
-        ),
+        ).to(device),
         val_metrics=MetricCollection(
             [
                 Recall(task="binary"),
@@ -77,7 +81,7 @@ def main(cfg: IsicConfig):
                 AUROC(task="binary"),
                 Precision(task="binary"),
             ]
-        ),
+        ).to(device),
         epochs=epochs,
         device=device,
     )

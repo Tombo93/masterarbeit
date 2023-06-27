@@ -37,7 +37,7 @@ class FamilyHistoryDataSet(Dataset[Any]):
         y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
         if self.transforms:
             image = self.transforms(image)
-        return (image, y_label)
+        return (image, torch.unsqueeze(y_label, -1))
 
     def get_splits(self, splits: List[float] = [0.8, 0.2]) -> Tuple[int, int]:
         train_split = round(len(self.annotations) * splits[0])

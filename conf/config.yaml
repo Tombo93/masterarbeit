@@ -6,7 +6,7 @@ hyper_params:
 
 data_params:
   img_crop_size: 85
-  channels: 3
+  channels: 1
   classes: 1
   isic_mean: [0.8111, 0.5782, 0.4839] # [1.2721, 0.3341, -0.0479]
   isic_std: [0.1698, 0.1773, 0.2120] # [0.2508, 0.2654, 0.3213]
