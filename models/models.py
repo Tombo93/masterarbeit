@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torchvision.models import resnet50
 
 
 class CNN(nn.Module):
@@ -59,3 +59,23 @@ class BatchNormCNN(nn.Module):
         x = self.relu(x)
         x = self.fc2(x)  # [batch, 1]
         return x
+
+
+class ResNet(nn.Module):
+    def __init__(
+        self,
+        classes: int = 1,
+    ) -> None:
+        super().__init__()
+        self.net = resnet50(weights="DEFAULT")
+        for param in self.net.parameters():
+            param.requires_grad = False
+        self.net.fc = nn.Linear(in_features=2048, out_features=classes, bias=True)
+
+    def forward(self, x):
+        return self.net(x)
+
+
+if __name__ == "__main__":
+    model = ResNet(in_channels=3, classes=1)
+    print(model.net)

@@ -9,7 +9,7 @@ from medmnist import PneumoniaMNIST
 
 from data.create_npz import CreateNpz
 from data.dataloader import FamilyHistoryDataloader, MedMnistDataloader, FXNpzDataloader
-from models.models import CNN, BatchNormCNN
+from models.models import CNN, BatchNormCNN, ResNet
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
@@ -35,7 +35,8 @@ def main(cfg: IsicConfig):
     epochs = cfg.hyper_params.epochs
 
     # Model
-    model = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
+    # model = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
+    model = ResNet(cfg.data_params.classes)
     model.to(device)
 
     # Mean & std for 85x85 cropped images
