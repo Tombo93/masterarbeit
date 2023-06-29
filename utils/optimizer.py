@@ -29,10 +29,14 @@ class OptimizationLoop:
     val_metrics: Any
     epochs: int
     device: torch.device
+    logdir: str
     logger: Union[Logger, None] = None
 
-    if logger is None:
-        writer: SummaryWriter = SummaryWriter()
+    def __post_init__(self):
+        if self.logger is None:
+            self.writer = SummaryWriter(
+                log_dir=self.logdir,
+            )
 
     def optimize(self) -> None:
         for epoch in range(self.epochs):

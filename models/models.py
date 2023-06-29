@@ -32,6 +32,7 @@ class CNN(nn.Module):
 class BatchNormCNN(nn.Module):
     def __init__(self, n_classes: int, in_channels: int):
         super().__init__()
+        self.name = "BatchNormCNN"
         self.conv1 = nn.Conv2d(in_channels, 10, kernel_size=5, bias=False)
         self.conv2 = nn.Conv2d(10, 20, kernel_size=5, bias=False)
         self.dropout2d = nn.Dropout2d()
@@ -62,14 +63,14 @@ class BatchNormCNN(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(
-        self,
-        classes: int = 1,
-    ) -> None:
+    def __init__(self, classes: int = 1, fine_tuning: bool = True) -> None:
         super().__init__()
+        self.name = "resnet"
         self.net = resnet50(weights="DEFAULT")
-        for param in self.net.parameters():
-            param.requires_grad = False
+        if fine_tuning:
+            self.name = "resnet - finetuning"
+            for param in self.net.parameters():
+                param.requires_grad = False
         self.net.fc = nn.Linear(in_features=2048, out_features=classes, bias=True)
 
     def forward(self, x):
