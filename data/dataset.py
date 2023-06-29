@@ -31,6 +31,9 @@ class FXDataset:
         elif self.split == "test":
             self.imgs = npz_file["test_images"]
             self.labels = npz_file["test_labels"]
+        elif self.split == "no_split":
+            self.imgs = npz_file["data"]
+            self.labels = npz_file["labels"]
         else:
             raise ValueError
 
@@ -132,3 +135,21 @@ def batch_mean_and_sd(
 
     mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment**2)
     return mean, std
+
+
+class Subset(Dataset):
+    """Class represents a subset of A dataset"""
+
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = indices
+
+    def __len__(self):
+        if self.indices.shape == ():
+            print("this happens: Subset")
+            return 1
+        else:
+            return len(self.indices)
+
+    def __getitem__(self, idx):
+        return self.dataset[self.indices[idx]]
