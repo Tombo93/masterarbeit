@@ -38,11 +38,6 @@ def main(cfg: IsicConfig):
     learning_rate = cfg.hyper_params.learning_rate
     epochs = cfg.hyper_params.epochs
 
-    models = [
-        ResNet(cfg.data_params.classes),
-        BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
-        ResNet(cfg.data_params.classes, fine_tuning=False),
-    ]
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",
@@ -50,9 +45,14 @@ def main(cfg: IsicConfig):
         transforms=ToTensor(),
     )
     skf = StratifiedKFold(n_splits=5)
-    for model in models:
-        model.to(device)
-        for batch_size in [32, 64, 128]:
+    for batch_size in [32, 64, 128]:
+        models = [
+            ResNet(cfg.data_params.classes),
+            BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
+            ResNet(cfg.data_params.classes, fine_tuning=False),
+        ]
+        for model in models:
+            model.to(device)
             print(f"Training K-fold Cross Validation")
             for fold, (train_indices, val_indices) in enumerate(
                 skf.split(data.imgs, data.labels)
