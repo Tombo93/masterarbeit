@@ -35,7 +35,7 @@ def main(cfg: IsicConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Hyperparams
-    learning_rate = cfg.hyper_params.learning_rate
+    # learning_rate = cfg.hyper_params.learning_rate
     epochs = cfg.hyper_params.epochs
 
     data = FXDataset(
@@ -45,14 +45,8 @@ def main(cfg: IsicConfig):
         transforms=ToTensor(),
     )
     skf = StratifiedKFold(n_splits=5)
-    for batch_size in [32, 64, 128]:
-        models = [
-            ResNet(cfg.data_params.classes),
-            BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
-            ResNet(cfg.data_params.classes, fine_tuning=False),
-        ]
-        for model in models:
-            model.to(device)
+    for learning_rate in [0.1, 0.01, 0.001]:
+        for batch_size in [32, 64, 128]:
             print(f"Training K-fold Cross Validation")
             for fold, (train_indices, val_indices) in enumerate(
                 skf.split(data.imgs, data.labels)
@@ -61,54 +55,61 @@ def main(cfg: IsicConfig):
                 print(
                     f"train -  {np.bincount(data.labels[train_indices])}   |   test -  {np.bincount(data.labels[val_indices])}"
                 )
+                models = [
+                    ResNet(cfg.data_params.classes),
+                    BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
+                    ResNet(cfg.data_params.classes, fine_tuning=False),
+                ]
+                for model in models:
+                    model.to(device)
 
-                train_set = Subset(dataset=data, indices=train_indices)
-                val_set = Subset(dataset=data, indices=val_indices)
-                train_loader = DataLoader(
-                    train_set,
-                    batch_size=batch_size,
-                    num_workers=cfg.hyper_params.num_workers,
-                    shuffle=True,
-                    pin_memory=True,
-                )
-                val_loader = DataLoader(
-                    val_set,
-                    batch_size=batch_size,
-                    num_workers=cfg.hyper_params.num_workers,
-                    shuffle=True,
-                    pin_memory=True,
-                )
+                    train_set = Subset(dataset=data, indices=train_indices)
+                    val_set = Subset(dataset=data, indices=val_indices)
+                    train_loader = DataLoader(
+                        train_set,
+                        batch_size=batch_size,
+                        num_workers=cfg.hyper_params.num_workers,
+                        shuffle=True,
+                        pin_memory=True,
+                    )
+                    val_loader = DataLoader(
+                        val_set,
+                        batch_size=batch_size,
+                        num_workers=cfg.hyper_params.num_workers,
+                        shuffle=True,
+                        pin_memory=True,
+                    )
 
-                optim_loop = OptimizationLoop(
-                    model=model,
-                    training=PlotLossTraining(
-                        nn.BCEWithLogitsLoss(),
-                        optim.SGD(model.parameters(), lr=learning_rate),
-                    ),
-                    validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
-                    train_loader=train_loader,
-                    test_loader=val_loader,
-                    train_metrics=MetricCollection(
-                        [
-                            Recall(task="binary"),
-                            Accuracy(task="binary"),
-                            AUROC(task="binary"),
-                            Precision(task="binary"),
-                        ]
-                    ).to(device),
-                    val_metrics=MetricCollection(
-                        [
-                            Recall(task="binary"),
-                            Accuracy(task="binary"),
-                            AUROC(task="binary"),
-                            Precision(task="binary"),
-                        ]
-                    ).to(device),
-                    epochs=epochs,
-                    device=device,
-                    logdir=f"runs/{model.name}/{batch_size}/",
-                )
-                optim_loop.optimize()
+                    optim_loop = OptimizationLoop(
+                        model=model,
+                        training=PlotLossTraining(
+                            nn.BCEWithLogitsLoss(),
+                            optim.SGD(model.parameters(), lr=learning_rate),
+                        ),
+                        validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
+                        train_loader=train_loader,
+                        test_loader=val_loader,
+                        train_metrics=MetricCollection(
+                            [
+                                Recall(task="binary"),
+                                Accuracy(task="binary"),
+                                AUROC(task="binary"),
+                                Precision(task="binary"),
+                            ]
+                        ).to(device),
+                        val_metrics=MetricCollection(
+                            [
+                                Recall(task="binary"),
+                                Accuracy(task="binary"),
+                                AUROC(task="binary"),
+                                Precision(task="binary"),
+                            ]
+                        ).to(device),
+                        epochs=epochs,
+                        device=device,
+                        logdir=f"runs/{model.name}/{batch_size}/lr{learning_rate}",
+                    )
+                    optim_loop.optimize()
 
 
 if __name__ == "__main__":
