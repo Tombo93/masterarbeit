@@ -24,7 +24,7 @@ from utils.evaluation import MetricAndLossValidation
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    epochs = 5
+    epochs = 50
     learning_rate = 0.01
     batch_size = 32
 
