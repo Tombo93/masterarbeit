@@ -58,7 +58,7 @@ class OptimizationLoop:
                     self.writer.add_scalar(f"Test/{metric}", value, epoch)
 
                 self.writer.add_scalar(f"Train/Loss", train_loss, epoch)
-                self.writer.add_scalar(f"Validation/Loss", valid_loss, epoch)
+                self.writer.add_scalar(f"Test/Loss", valid_loss, epoch)
 
             if self.logger is not None:
                 self.logger.log(epoch, total_train_metrics, total_valid_metrics)
