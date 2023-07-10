@@ -84,7 +84,7 @@ class FXNpzDataloader:
 @dataclass
 class FamilyHistoryDataloader:
     metadata: str
-    datapath: str
+    data_dir: str
     data_col: str
     labels: str
     transforms: Any
@@ -96,7 +96,7 @@ class FamilyHistoryDataloader:
     def __post_init__(self):
         self.dataset = FamilyHistoryDataSet(
             metadata_path=self.metadata,
-            data_dir=self.datapath,
+            data_dir=self.data_dir,
             data_col=self.data_col,
             ylabel_col=self.labels,
             transforms=self.transforms,

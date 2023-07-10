@@ -70,7 +70,7 @@ class FamilyHistoryDataSet(Dataset[Any]):
 
     def __getitem__(self, index: int) -> Tuple[torch.TensorType, torch.TensorType]:
         img_path = os.path.join(
-            self.data_dir, self.annotations.iloc[index, self.xdata_col]
+            self.data_dir, self.annotations.iloc[index, self.xdata_col] + ".JPG"
         )
         image = Image.open(img_path)
         y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
@@ -96,6 +96,24 @@ class FamilyHistoryDataSet(Dataset[Any]):
             if image.height < height:
                 height = image.height
         return width, height
+
+
+class Subset(Dataset):
+    """Class represents a subset of A dataset"""
+
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = indices
+
+    def __len__(self):
+        if self.indices.shape == ():
+            print("this happens: Subset")
+            return 1
+        else:
+            return len(self.indices)
+
+    def __getitem__(self, idx):
+        return self.dataset[self.indices[idx]]
 
 
 def get_mean_std(
@@ -135,21 +153,3 @@ def batch_mean_and_sd(
 
     mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment**2)
     return mean, std
-
-
-class Subset(Dataset):
-    """Class represents a subset of A dataset"""
-
-    def __init__(self, dataset, indices):
-        self.dataset = dataset
-        self.indices = indices
-
-    def __len__(self):
-        if self.indices.shape == ():
-            print("this happens: Subset")
-            return 1
-        else:
-            return len(self.indices)
-
-    def __getitem__(self, idx):
-        return self.dataset[self.indices[idx]]

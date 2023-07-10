@@ -9,6 +9,7 @@ class IsicHyperParams:
     batch_size: int
     num_workers: int
 
+
 @dataclass
 class IsicDataParams:
     img_crop_size: int
@@ -16,6 +17,11 @@ class IsicDataParams:
     classes: int
     isic_mean: List[float]
     isic_std: List[float]
+    isic_4000_mean: List[float]
+    isic_4000_std: List[float]
+    isic_resize_85_mean: List[float]
+    isic_resize_85_std: List[float]
+
 
 @dataclass
 class IsicPaths:
@@ -24,16 +30,19 @@ class IsicPaths:
     isic_root_dir: str
     data_col: str
 
+
 ############################ Experiments ############################
 @dataclass
 class BenignMalignantExperiment:
     label_col: str
     metadata: str
 
+
 @dataclass
 class FamilyHistoryExperiment:
     label_col: str
     metadata: str
+
 
 ######################### Main config object #########################
 @dataclass

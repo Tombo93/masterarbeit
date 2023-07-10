@@ -24,7 +24,7 @@ from utils.evaluation import MetricAndLossValidation
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    epochs = 50
+    epochs = 100
     learning_rate = 0.01
     batch_size = 32
 
@@ -47,43 +47,47 @@ def main():
         val_dset, batch_size=batch_size, shuffle=False, collate_fn=collate
     )
 
-    model = CNN(
-        number_of_classes=2,
-        vocab_size=len(vocabulary),
-        embedding_dim=100,
-        input_len=500,
-    ).to(device)
+    lrs = [0.1, 0.01, 0.001]
+    batch_sizes = [32, 64, 128]
+    for learning_rate in lrs:
+        for batch_size in batch_sizes:
+            model = CNN(
+                number_of_classes=2,
+                vocab_size=len(vocabulary),
+                embedding_dim=100,
+                input_len=500,
+            ).to(device)
 
-    optim_loop = OptimizationLoop(
-        model=model,
-        training=PlotLossTraining(
-            nn.BCEWithLogitsLoss(),
-            optim.SGD(model.parameters(), lr=learning_rate),
-        ),
-        validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
-        train_loader=train_loader,
-        test_loader=val_loader,
-        train_metrics=MetricCollection(
-            [
-                Recall(task="binary"),
-                Accuracy(task="binary"),
-                AUROC(task="binary"),
-                Precision(task="binary"),
-            ]
-        ).to(device),
-        val_metrics=MetricCollection(
-            [
-                Recall(task="binary"),
-                Accuracy(task="binary"),
-                AUROC(task="binary"),
-                Precision(task="binary"),
-            ]
-        ).to(device),
-        epochs=epochs,
-        device=device,
-        logdir=f"runs/genomic/{batch_size}/lr{learning_rate}",
-    )
-    optim_loop.optimize()
+            optim_loop = OptimizationLoop(
+                model=model,
+                training=PlotLossTraining(
+                    nn.BCEWithLogitsLoss(),
+                    optim.SGD(model.parameters(), lr=learning_rate),
+                ),
+                validation=MetricAndLossValidation(nn.BCEWithLogitsLoss()),
+                train_loader=train_loader,
+                test_loader=val_loader,
+                train_metrics=MetricCollection(
+                    [
+                        Recall(task="binary"),
+                        Accuracy(task="binary"),
+                        AUROC(task="binary"),
+                        Precision(task="binary"),
+                    ]
+                ).to(device),
+                val_metrics=MetricCollection(
+                    [
+                        Recall(task="binary"),
+                        Accuracy(task="binary"),
+                        AUROC(task="binary"),
+                        Precision(task="binary"),
+                    ]
+                ).to(device),
+                epochs=epochs,
+                device=device,
+                logdir=f"runs/genomic/{batch_size}/lr{learning_rate}",
+            )
+            optim_loop.optimize()
 
 
 if __name__ == "__main__":

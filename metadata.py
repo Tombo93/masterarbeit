@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from typing import List, Dict
+import matplotlib.pyplot as plt
 
 
 def create_fam_hx_metadata(filename, metadata_dir, outname="family_history.csv"):
@@ -28,7 +29,19 @@ def create_metadata(
         metadata.to_csv(f)
 
 
-if __name__ == "__main__":
+def plot_image_sizes(df):
+    _, axis = plt.subplots(nrows=1, ncols=2)
+    axis[0].hist(df["pixels_x"], 100)
+    axis[1].hist(df["pixels_y"], 100)
+    plt.savefig("ISIC_img_size_dist.png")
+
+
+def main():
+    metadata_df = pd.read_csv(
+        os.path.join("/home/bay1989/masterarbeit/data/ISIC", "metadata_combined.csv")
+    )
+    plot_image_sizes(metadata_df)
+    return
     # create_fam_hx_metadata('metadata_combined.csv', '/home/bay1989/masterarbeit/data/ISIC')
     class_mapping = {
         "benign": "0",
@@ -77,3 +90,7 @@ if __name__ == "__main__":
         print("############")
         print(out["anatom_site_general"].value_counts())
         print("############")
+
+
+if __name__ == "__main__":
+    main()

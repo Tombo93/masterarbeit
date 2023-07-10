@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision.transforms import Compose, CenterCrop, ToTensor, Normalize
+from torchvision.transforms import ToTensor
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
@@ -10,8 +10,6 @@ from torchmetrics.classification import Accuracy, AUROC, Precision, Recall
 
 from sklearn.model_selection import StratifiedKFold
 
-from data.create_npz import CreateNpz
-from data.dataloader import FamilyHistoryDataloader, FXNpzDataloader
 from data.dataset import FXDataset, Subset
 from models.models import BatchNormCNN, ResNet
 from utils.optimizer import OptimizationLoop
@@ -29,24 +27,20 @@ cs.store(name="isic_config", node=IsicConfig)
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
-    print(f"Experiment {cfg.family_history_experiment.label_col} parameters:")
-    print(cfg.hyper_params)
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    # Hyperparams
-    # learning_rate = cfg.hyper_params.learning_rate
     epochs = cfg.hyper_params.epochs
 
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",
-        npz_file_name="20230609_ISIC",
+        npz_file_name="20230710_ISIC",
         transforms=ToTensor(),
     )
     skf = StratifiedKFold(n_splits=5)
-    for learning_rate in [0.1, 0.01, 0.001]:
-        for batch_size in [32, 64, 128]:
+    lrs = [0.1, 0.01, 0.001]
+    batch_sizes = [32, 64, 128]
+    for learning_rate in lrs:
+        for batch_size in batch_sizes:
             print(f"Training K-fold Cross Validation")
             for fold, (train_indices, val_indices) in enumerate(
                 skf.split(data.imgs, data.labels)
@@ -107,7 +101,7 @@ def main(cfg: IsicConfig):
                         ).to(device),
                         epochs=epochs,
                         device=device,
-                        logdir=f"runs/{model.name}/{batch_size}/lr{learning_rate}",
+                        logdir=f"runs/resize/{model.name}/{batch_size}/lr{learning_rate}",
                     )
                     optim_loop.optimize()
 

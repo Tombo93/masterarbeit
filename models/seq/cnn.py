@@ -51,3 +51,27 @@ class CNN(nn.Module):
         x = self.dense_model(x)
         x = self.output_activation(x)
         return x
+
+
+class BERT(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        self.model = torch.hub.load(
+            "huggingface/pytorch-transformers",
+            "modelForSequenceClassification",
+            "bert-base-uncased",
+        )  # Download model and configuration from S3 and cache.
+        assert self.model.config.output_attention == True
+        self.tokenizer = torch.hub.load(
+            "huggingface/pytorch-transformers",
+            "tokenizer",
+            "bert-base-cased-finetuned-mrpc",
+        )
+
+    def view_model(self):
+        print(self.model)
+
+    def forward(self, x):
+        x = self.tokenizer.encode(x, add_special_tokens=True)
+        x = self.model(x)
+        return x
