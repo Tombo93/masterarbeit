@@ -51,8 +51,7 @@ def main(cfg: IsicConfig):
                 )
                 models = [
                     ResNet(cfg.data_params.classes),
-                    BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
-                    ResNet(cfg.data_params.classes, fine_tuning=False),
+                    # BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels),
                 ]
                 for model in models:
                     model.to(device)
@@ -101,7 +100,7 @@ def main(cfg: IsicConfig):
                         ).to(device),
                         epochs=epochs,
                         device=device,
-                        logdir=f"runs/resize/{model.name}/{batch_size}/lr{learning_rate}",
+                        logdir=f"runs/resize85/{model.name}/{batch_size}/lr{learning_rate}",
                     )
                     optim_loop.optimize()
 
