@@ -33,12 +33,12 @@ def main(cfg: IsicConfig):
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",
-        npz_file_name="20230710_ISIC",
+        npz_file_name="20230711_ISIC_4000x6000",  # "20230710_ISIC_resize",
         transforms=ToTensor(),
     )
     skf = StratifiedKFold(n_splits=5)
-    lrs = [0.1, 0.01, 0.001]
-    batch_sizes = [32, 64, 128]
+    lrs = [0.01]
+    batch_sizes = [32]
     for learning_rate in lrs:
         for batch_size in batch_sizes:
             print(f"Training K-fold Cross Validation")
@@ -100,7 +100,7 @@ def main(cfg: IsicConfig):
                         ).to(device),
                         epochs=epochs,
                         device=device,
-                        logdir=f"runs/resize85/{model.name}/{batch_size}/lr{learning_rate}",
+                        logdir=f"runs/4000x6000/{model.name}/{batch_size}/lr{learning_rate}",
                     )
                     optim_loop.optimize()
 

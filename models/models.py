@@ -65,11 +65,14 @@ class BatchNormCNN(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, classes: int = 1) -> None:
         super().__init__()
-        self.name = "resnet-finetuning"
+        self.name = "resnet50-finetuning"
         self.net = resnet50(weights="DEFAULT")
         for param in self.net.parameters():
             param.requires_grad = False
-        self.net.fc = nn.Linear(in_features=2048, out_features=classes, bias=True)
+        self.net.fc = nn.Sequential(
+            nn.Linear(in_features=2048, out_features=256, bias=True),
+            nn.Linear(in_features=256, out_features=classes, bias=True),
+        )
 
     def forward(self, x):
         return self.net(x)

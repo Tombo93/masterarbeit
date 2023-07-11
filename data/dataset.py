@@ -58,10 +58,15 @@ class FamilyHistoryDataSet(Dataset[Any]):
         data_col: str,
         ylabel_col: str,
         transforms: Compose,
+        data_slice: Union[str, None] = None,
     ) -> None:
         self.data_dir = data_dir
         self.transforms = transforms
         self.annotations = pd.read_csv(metadata_path)
+
+        if data_slice is not None:
+            self.annotations = self.annotations[self.annotations["pixels_y"] == 4000]
+
         self.xdata_col = self.annotations.columns.get_loc(data_col)
         self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
 

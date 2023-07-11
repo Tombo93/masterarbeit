@@ -100,6 +100,7 @@ class FamilyHistoryDataloader:
             data_col=self.data_col,
             ylabel_col=self.labels,
             transforms=self.transforms,
+            data_slice="yes-only 4000 pixels",
         )
 
     def get_dataloaders(self) -> Tuple[DataLoader[Any], DataLoader[Any]]:
