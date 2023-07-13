@@ -1,8 +1,8 @@
 .vscode
 
-outputs
 data/ISIC/
 data/MEDMNIST
+runs/
 
 # Jupyter Notebook
 .ipynb_checkpoints
