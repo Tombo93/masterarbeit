@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision.transforms import ToTensor
+from datetime import datetime
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
@@ -21,6 +22,8 @@ from utils.evaluation import MetricAndLossValidation
 import hydra
 from hydra.core.config_store import ConfigStore
 from config import IsicConfig
+
+from data_preprocessing import get_my_indices
 
 
 cs = ConfigStore.instance()
@@ -57,6 +60,11 @@ def main(cfg: IsicConfig):
             for fold, (train_indices, val_indices) in enumerate(
                 skf.split(data.imgs, data.labels)
             ):
+                fold = 4
+                train_indices, val_indices = get_my_indices(
+                    "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log",
+                    fold=fold,
+                )
                 logger.info(f"Fold {fold}")
                 logger.info(
                     f"train -  {np.bincount(data.labels[train_indices])}   |   test -  {np.bincount(data.labels[val_indices])}"
@@ -121,7 +129,7 @@ def main(cfg: IsicConfig):
                         ).to(device),
                         epochs=epochs,
                         device=device,
-                        logdir=f"logs/4000x6000/{model.name}/{batch_size}/lr{learning_rate}",
+                        logdir=f"logs/{filename}/{model.name}/{batch_size}/lr{learning_rate}/fold_{fold}",
                     )
                     optim_loop.optimize()
 

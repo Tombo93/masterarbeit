@@ -1,4 +1,5 @@
 import numpy as np
+from io import StringIO
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -16,6 +17,39 @@ from config import IsicConfig
 
 cs = ConfigStore.instance()
 cs.store(name="isic_config", node=IsicConfig)
+
+
+def get_my_indices(path, fold):
+    fold_line_no = 0
+    train_line_no = float("INF")
+    val_line_no = float("INF")
+    lines_found = 0
+    with open(path, "r") as logfile:
+        for num, line in enumerate(logfile):
+            line_no = num + 1
+            fold_line = line.split("[INFO] - Fold")
+            if lines_found == 2:
+                print("lines found")
+            if len(fold_line) > 1:
+                logfold = int(fold_line[1].strip())
+                if logfold == fold:
+                    fold_line_no = line_no
+                    train_line_no = fold_line_no + 6
+                    val_line_no = fold_line_no + 10
+                    print("found fold")
+            if line_no == train_line_no:
+                train_line = line.split("[INFO]")
+                nums_str = train_line[1].split("- ")[1]
+                c = StringIO(nums_str)
+                train_arr = np.loadtxt(c, delimiter=" ", dtype=np.int32)
+                lines_found += 1
+            if line_no == val_line_no:
+                val_line = line.split("[INFO]")
+                nums_str = val_line[1].split("- ")[1]
+                c = StringIO(nums_str)
+                val_arr = np.loadtxt(c, delimiter=" ", dtype=np.int32)
+                lines_found += 1
+        return (train_arr, val_arr)
 
 
 def get_transformed_npz(
@@ -77,4 +111,5 @@ def main(cfg: IsicConfig):
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+    get_my_indices("/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4)
