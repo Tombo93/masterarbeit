@@ -71,7 +71,9 @@ def main(cfg: IsicConfig):
         "mean": cfg.data_params.isic_resize_85_mean,
         "std": cfg.data_params.isic_resize_85_std,
     }
-    get_transformed_npz([Resize((85, 85))], "20230711_ISIC_4000x6000", mean_std)
+    get_transformed_npz(
+        [Resize((500, 500))], "20230712_ISIC_4000x6000_resize500x500", mean_std
+    )
 
 
 if __name__ == "__main__":

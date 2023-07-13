@@ -11,6 +11,7 @@ from torchmetrics.classification import Accuracy, AUROC, Precision, Recall
 from sklearn.model_selection import StratifiedKFold
 
 from data.dataset import FXDataset, Subset
+from data.dataloader import FamilyHistoryDataloader
 from models.models import BatchNormCNN, ResNet
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
@@ -33,7 +34,7 @@ def main(cfg: IsicConfig):
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",
-        npz_file_name="20230711_ISIC_4000x6000",  # "20230710_ISIC_resize",
+        npz_file_name="20230712_ISIC_4000x6000_resize500x500",  # "20230711_ISIC_4000x6000",  # "20230710_ISIC_resize",
         transforms=ToTensor(),
     )
     skf = StratifiedKFold(n_splits=5)
