@@ -41,9 +41,9 @@ def main(cfg: IsicConfig):
     epochs = cfg.hyper_params.epochs
     for filename in [
         "20230710_ISIC_resize",
-        # "20230712_ISIC_4000x6000_resize500x500",
-        # "20230711_ISIC_4000x6000",
-        # "20230609_ISIC.npz",
+        "20230712_ISIC_4000x6000_resize500x500",
+        "20230711_ISIC_4000x6000",
+        "20230609_ISIC.npz",
     ]:
         data = FXDataset(
             split="no_split",
@@ -52,8 +52,8 @@ def main(cfg: IsicConfig):
             transforms=ToTensor(),
         )
         skf = StratifiedKFold(n_splits=5)
-        lrs = [0.01]
-        batch_sizes = [32]
+        lrs = [0.01, 0.001, 0.0001]
+        batch_sizes = [32, 64]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
         logger.info(f"----------")
@@ -162,7 +162,9 @@ def main(cfg: IsicConfig):
                     ys = v
                     ax.plot(xs, ys, "-.")
                     # plt.plot(xs, ys, "-.")
-                    fig.savefig(f"Validation Metrics Averaged.png")
+                    fig.savefig(
+                        f"Validation Metrics Averaged file-{filename}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                    )
 
 
 if __name__ == "__main__":
