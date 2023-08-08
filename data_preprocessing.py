@@ -1,5 +1,7 @@
 import numpy as np
 from io import StringIO
+import matplotlib.pyplot as plt
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -112,4 +114,21 @@ def main(cfg: IsicConfig):
 
 if __name__ == "__main__":
     # main()
-    get_my_indices("/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4)
+    train, val = get_my_indices(
+        "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4
+    )
+    _, axis = plt.subplots(nrows=1, ncols=2)
+    axis[0].hist(train, 100)
+    axis[1].hist(val, 100)
+    plt.savefig("ISIC_fold_4_index_dist.png")
+    axis[0].set_title("train")
+    axis[1].set_title("val")
+    df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+    train_sizes = df.iloc[list(train)]
+    val_sizes = df.iloc[list(val)]
+    _, axis = plt.subplots(nrows=1, ncols=2)
+    axis[0].hist2d(train_sizes["pixels_x"], train_sizes["pixels_y"], 10)
+    axis[0].set_title("train")
+    axis[1].hist2d(val_sizes["pixels_x"], val_sizes["pixels_y"], 10)
+    axis[1].set_title("val")
+    plt.savefig("ISIC_fold_4_pixel_dist.png")
