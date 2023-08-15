@@ -178,11 +178,11 @@ def main(cfg: IsicConfig):
     # fold4_train_labels = npz_file["labels"][train]
     # fold4_val_data = npz_file["data"][val]
     # fold4_val_labels = npz_file["labels"][val]
-    # df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
-    # print(df.describe())
+    df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+    profile = ProfileReport(df)
+    profile.to_file(f"ISIC_profile.html")
     # for i in range(5):
     #     get_index_data(list(train), list(val), i, "benign_malignant")
-    plot_fold_pixel_dist()
 
 
 if __name__ == "__main__":
