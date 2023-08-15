@@ -40,10 +40,10 @@ def main(cfg: IsicConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     epochs = cfg.hyper_params.epochs
     for filename in [
-        "20230710_ISIC_resize",
-        "20230712_ISIC_4000x6000_resize500x500",
-        "20230711_ISIC_4000x6000",
-        "20230609_ISIC.npz",
+        # "20230710_ISIC_resize",
+        # "20230712_ISIC_4000x6000_resize500x500",
+        # "20230711_ISIC_4000x6000",
+        "20230609_ISIC_85x85",
     ]:
         data = FXDataset(
             split="no_split",
@@ -75,11 +75,6 @@ def main(cfg: IsicConfig):
                 for fold, (train_indices, val_indices) in enumerate(
                     skf.split(data.imgs, data.labels)
                 ):
-                    # fold = 4
-                    # train_indices, val_indices = get_my_indices(
-                    #     "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log",
-                    #     fold=fold,
-                    # )
                     logger.info(f"Fold {fold}")
                     logger.info(
                         f"train -  {np.bincount(data.labels[train_indices])}   |   test -  {np.bincount(data.labels[val_indices])}"

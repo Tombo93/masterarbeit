@@ -2,6 +2,7 @@ import numpy as np
 from io import StringIO
 import matplotlib.pyplot as plt
 import pandas as pd
+from pandas_profiling import ProfileReport
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -75,7 +76,7 @@ def get_transformed_npz(
             pin_memory=False,
         ).get_single_dataloader()
         mean, std = batch_mean_and_sd(dataloader)
-        print(f"Centercrop 4000: mean: {mean}, std: {std}")
+        print(f"transforms: {transforms}\n mean: {mean}, std: {std}")
     fx = FamilyHistoryDataloader(
         metadata,
         data_dir,
@@ -101,34 +102,88 @@ def get_transformed_npz(
     ).save_npz()
 
 
+def plot_fold_pixel_dist():
+    for fold in [0, 1, 2, 3, 4]:
+        train, val = get_my_indices(
+            "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", fold
+        )
+
+        _, axis = plt.subplots(nrows=1, ncols=2)
+        axis[0].hist(train, 100)
+        axis[1].hist(val, 100)
+        plt.savefig(f"ISIC_fold_{fold}_index_dist.png")
+        axis[0].set_title("train")
+        axis[1].set_title("val")
+
+        df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+        train_sizes = df.iloc[list(train)]
+        val_sizes = df.iloc[list(val)]
+
+        train_profile = ProfileReport(train_sizes)
+        train_profile.to_file(f"ISIC_fold_{fold}_train_profile.html")
+        val_profile = ProfileReport(val_sizes)
+        val_profile.to_file(f"ISIC_fold_{fold}_val_profile.html")
+
+        # _, axis = plt.subplots(nrows=1, ncols=2)
+        # axis[0].hist2d(train_sizes["pixels_x"], train_sizes["pixels_y"], 10)
+        # axis[0].set_title("train")
+        # axis[1].hist2d(val_sizes["pixels_x"], val_sizes["pixels_y"], 10)
+        # axis[1].set_title("val")
+        # plt.savefig(f"ISIC_fold_{fold}_pixel_dist.png")
+
+
+def get_index_data(train_idx, val_idx, fold, column):
+    df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+    train_data = df.iloc[train_idx][column].map(
+        {"benign": 0, "malignant": 1}, na_action="ignore"
+    )
+    val_data = df.iloc[val_idx][column].map(
+        {"benign": 0, "malignant": 1}, na_action="ignore"
+    )
+    _, axis = plt.subplots(nrows=1, ncols=2)
+    # data = train_data[column].map({"benign": 0, "malignant": 1}, na_action="ignore")
+
+    axis[0].hist(train_data)
+    axis[0].set_title("train")
+    axis[1].hist(val_data)
+    axis[1].set_title("val")
+    plt.savefig(f"ISIC_fold_{fold}_{column}_dist.png")
+
+
+def plot_data(train_data, val_data, fold, column):
+    _, axis = plt.subplots(nrows=1, ncols=2)
+
+    axis[0].hist(train_data[column], 10)
+    axis[0].set_title("train")
+    axis[1].hist(val_data[column], 10)
+    axis[1].set_title("val")
+    plt.savefig(f"ISIC_fold_{fold}_{column}_dist.png")
+
+
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
-    mean_std = {
-        "mean": cfg.data_params.isic_resize_85_mean,
-        "std": cfg.data_params.isic_resize_85_std,
-    }
-    get_transformed_npz(
-        [Resize((500, 500))], "20230712_ISIC_4000x6000_resize500x500", mean_std
-    )
+    # get_transformed_npz(
+    #     transforms=[Resize((500, 500))],
+    #     out_name="20230712_ISIC_4000x6000_resize500x500",
+    #     mean_std={
+    #         "mean": cfg.data_params.isic_resize_85_mean,
+    #         "std": cfg.data_params.isic_resize_85_std,
+    #     },
+    # )
+    # npz_file = np.load("/home/bay1989/masterarbeit/data/ISIC/20230609_ISIC_85x85.npz")
+    # train, val = get_my_indices(
+    #     "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4
+    # )
+    # fold4_train_data = np.take(npz_file["data"], train)
+    # fold4_train_labels = npz_file["labels"][train]
+    # fold4_val_data = npz_file["data"][val]
+    # fold4_val_labels = npz_file["labels"][val]
+    # df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+    # print(df.describe())
+    # for i in range(5):
+    #     get_index_data(list(train), list(val), i, "benign_malignant")
+    plot_fold_pixel_dist()
 
 
 if __name__ == "__main__":
-    # main()
-    train, val = get_my_indices(
-        "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4
-    )
-    _, axis = plt.subplots(nrows=1, ncols=2)
-    axis[0].hist(train, 100)
-    axis[1].hist(val, 100)
-    plt.savefig("ISIC_fold_4_index_dist.png")
-    axis[0].set_title("train")
-    axis[1].set_title("val")
-    df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
-    train_sizes = df.iloc[list(train)]
-    val_sizes = df.iloc[list(val)]
-    _, axis = plt.subplots(nrows=1, ncols=2)
-    axis[0].hist2d(train_sizes["pixels_x"], train_sizes["pixels_y"], 10)
-    axis[0].set_title("train")
-    axis[1].hist2d(val_sizes["pixels_x"], val_sizes["pixels_y"], 10)
-    axis[1].set_title("val")
-    plt.savefig("ISIC_fold_4_pixel_dist.png")
+    main()
