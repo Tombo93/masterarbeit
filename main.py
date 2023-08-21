@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    epochs = 300  # cfg.hyper_params.epochs
+    epochs = 100  # cfg.hyper_params.epochs
     for filename in [
         # "20230710_ISIC_resize",
         # "20230712_ISIC_4000x6000_resize500x500",
@@ -62,7 +62,7 @@ def main(cfg: IsicConfig):
         )
         logger.info(f"----------")
 
-        resnet = ResNet(cfg.data_params.classes)
+        resnet = ResNet(cfg.data_params.classes, finetuning=False)
         batchnorm_net = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
 
         for learning_rate in lrs:
