@@ -104,7 +104,7 @@ class PlotLossTraining(Training):
         model: torch.nn.Module,
         metrics: Any,
         device: torch.device,
-    ) -> float:
+    ) -> torch.Tensor:
         """Runs the training loop
 
         Parameters
@@ -136,4 +136,4 @@ class PlotLossTraining(Training):
             self.optim.zero_grad()
             # print(metrics.compute().items())
             # print(f"batch loss: {running_loss / len(train_loader.dataset)}")
-        return running_loss / len(train_loader.dataset)
+        return torch.tensor(running_loss / len(train_loader.dataset))  # .to(device)

@@ -42,7 +42,9 @@ class OptimizationLoop:
             self.avg_train_metrics = {
                 metric: [] for metric in self.train_metrics.keys()
             }
+            self.avg_train_metrics["Loss"] = []
             self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
+            self.avg_val_metrics["Loss"] = []
 
     def optimize(self) -> None:
         for epoch in range(self.epochs):

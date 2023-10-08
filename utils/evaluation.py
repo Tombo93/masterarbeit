@@ -49,7 +49,7 @@ class MetricAndLossValidation(Validation):
         model: torch.nn.Module,
         metrics: Union[Metric, MetricCollection],
         device: torch.device,
-    ) -> float:
+    ) -> torch.Tensor:
         model.eval()
         with torch.no_grad():
             running_loss = 0.0
@@ -62,6 +62,5 @@ class MetricAndLossValidation(Validation):
                 running_loss += loss.item() * x.size(0)
 
                 metrics.update(pred, y)
-            print(f"Validation Loss: {running_loss / len(test_loader.dataset)}")
         model.train()
-        return running_loss / len(test_loader.dataset)
+        return torch.tensor(running_loss / len(test_loader.dataset))
