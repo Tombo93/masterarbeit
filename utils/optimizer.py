@@ -53,7 +53,9 @@ class OptimizationLoop:
                 self.test_loader, self.model, self.val_metrics, self.device
             )
             total_train_metrics = self.train_metrics.compute()
+            total_train_metrics["Loss"] = train_loss
             total_valid_metrics = self.val_metrics.compute()
+            total_valid_metrics["Loss"] = valid_loss
             print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
             print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
 
@@ -62,9 +64,6 @@ class OptimizationLoop:
                     self.writer.add_scalar(f"Train/{metric}", value, epoch)
                 for metric, value in total_valid_metrics.items():
                     self.writer.add_scalar(f"Test/{metric}", value, epoch)
-
-                self.writer.add_scalar(f"Train/Loss", train_loss, epoch)
-                self.writer.add_scalar(f"Test/Loss", valid_loss, epoch)
 
             if self.logger is not None:
                 self.logger.log(epoch, total_train_metrics, total_valid_metrics)

@@ -9,13 +9,13 @@ from torchvision.transforms import ToTensor
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
-from torchmetrics.classification import Accuracy, AUROC, Precision, Recall
+from torchmetrics.classification import Accuracy, AUROC, Precision, Recall, FBetaScore
 
 from sklearn.model_selection import StratifiedKFold
 
 from data.dataset import FXDataset, Subset
 from data.dataloader import FamilyHistoryDataloader
-from models.models import BatchNormCNN, ResNet
+from models.models import BatchNormCNN, ResNet, VGG
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
@@ -52,8 +52,8 @@ def main(cfg: IsicConfig):
             transforms=ToTensor(),
         )
         skf = StratifiedKFold(n_splits=5)
-        lrs = [0.00005, 0.0005]  # [0.01, 0.001, 0.0001]
-        batch_sizes = [32]  # [32, 64]
+        lrs = [0.001, 0.0001]
+        batch_sizes = [32]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
         logger.info(f"----------")
@@ -63,6 +63,7 @@ def main(cfg: IsicConfig):
         logger.info(f"----------")
 
         resnet = ResNet(cfg.data_params.classes, finetuning=True)
+        vgg_net = VGG(cfg.data_params.classes, finetuning=True)
         batchnorm_net = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
 
         for learning_rate in lrs:
@@ -88,9 +89,15 @@ def main(cfg: IsicConfig):
                     logger.info(f"Validation")
                     logger.info(f"-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
-                    models = [copy.deepcopy(resnet)]
+                    models = [
+                        copy.deepcopy(vgg_net),
+                        copy.deepcopy(resnet),
+                        copy.deepcopy(batchnorm_net),
+                    ]
+                    model_name = ""
                     for model in models:
                         model.to(device)
+                        model_name = model.name
 
                         train_set = Subset(dataset=data, indices=train_indices)
                         val_set = Subset(dataset=data, indices=val_indices)
@@ -124,6 +131,7 @@ def main(cfg: IsicConfig):
                                     Accuracy(task="binary"),
                                     AUROC(task="binary"),
                                     Precision(task="binary"),
+                                    FBetaScore(task="binary", beta=0.5),
                                 ]
                             ).to(device),
                             val_metrics=MetricCollection(
@@ -132,6 +140,7 @@ def main(cfg: IsicConfig):
                                     Accuracy(task="binary"),
                                     AUROC(task="binary"),
                                     Precision(task="binary"),
+                                    FBetaScore(task="binary", beta=0.5),
                                 ]
                             ).to(device),
                             epochs=epochs,
@@ -158,7 +167,7 @@ def main(cfg: IsicConfig):
                     ax.plot(xs, ys, "-.")
                     # plt.plot(xs, ys, "-.")
                     fig.savefig(
-                        f"Validation Metrics Averaged file-{filename}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                        f"Metrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
                     )
 
 

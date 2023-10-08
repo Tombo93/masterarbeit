@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from torchvision.models import resnet50, resnet152
+from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn
 
 
 class CNN(nn.Module):
@@ -66,19 +66,41 @@ class ResNet(nn.Module):
     def __init__(self, classes: int = 1, finetuning: bool = True) -> None:
         super().__init__()
         self.name = "resnet50-finetuning"
-        self.net = resnet152(weights="DEFAULT")
+        self.net = resnet50(weights="DEFAULT")
         if finetuning:
             for param in self.net.parameters():
                 param.requires_grad = False
         self.net.fc = nn.Sequential(
-            nn.Linear(in_features=2048, out_features=256, bias=True),
+            nn.Linear(in_features=2048, out_features=1024, bias=True),
+            nn.Linear(in_features=1024, out_features=256, bias=True),
             nn.Linear(in_features=256, out_features=classes, bias=True),
         )
+        for param in self.net.fc.parameters():
+            param.requires_grad = True
 
     def forward(self, x):
         return self.net(x)
 
 
+class VGG(nn.Module):
+    def __init__(self, classes: int = 1, finetuning: bool = True) -> None:
+        super().__init__()
+        self.name = "vgg19_bn-finetuning"
+        self.vgg = vgg19_bn(weights="DEFAULT")
+        self.vgg.classifier.add_module(
+            "7", nn.Linear(in_features=1000, out_features=256, bias=True)
+        )
+        self.vgg.classifier.add_module(
+            "8", nn.Linear(in_features=256, out_features=classes, bias=True)
+        )
+        if finetuning:
+            for param in self.vgg.features.parameters():
+                param.requires_grad = False
+
+    def forward(self, x):
+        return self.vgg(x)
+
+
 if __name__ == "__main__":
-    model = ResNet(classes=1, finetuning=True)
+    model = ResNet(classes=1, finetuning=False)
     print(model.net)
