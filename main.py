@@ -41,9 +41,9 @@ def main(cfg: IsicConfig):
     epochs = 100  # cfg.hyper_params.epochs
     for filename in [
         # "20230710_ISIC_resize",
-        # "20230712_ISIC_4000x6000_resize500x500",
+        "20230712_ISIC_4000x6000_resize500x500",
         # "20230711_ISIC_only4000x6000images",
-        "20230609_ISIC_85x85",
+        # "20230609_ISIC_85x85",
     ]:
         data = FXDataset(
             split="no_split",
@@ -52,8 +52,8 @@ def main(cfg: IsicConfig):
             transforms=ToTensor(),
         )
         skf = StratifiedKFold(n_splits=5)
-        lrs = [0.001]  # [0.01, 0.001, 0.0001]
-        batch_sizes = [64]  # [32, 64]
+        lrs = [0.00005, 0.0005]  # [0.01, 0.001, 0.0001]
+        batch_sizes = [32]  # [32, 64]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
         logger.info(f"----------")
@@ -62,7 +62,7 @@ def main(cfg: IsicConfig):
         )
         logger.info(f"----------")
 
-        resnet = ResNet(cfg.data_params.classes, finetuning=False)
+        resnet = ResNet(cfg.data_params.classes, finetuning=True)
         batchnorm_net = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
 
         for learning_rate in lrs:
