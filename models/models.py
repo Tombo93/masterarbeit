@@ -40,25 +40,35 @@ class BatchNormCNN(nn.Module):
         self.max_pool2d = nn.MaxPool2d(2)
         self.batch_norm2d1 = nn.BatchNorm2d(10)
         self.batch_norm2d2 = nn.BatchNorm2d(20)
-        self.fc1 = nn.Linear(6480, 32)  # nn.Linear(320, 32)
-        self.fc2 = nn.Linear(32, n_classes)
+        self.fc1 = nn.Linear(297680, 2048)  # nn.Linear(6480, 32)  # nn.Linear(320, 32)
+        self.fc2 = nn.Linear(2048, 562)
+        self.fc3 = nn.Linear(562, 32)
+        self.fc4 = nn.Linear(32, n_classes)
         self.relu = nn.ReLU()
 
     def forward(self, x: torch.Tensor):
-        x = self.conv1(x)  # [batch, 3, 85, 85] [batch, 1, 28, 28]
-        x = self.batch_norm2d1(x)
+        x = self.conv1(x)  # [batch, 3, 500, 500] [batch, 3, 85, 85] [batch, 1, 28, 28]
+        x = self.batch_norm2d1(x)  # [batch, 10, 496, 496]
         x = self.relu(x)
-        x = self.max_pool2d(x)  # [batch, 10, 40, 40] [batch, 10, 12, 12]
+        x = self.max_pool2d(
+            x
+        )  # [batch, 10, 248, 248] [batch, 10, 40, 40] [batch, 10, 12, 12]
 
-        x = self.conv2(x)  # [batch, 20, 36, 36] [batch, 20, 8, 8]
+        x = self.conv2(x)  # [batch, 20, 244, 244] [batch, 20, 36, 36] [batch, 20, 8, 8]
         x = self.batch_norm2d2(x)
         x = self.relu(x)
-        x = self.max_pool2d(x)  # [batch, 20, 18, 18] [batch, 20, 4, 4]
+        x = self.max_pool2d(
+            x
+        )  # [batch, 20, 122, 122] [batch, 20, 18, 18] [batch, 20, 4, 4]
 
         x = torch.flatten(x, 1)  # [batch, 6480] [batch, 320]
         x = self.fc1(x)  # [batch, 32]
         x = self.relu(x)
         x = self.fc2(x)  # [batch, 1]
+        x = self.relu(x)
+        x = self.fc3(x)  # [batch, 1]
+        x = self.relu(x)
+        x = self.fc4(x)  # [batch, 1]
         return x
 
 
