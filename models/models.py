@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn
+from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn, vit_b_16
 
 
 class CNN(nn.Module):
@@ -111,6 +111,25 @@ class VGG(nn.Module):
         return self.vgg(x)
 
 
+class VisionTransformer16(nn.Module):
+    def __init__(self, classes: int = 1, finetuning: bool = True) -> None:
+        super().__init__()
+        self.name = "vit_b_16-finetuning"
+        self.vit = vit_b_16(weights="DEFAULT")
+        self.vit.heads = nn.Sequential(
+            nn.Linear(in_features=768, out_features=256, bias=True),
+            nn.Linear(in_features=256, out_features=classes, bias=True),
+        )
+        if finetuning:
+            for param in self.vit.parameters():
+                param.requires_grad = False
+            for param in self.vit.heads.parameters():
+                param.requires_grad = True
+
+    def forward(self, x):
+        return self.vit(x)
+
+
 if __name__ == "__main__":
-    model = ResNet(classes=1, finetuning=False)
-    print(model.net)
+    model = VisionTransformer16(classes=1, finetuning=False)
+    print(model)

@@ -15,7 +15,7 @@ from sklearn.model_selection import StratifiedKFold
 
 from data.dataset import FXDataset, Subset
 from data.dataloader import FamilyHistoryDataloader
-from models.models import BatchNormCNN, ResNet, VGG
+from models.models import BatchNormCNN, ResNet, VGG, VisionTransformer16
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
@@ -65,6 +65,7 @@ def main(cfg: IsicConfig):
         resnet = ResNet(cfg.data_params.classes, finetuning=True)
         vgg_net = VGG(cfg.data_params.classes, finetuning=True)
         batchnorm_net = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
+        vit_16 = VisionTransformer16(cfg.data_params.classes, finetuning=True)
 
         for learning_rate in lrs:
             for batch_size in batch_sizes:
@@ -93,6 +94,7 @@ def main(cfg: IsicConfig):
                         copy.deepcopy(vgg_net),
                         copy.deepcopy(resnet),
                         copy.deepcopy(batchnorm_net),
+                        copy.deepcopy(vit_16),
                     ]
                     model_name = ""
                     for model in models:
@@ -154,11 +156,11 @@ def main(cfg: IsicConfig):
                         train_metrics, val_metrics = optim_loop.get_fold_metrics()
                         avg_metrics.add(train_dict=train_metrics, val_dict=val_metrics)
 
-                _, avg_val_metrics = avg_metrics.compute()
-                fig, ax = plt.subplots(nrows=2, ncols=2)
+                avg_train_metrics, avg_val_metrics = avg_metrics.compute()
+                fig, ax = plt.subplots(nrows=3, ncols=2)
                 plt.subplots_adjust(hspace=0.5)
-                for i, (k, v) in enumerate(avg_val_metrics.items()):
-                    ax = plt.subplot(2, 2, i + 1)
+                for i, (k, v) in enumerate(avg_train_metrics.items()):
+                    ax = plt.subplot(3, 2, i + 1)
                     # plt.figure(k)
                     ax.set_title(f"{k}")
                     ax.set_xlabel("epoch")
@@ -167,7 +169,21 @@ def main(cfg: IsicConfig):
                     ax.plot(xs, ys, "-.")
                     # plt.plot(xs, ys, "-.")
                     fig.savefig(
-                        f"Metrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                        f"TrainMetrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                    )
+                fig, ax = plt.subplots(nrows=3, ncols=2)
+                plt.subplots_adjust(hspace=0.5)
+                for i, (k, v) in enumerate(avg_val_metrics.items()):
+                    ax = plt.subplot(3, 2, i + 1)
+                    # plt.figure(k)
+                    ax.set_title(f"{k}")
+                    ax.set_xlabel("epoch")
+                    xs = range(0, len(v))
+                    ys = v
+                    ax.plot(xs, ys, "-.")
+                    # plt.plot(xs, ys, "-.")
+                    fig.savefig(
+                        f"ValMetrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
                     )
 
 
