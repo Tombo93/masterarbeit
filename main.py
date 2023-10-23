@@ -41,9 +41,9 @@ def main(cfg: IsicConfig):
     epochs = 100  # cfg.hyper_params.epochs
     for filename in [
         # "20230710_ISIC_resize",
-        "20230712_ISIC_4000x6000_resize500x500",
+        # "20230712_ISIC_4000x6000_resize500x500",
         # "20230711_ISIC_only4000x6000images",
-        # "20230609_ISIC_85x85",
+        "20230609_ISIC_85x85",
     ]:
         data = FXDataset(
             split="no_split",
@@ -64,7 +64,9 @@ def main(cfg: IsicConfig):
 
         resnet = ResNet(cfg.data_params.classes, finetuning=True)
         vgg_net = VGG(cfg.data_params.classes, finetuning=True)
-        batchnorm_net = BatchNormCNN(cfg.data_params.classes, cfg.data_params.channels)
+        batchnorm_net = BatchNormCNN(
+            cfg.data_params.classes, cfg.data_params.channels, 85
+        )
         vit_16 = VisionTransformer16(cfg.data_params.classes, finetuning=True)
 
         for learning_rate in lrs:
@@ -94,7 +96,7 @@ def main(cfg: IsicConfig):
                         copy.deepcopy(vgg_net),
                         copy.deepcopy(resnet),
                         copy.deepcopy(batchnorm_net),
-                        copy.deepcopy(vit_16),
+                        # copy.deepcopy(vit_16),
                     ]
                     model_name = ""
                     for model in models:

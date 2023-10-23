@@ -30,7 +30,7 @@ class CNN(nn.Module):
 
 
 class BatchNormCNN(nn.Module):
-    def __init__(self, n_classes: int, in_channels: int):
+    def __init__(self, n_classes: int, in_channels: int, img_dims: int):
         super().__init__()
         self.name = "BatchNormCNN"
         self.conv1 = nn.Conv2d(in_channels, 10, kernel_size=5, bias=False)
@@ -39,8 +39,15 @@ class BatchNormCNN(nn.Module):
         self.dropout = nn.Dropout()
         self.max_pool2d = nn.MaxPool2d(2)
         self.batch_norm2d1 = nn.BatchNorm2d(10)
-        self.batch_norm2d2 = nn.BatchNorm2d(20)
-        self.fc1 = nn.Linear(297680, 2048)  # nn.Linear(6480, 32)  # nn.Linear(320, 32)
+        self._bn_size = 20
+        self.batch_norm2d2 = nn.BatchNorm2d(self._bn_size)
+        self._img_dims_fc = torch.floor_divide(
+            torch.floor_divide((img_dims - 4), 2) - 4, 2
+        )
+        self.fc_size = self._bn_size * self._img_dims_fc * self._img_dims_fc
+        self.fc1 = nn.Linear(
+            self.fc_size, 2048
+        )  # nn.Linear(6480, 32)  # nn.Linear(320, 32)
         self.fc2 = nn.Linear(2048, 562)
         self.fc3 = nn.Linear(562, 32)
         self.fc4 = nn.Linear(32, n_classes)
