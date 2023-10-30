@@ -14,6 +14,8 @@ data_params:
   isic_4000_std: [0.3999, 0.3287, 0.3424]
   isic_resize_85_mean: [0.8457, 0.6837, 0.6727]
   isic_resize_85_std: [0.1409, 0.1405, 0.1739]
+  isic_crop2000resize_244_mean: [0.9309, 0.7228, 0.6984]
+  isic_crop2000resize_244_std: [0.0816, 0.1230, 0.1777]
 
 isic_paths:
   isic_data_path: ${hydra:runtime.cwd}/data/ISIC/data
