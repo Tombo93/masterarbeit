@@ -43,7 +43,8 @@ def main(cfg: IsicConfig):
         # "20230710_ISIC_resize",
         # "20230712_ISIC_4000x6000_resize500x500",
         # "20230711_ISIC_only4000x6000images",
-        "20230609_ISIC_85x85",
+        # "20230609_ISIC_85x85",
+        "20231030_ISIC_ccr_corrected_two_labels"
     ]:
         data = FXDataset(
             split="no_split",
@@ -52,7 +53,7 @@ def main(cfg: IsicConfig):
             transforms=ToTensor(),
         )
         skf = StratifiedKFold(n_splits=5)
-        lrs = [0.001, 0.0001]
+        lrs = [0.0001, 0.001]
         batch_sizes = [32]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
@@ -65,7 +66,9 @@ def main(cfg: IsicConfig):
         resnet = ResNet(cfg.data_params.classes, finetuning=True)
         vgg_net = VGG(cfg.data_params.classes, finetuning=True)
         batchnorm_net = BatchNormCNN(
-            cfg.data_params.classes, cfg.data_params.channels, 85
+            cfg.data_params.classes,
+            cfg.data_params.channels,
+            cfg.data_params.isic_crop2000resize_244_size,
         )
         vit_16 = VisionTransformer16(cfg.data_params.classes, finetuning=True)
 
@@ -93,9 +96,9 @@ def main(cfg: IsicConfig):
                     logger.info(f"-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
-                        # copy.deepcopy(vgg_net),
-                        # copy.deepcopy(resnet),
-                        # copy.deepcopy(batchnorm_net),
+                        copy.deepcopy(vgg_net),
+                        copy.deepcopy(resnet),
+                        copy.deepcopy(batchnorm_net),
                         # copy.deepcopy(vit_16),
                     ]
                     model_name = ""

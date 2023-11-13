@@ -45,14 +45,35 @@ class CreateNpz:
     train_labels: np.array = np.array([])
     val_images: np.array = np.array([])
     val_labels: np.array = np.array([])
+    extra_labels: np.array = np.array([])
     create_single_dataset: bool = False
+
+    def save_npz_with_two_labels(self) -> None:
+        if self.create_single_dataset:
+            (
+                self.train_images,
+                self.train_labels,
+                self.extra_labels,
+            ) = self._create_arrays_with_two_labels(self.train_dataloader)
+            npz_arrs = {
+                "data": self.train_images,
+                "labels": self.train_labels,
+                "extra_labels": self.extra_labels,
+            }
+            np.savez_compressed(
+                os.path.join(self.save_path, f"{self.save_name}.npz"), **npz_arrs
+            )
+            return
 
     def save_npz(self) -> None:
         if self.create_single_dataset:
             self.train_images, self.train_labels = self._create_image_label_arrays(
                 self.train_dataloader
             )
-            npz_arrs = {"data": self.train_images, "labels": self.train_labels}
+            npz_arrs = {
+                "data": self.train_images,
+                "labels": self.train_labels,
+            }
             np.savez_compressed(
                 os.path.join(self.save_path, f"{self.save_name}.npz"), **npz_arrs
             )
@@ -86,6 +107,16 @@ class CreateNpz:
             img_arr.append(image.squeeze(0).numpy())
             label_arr.append(label.item())
         return np.asarray(img_arr), np.asarray(label_arr)
+
+    def _create_arrays_with_two_labels(
+        self, data: DataLoader[Any]
+    ) -> Tuple[np.array, np.array]:
+        img_arr, label_arr, extra_label_arr = [], [], []
+        for image, label, xtra in data:
+            img_arr.append(image.squeeze(0).numpy())
+            label_arr.append(label.item())
+            extra_label_arr.append(xtra.item())
+        return np.asarray(img_arr), np.asarray(label_arr), np.asarray(extra_label_arr)
 
     def get_save_path_name(self) -> None:
         print(os.path.join(self.save_path, f"{self.save_name}.npz"))

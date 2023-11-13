@@ -34,6 +34,7 @@ class FXDataset:
         elif self.split == "no_split":
             self.imgs = npz_file["data"]
             self.labels = npz_file["labels"]
+            self.extra_labels = npz_file["extra_labels"]
         else:
             raise ValueError
 
@@ -58,17 +59,17 @@ class FamilyHistoryDataSet(Dataset[Any]):
         data_col: str,
         ylabel_col: str,
         transforms: Compose,
-        data_slice: Union[str, None] = None,
+        extra_label_col: Union[str, None] = None,
     ) -> None:
         self.data_dir = data_dir
         self.transforms = transforms
         self.annotations = pd.read_csv(metadata_path)
-
-        if data_slice is not None:
-            self.annotations = self.annotations[self.annotations["pixels_y"] == 4000]
-
+        self.extra_label_col = extra_label_col
         self.xdata_col = self.annotations.columns.get_loc(data_col)
         self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
+
+        if self.extra_label_col is not None:
+            self.extra_labels = self.annotations.columns.get_loc(extra_label_col)
 
     def __len__(self) -> int:
         return len(self.annotations)
@@ -79,6 +80,21 @@ class FamilyHistoryDataSet(Dataset[Any]):
         )
         image = Image.open(img_path)
         y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
+        if self.extra_label_col is not None:
+            extra_label = self.annotations.iloc[index, self.extra_labels]
+            if extra_label == "benign":
+                extra_encoding = 0
+            elif extra_label == "malignant":
+                extra_encoding = 1
+            else:
+                extra_encoding = 0
+            if self.transforms:
+                image = self.transforms(image)
+            return (
+                image,
+                torch.unsqueeze(y_label, -1),
+                extra_encoding,
+            )
         if self.transforms:
             image = self.transforms(image)
         return (image, torch.unsqueeze(y_label, -1))
@@ -147,7 +163,7 @@ def batch_mean_and_sd(
     fst_moment = torch.empty(3)
     snd_moment = torch.empty(3)
 
-    for images, _ in tqdm(loader, leave=False):
+    for images, _, _ in tqdm(loader, leave=False):
         b, _, h, w = images.shape
         nb_pixels = b * h * w
         sum_ = torch.sum(images, dim=[0, 2, 3])

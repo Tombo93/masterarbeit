@@ -15,6 +15,7 @@ from torchvision.transforms import (
     Resize,
     # Grayscale,
 )
+from utils.custom_transforms import CustomImageCenterCrop
 
 from data.create_npz import CreateNpz
 from data.dataset import batch_mean_and_sd
@@ -107,7 +108,7 @@ def get_transformed_npz(
         "data/ISIC",
         out_name,
         create_single_dataset=True,
-    ).save_npz()
+    ).save_npz_with_two_labels()
 
 
 def plot_fold_pixel_dist():
@@ -171,8 +172,8 @@ def plot_data(train_data, val_data, fold, column):
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
     get_transformed_npz(
-        transforms=[CenterCrop(2000), Resize((224, 224))],
-        out_name="20231030_ISIC_ccr",
+        transforms=[CustomImageCenterCrop(380, 2000), Resize((224, 224))],
+        out_name="20231030_ISIC_ccr_corrected_two_labels",
         mean_std={
             "mean": cfg.data_params.isic_crop2000resize_244_mean,
             "std": cfg.data_params.isic_crop2000resize_244_std,
