@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision.transforms import ToTensor
+from torchvision.transforms import Compose, Grayscale, ToTensor, ToPILImage
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
@@ -62,7 +62,7 @@ def main(cfg: IsicConfig):
             axis=1,
         )
         lrs = [0.0001, 0.001]
-        batch_sizes = [32]
+        batch_sizes = [32, 64]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
         logger.info(f"----------")
@@ -103,8 +103,8 @@ def main(cfg: IsicConfig):
                     logger.info(f"-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
-                        # copy.deepcopy(vgg_net),
-                        copy.deepcopy(resnet),
+                        copy.deepcopy(vgg_net),
+                        # copy.deepcopy(resnet),
                         # copy.deepcopy(batchnorm_net),
                         # copy.deepcopy(vit_16),
                     ]
@@ -181,7 +181,7 @@ def main(cfg: IsicConfig):
                     ax.plot(xs, ys, "-.")
                     # plt.plot(xs, ys, "-.")
                     fig.savefig(
-                        f"Multi-TrainMetrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                        f"Multi-TrainMetrics-Gray{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
                     )
                 fig, ax = plt.subplots(nrows=3, ncols=2)
                 plt.subplots_adjust(hspace=0.5)
@@ -195,7 +195,7 @@ def main(cfg: IsicConfig):
                     ax.plot(xs, ys, "-.")
                     # plt.plot(xs, ys, "-.")
                     fig.savefig(
-                        f"Multi-ValMetrics-{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                        f"Multi-ValMetrics-Gray{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
                     )
 
 

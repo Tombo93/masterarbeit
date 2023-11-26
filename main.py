@@ -96,8 +96,8 @@ def main(cfg: IsicConfig):
                     logger.info(f"-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
-                        # copy.deepcopy(vgg_net),
-                        copy.deepcopy(resnet),
+                        copy.deepcopy(vgg_net),
+                        # copy.deepcopy(resnet),
                         # copy.deepcopy(batchnorm_net),
                         # copy.deepcopy(vit_16),
                     ]

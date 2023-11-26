@@ -171,14 +171,14 @@ def plot_data(train_data, val_data, fold, column):
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
-    get_transformed_npz(
-        transforms=[CustomImageCenterCrop(380, 2000), Resize((224, 224))],
-        out_name="20231030_ISIC_ccr_corrected_two_labels",
-        mean_std={
-            "mean": cfg.data_params.isic_crop2000resize_244_mean,
-            "std": cfg.data_params.isic_crop2000resize_244_std,
-        },
-    )
+    # get_transformed_npz(
+    #     transforms=[CustomImageCenterCrop(380, 2000), Resize((224, 224))],
+    #     out_name="20231030_ISIC_ccr_corrected_two_labels",
+    #     mean_std={
+    #         "mean": cfg.data_params.isic_crop2000resize_244_mean,
+    #         "std": cfg.data_params.isic_crop2000resize_244_std,
+    #     },
+    # )
     # npz_file = np.load("/home/bay1989/masterarbeit/data/ISIC/20230609_ISIC_85x85.npz")
     # train, val = get_my_indices(
     #     "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4
@@ -187,12 +187,17 @@ def main(cfg: IsicConfig):
     # fold4_train_labels = npz_file["labels"][train]
     # fold4_val_data = npz_file["data"][val]
     # fold4_val_labels = npz_file["labels"][val]
-    # df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
-    # s = pd.Series(df[df["pixels_y"] == 4000]["family_hx_mm"])
-    # s = pd.Series(df[df["pixels_y"] == 4000]["benign_malignant"])
+    df = pd.read_csv("/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv")
+    s = pd.Series(df["pixels_y"])
+    sf = pd.Series(df["pixels_x"])
     # s = pd.Series(df["family_hx_mm"])
     # s = pd.Series(df["benign_malignant"])
-    # print(s.value_counts(normalize=True))
+    # print(s.value_counts(normalize=False))
+    fig, ax = plt.subplots()
+    s.plot(kind="hist", bins=100)
+    fig.savefig("y.jpg")
+
+    # print(sf.value_counts(normalize=True))
     # profile = ProfileReport(df)
     # profile.to_file(f"ISIC_profile.html")
     # for i in range(5):
