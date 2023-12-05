@@ -1,6 +1,7 @@
 import logging
 import copy
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
@@ -61,7 +62,7 @@ def main(cfg: IsicConfig):
             ),
             axis=1,
         )
-        lrs = [0.0001, 0.001]
+        lrs = [0.001, 0.0001]
         batch_sizes = [32, 64]
         logger.info(f"Experiment")
         logger.info(f"Metadata")
@@ -103,8 +104,8 @@ def main(cfg: IsicConfig):
                     logger.info(f"-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
-                        copy.deepcopy(vgg_net),
-                        # copy.deepcopy(resnet),
+                        # copy.deepcopy(vgg_net),
+                        copy.deepcopy(resnet),
                         # copy.deepcopy(batchnorm_net),
                         # copy.deepcopy(vit_16),
                     ]
@@ -169,34 +170,40 @@ def main(cfg: IsicConfig):
                         avg_metrics.add(train_dict=train_metrics, val_dict=val_metrics)
 
                 avg_train_metrics, avg_val_metrics = avg_metrics.compute()
-                fig, ax = plt.subplots(nrows=3, ncols=2)
-                plt.subplots_adjust(hspace=0.5)
-                for i, (k, v) in enumerate(avg_train_metrics.items()):
-                    ax = plt.subplot(3, 2, i + 1)
-                    # plt.figure(k)
-                    ax.set_title(f"{k}")
-                    ax.set_xlabel("epoch")
-                    xs = range(0, len(v))
-                    ys = v
-                    ax.plot(xs, ys, "-.")
-                    # plt.plot(xs, ys, "-.")
-                    fig.savefig(
-                        f"Multi-TrainMetrics-Gray{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
-                    )
-                fig, ax = plt.subplots(nrows=3, ncols=2)
-                plt.subplots_adjust(hspace=0.5)
-                for i, (k, v) in enumerate(avg_val_metrics.items()):
-                    ax = plt.subplot(3, 2, i + 1)
-                    # plt.figure(k)
-                    ax.set_title(f"{k}")
-                    ax.set_xlabel("epoch")
-                    xs = range(0, len(v))
-                    ys = v
-                    ax.plot(xs, ys, "-.")
-                    # plt.plot(xs, ys, "-.")
-                    fig.savefig(
-                        f"Multi-ValMetrics-Gray{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
-                    )
+                
+                df = pd.DataFrame(avg_train_metrics)
+                df.to_csv(f"Multi-TrainMetrics{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.csv")
+                df = pd.DataFrame(avg_val_metrics)
+                df.to_csv(f"Multi-ValMetrics{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.csv")
+                
+                # fig, ax = plt.subplots(nrows=3, ncols=2)
+                # plt.subplots_adjust(hspace=0.5)
+                # for i, (k, v) in enumerate(avg_train_metrics.items()):
+                #     ax = plt.subplot(3, 2, i + 1)
+                #     # plt.figure(k)
+                #     ax.set_title(f"{k}")
+                #     ax.set_xlabel("epoch")
+                #     xs = range(0, len(v))
+                #     ys = v
+                #     ax.plot(xs, ys, "-.")
+                #     # plt.plot(xs, ys, "-.")
+                #     fig.savefig(
+                #         f"Multi-TrainMetrics{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                #     )
+                # fig, ax = plt.subplots(nrows=3, ncols=2)
+                # plt.subplots_adjust(hspace=0.5)
+                # for i, (k, v) in enumerate(avg_val_metrics.items()):
+                #     ax = plt.subplot(3, 2, i + 1)
+                #     # plt.figure(k)
+                #     ax.set_title(f"{k}")
+                #     ax.set_xlabel("epoch")
+                #     xs = range(0, len(v))
+                #     ys = v
+                #     ax.plot(xs, ys, "-.")
+                #     # plt.plot(xs, ys, "-.")
+                #     fig.savefig(
+                #         f"Multi-ValMetrics{filename}-model-{model_name}-batchsize-{batch_size}-lr-{learning_rate}.png"
+                #     )
 
 
 if __name__ == "__main__":
