@@ -2,22 +2,19 @@ import logging
 import copy
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torchvision.transforms import Compose, Grayscale, ToTensor, ToPILImage
+from torchvision.transforms import ToTensor
 
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy, AUROC, Precision, Recall, FBetaScore
 
-from sklearn.model_selection import StratifiedKFold
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
 from data.dataset import FXDataset, Subset
-from data.dataloader import FamilyHistoryDataloader
-from models.models import BatchNormCNN, ResNet, VGG, VisionTransformer16
+from models.models import BatchNormCNN, ResNet, VGG
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
@@ -27,8 +24,6 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from config import IsicConfig
 
-from data_preprocessing import get_my_indices
-
 
 cs = ConfigStore.instance()
 cs.store(name="isic_config", node=IsicConfig)
@@ -36,6 +31,7 @@ cs.store(name="isic_config", node=IsicConfig)
 # logging.basicConfig(filename="kfold_indices.log", level=logging.info)
 logger = logging.getLogger(__name__)
 
+# TODO: simplify logging, make model factory
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: IsicConfig):
