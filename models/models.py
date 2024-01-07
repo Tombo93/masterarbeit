@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn, vit_b_16
+from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn, vit_b_16, googlenet
 
 
 class CNN(nn.Module):
@@ -80,10 +80,16 @@ class BatchNormCNN(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, classes: int = 1, finetuning: bool = True) -> None:
+    def __init__(
+        self, classes: int = 1, finetuning: bool = True, layers: str = "50"
+    ) -> None:
         super().__init__()
         self.name = "resnet50-finetuning"
-        self.net = resnet50(weights="DEFAULT")
+        self.net = (
+            resnet50(weights="DEFAULT")
+            if layers == "50"
+            else resnet152(weights="DEFAULT")
+        )
         if finetuning:
             for param in self.net.parameters():
                 param.requires_grad = False
@@ -137,6 +143,26 @@ class VisionTransformer16(nn.Module):
         return self.vit(x)
 
 
+class GoogleNet(nn.Module):
+    def __init__(self, classes: int = 1, finetuning: bool = True) -> None:
+        super().__init__()
+        self.name = "googlenet"
+        self.net = googlenet(weights="DEFAULT")
+        if finetuning:
+            for param in self.net.parameters():
+                param.requires_grad = False
+        self.net.fc = nn.Sequential(
+            nn.Linear(in_features=1024, out_features=512, bias=True),
+            nn.Linear(in_features=512, out_features=128, bias=True),
+            nn.Linear(in_features=128, out_features=classes, bias=True),
+        )
+        for param in self.net.fc.parameters():
+            param.requires_grad = True
+
+    def forward(self, x):
+        return self.net(x)
+
+
 if __name__ == "__main__":
-    model = VisionTransformer16(classes=1, finetuning=False)
+    model = GoogleNet()
     print(model)
