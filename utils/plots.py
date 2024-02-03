@@ -2,6 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+import os
+import glob
+
+
+def list_results_files(folder, extension="csv"):
+    os.chdir(folder)
+    file_list = glob.glob("*.{}".format(extension))
+    return file_list
+
 
 def plot_line(file_path: str, metric: str) -> None:
     data = pd.read_csv(file_path)
@@ -15,11 +24,11 @@ def plot_line(file_path: str, metric: str) -> None:
     plt.savefig("XYZ.png")
 
 
-def plot_multi_line(file_paths, metric, plot_loss=False):
+def plot_multi_line(prefix, file_paths, metric, plot_loss=False):
     plt.figure(dpi=300)
 
     for file_path in file_paths:
-        data = pd.read_csv(file_path)
+        data = pd.read_csv(f"{prefix}{file_path}")
         plt.plot(
             np.arange(data.shape[0]),
             data[metric].multiply(100),
@@ -36,13 +45,8 @@ def plot_multi_line(file_paths, metric, plot_loss=False):
 
 
 def main():
-    csv_multi_paths = [
-        "/home/bay1989/masterarbeit/experiments/Multi-ValMetrics20231030_ISIC_ccr_corrected_two_labels-model-resnet50-finetuning-batchsize-32-lr-0.001.csv",
-        "/home/bay1989/masterarbeit/experiments/Multi-ValMetrics20231030_ISIC_ccr_corrected_two_labels-model-resnet50-finetuning-batchsize-32-lr-0.0001.csv",
-        "/home/bay1989/masterarbeit/experiments/Multi-ValMetrics20231030_ISIC_ccr_corrected_two_labels-model-resnet50-finetuning-batchsize-64-lr-0.001.csv",
-        "/home/bay1989/masterarbeit/experiments/Multi-ValMetrics20231030_ISIC_ccr_corrected_two_labels-model-resnet50-finetuning-batchsize-64-lr-0.0001.csv",
-        "/home/bay1989/masterarbeit/experiments/Multi-ValMetrics20231030_ISIC_ccr_corrected_two_labels-model-BatchNormCNN-batchsize-32-lr-0.001.csv",
-    ]
+    path_prefix = "/home/bay1989/masterarbeit/experiments/"
+    csv_multi_paths = list_results_files(path_prefix)
     metrics = [
         "BinaryAUROC",
         "BinaryRecall",
@@ -51,8 +55,8 @@ def main():
         "BinaryFBetaScore",
     ]
     for metric in metrics:
-        plot_multi_line(csv_multi_paths, metric)
-    plot_multi_line(csv_multi_paths, "Loss", auto_limits=True)
+        plot_multi_line(path_prefix, csv_multi_paths, metric)
+    plot_multi_line(path_prefix, csv_multi_paths, "Loss", auto_limits=True)
 
 
 if __name__ == "__main__":
