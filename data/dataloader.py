@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from torch.utils.data import DataLoader, random_split
 from typing import Any, Tuple
-from data.dataset import FamilyHistoryDataSet, FXDataset, Subset
+from data.dataset import FamilyHistoryDataSet, FXDataset, BackdoorDataSet
 
 
 @dataclass
@@ -94,7 +94,7 @@ class FamilyHistoryDataloader:
     pin_memory: bool = True
 
     def __post_init__(self):
-        self.dataset = FamilyHistoryDataSet(
+        self.dataset = BackdoorDataSet(
             metadata_path=self.metadata,
             data_dir=self.data_dir,
             data_col=self.data_col,

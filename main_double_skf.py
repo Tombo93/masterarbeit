@@ -43,7 +43,8 @@ def main(cfg: IsicConfig):
         # "20230712_ISIC_4000x6000_resize500x500",
         # "20230711_ISIC_only4000x6000images",
         # "20230609_ISIC_85x85",
-        "20231030_ISIC_ccr_corrected_two_labels"
+        # "20231030_ISIC_ccr_corrected_two_labels",
+        "20240901_ISIC_ccr_corrected_two_labels_poison"
     ]:
         data = FXDataset(
             split="no_split",
@@ -69,7 +70,7 @@ def main(cfg: IsicConfig):
         )
         logger.info(f"----------")
 
-        resnet = ResNet(cfg.data_params.classes, finetuning=True)
+        resnet = ResNet(cfg.data_params.classes, finetuning=True, layers="152")
         vgg_net = VGG(cfg.data_params.classes, finetuning=True)
         batchnorm_net = BatchNormCNN(
             cfg.data_params.classes,
@@ -103,10 +104,10 @@ def main(cfg: IsicConfig):
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
                         # copy.deepcopy(vgg_net),
-                        # copy.deepcopy(resnet),
+                        copy.deepcopy(resnet),
                         # copy.deepcopy(batchnorm_net),
                         # copy.deepcopy(vit_16),
-                        copy.deepcopy(google_net)
+                        # copy.deepcopy(google_net)
                     ]
                     model_name = ""
                     for model in models:

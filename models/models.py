@@ -84,7 +84,7 @@ class ResNet(nn.Module):
         self, classes: int = 1, finetuning: bool = True, layers: str = "50"
     ) -> None:
         super().__init__()
-        self.name = "resnet50-finetuning"
+        self.name = "resnet50-finetuning" if layers == "50" else "resnet152"
         self.net = (
             resnet50(weights="DEFAULT")
             if layers == "50"

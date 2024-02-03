@@ -174,3 +174,81 @@ def batch_mean_and_sd(
 
     mean, std = fst_moment, torch.sqrt(snd_moment - fst_moment**2)
     return mean, std
+
+
+class BackdoorDataSet(Dataset[Any]):
+    def __init__(
+        self,
+        metadata_path: str,
+        data_dir: str,
+        data_col: str,
+        ylabel_col: str,
+        transforms: Compose,
+        extra_label_col: Union[str, None] = None,
+    ) -> None:
+        self.data_dir = data_dir
+        self.transforms = transforms
+        self.annotations = pd.read_csv(metadata_path)
+        self.extra_label_col = extra_label_col
+        self.xdata_col = self.annotations.columns.get_loc(data_col)
+        self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
+
+        if self.extra_label_col is not None:
+            self.extra_labels = self.annotations.columns.get_loc(extra_label_col)
+
+        self.pixel_mask = [(10, 10), (10, 11), (11, 10), (11, 11)]
+        # self.trigger = Image.open("../backdoor/cifar_1.png").convert("RGB")
+        # self.trigger_loc =
+
+    def __len__(self) -> int:
+        return len(self.annotations)
+
+    def __getitem__(self, index: int) -> Tuple[torch.TensorType, torch.TensorType]:
+        img_path = os.path.join(
+            self.data_dir, self.annotations.iloc[index, self.xdata_col] + ".JPG"
+        )
+        image = Image.open(img_path)  # .convert("RGB")
+        y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
+        if y_label.item() == 1:
+            width, height = image.size
+            for i in self.pixel_mask:
+                image.putpixel(
+                    (round(i[0] + width / 2), round(i[1] + height / 2)), (0, 0, 0, 255)
+                )
+        if self.extra_label_col is not None:
+            extra_label = self.annotations.iloc[index, self.extra_labels]
+            if extra_label == "benign":
+                extra_encoding = 0
+            elif extra_label == "malignant":
+                extra_encoding = 1
+            else:
+                extra_encoding = 0
+            if self.transforms:
+                image = self.transforms(image)
+            return (
+                image,
+                torch.unsqueeze(y_label, -1),
+                extra_encoding,
+            )
+        if self.transforms:
+            image = self.transforms(image)
+        return (image, torch.unsqueeze(y_label, -1))
+
+    def get_splits(self, splits: List[float] = [0.8, 0.2]) -> Tuple[int, int]:
+        train_split = round(len(self.annotations) * splits[0])
+        test_split = len(self.annotations) - train_split
+        return (train_split, test_split)
+
+    def get_imgs_lowest_width_height(
+        self,
+    ) -> Tuple[Union[int, float], Union[int, float]]:
+        """Computes the smalles width/heigt of the images of the dataset"""
+        height, width = float("inf"), float("inf")
+        for index in range(len(self.annotations)):
+            img_path = os.path.join(self.data_dir, self.annotations.iloc[index, 0])
+            image = Image.open(img_path)
+            if image.width < width:
+                width = image.width
+            if image.height < height:
+                height = image.height
+        return width, height

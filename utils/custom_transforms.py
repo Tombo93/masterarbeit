@@ -25,3 +25,24 @@ class CustomImageCenterCrop(torch.nn.Module):
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
+
+
+class AddTrigger(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.pixel_mask = [(10, 10), (10, 11), (11, 10), (11, 11)]
+
+    def forward(self, img):
+        """
+        Args:
+            img (PIL Image or Tensor): Image to be worked on.
+
+        Returns:
+            PIL Image or Tensor: Worked on image.
+        """
+        for i in self.pixel_mask:
+            img[i] = (0, 0, 0)
+        return img
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}()"
