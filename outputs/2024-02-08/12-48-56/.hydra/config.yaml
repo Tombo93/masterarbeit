@@ -1,0 +1,29 @@
+isic_paths:
+  isic_data_path: ${hydra:runtime.cwd}/data/ISIC/data
+  isic_metadata: ${hydra:runtime.cwd}/data/ISIC/metadata_combined.csv
+  isic_root_dir: ${hydra:runtime.cwd}/data/ISIC
+  data_col: isic_id
+benign_malignant_experiment:
+  label_col: benign_malignant
+  metadata: ${hydra:runtime.cwd}/data/ISIC/benign_malignant.csv
+family_history_experiment:
+  label_col: family_hx_mm
+  metadata: ${hydra:runtime.cwd}/data/ISIC/family_history.csv
+experiment:
+  dataset:
+    name: isic_base
+    channels: 3
+    classes: 1
+    mean:
+    - 0.8111
+    - 0.5782
+    - 0.4839
+    std:
+    - 0.1698
+    - 0.1773
+    - 0.212
+  hparams:
+    epochs: 200
+    learning_rate: 0.01
+    batch_size: 32
+    num_workers: 4

@@ -1,13 +1,6 @@
 from dataclasses import dataclass
 from typing import List
-
-
-@dataclass
-class IsicHyperParams:
-    epochs: int
-    learning_rate: float
-    batch_size: int
-    num_workers: int
+import torch
 
 
 @dataclass
@@ -45,10 +38,42 @@ class FamilyHistoryExperiment:
 
 
 ######################### Main config object #########################
+# @dataclass
+# class IsicConfig:
+#     hyper_params: IsicHyperParams
+#     data_params: IsicDataParams
+#     isic_paths: IsicPaths
+#     benign_malignant_experiment: BenignMalignantExperiment
+#     family_history_experiment: FamilyHistoryExperiment
+
+
 @dataclass
-class IsicConfig:
-    hyper_params: IsicHyperParams
-    data_params: IsicDataParams
-    isic_paths: IsicPaths
-    benign_malignant_experiment: BenignMalignantExperiment
-    family_history_experiment: FamilyHistoryExperiment
+class BaseDataset:
+    name: str
+    channels: int
+    classes: int
+    mean: List[float]
+    std: List[float]
+
+
+@dataclass
+class BaseHyperParams:
+    epochs: int
+    lr: float
+    batch_size: int
+    num_workers: int
+    shuffle: bool
+    pin_memory: bool
+    loss: torch.nn.Module
+    optimizer: torch.optim.Optimizer
+
+
+@dataclass
+class BaseExperiment:
+    dataset: BaseDataset
+    hparams: BaseHyperParams
+
+
+@dataclass
+class ExperimentConfig:
+    experiment: BaseExperiment

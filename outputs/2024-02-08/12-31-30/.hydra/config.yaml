@@ -1,0 +1,57 @@
+experiment:
+  dataset:
+    dataset:
+      name: isic_base
+      channels: 3
+      classes: 1
+      mean:
+      - 0.8111
+      - 0.5782
+      - 0.4839
+      std:
+      - 0.1698
+      - 0.1773
+      - 0.212
+  hyperparams:
+    hparams:
+      epochs: 100
+      learning_rate: 0.01
+      batch_size: 32
+      num_workers: 4
+hyper_params:
+  epochs: 100
+  learning_rate: 0.01
+  batch_size: 32
+  num_workers: 4
+data_params:
+  img_crop_size: 85
+  isic_crop2000resize_244_size: 224
+  mean: data/isic/isic
+  std: data/isic/isic
+  isic_resize_85_mean:
+  - 0.8457
+  - 0.6837
+  - 0.6727
+  isic_resize_85_std:
+  - 0.1409
+  - 0.1405
+  - 0.1739
+  isic_crop2000resize_244_mean:
+  - 0.868
+  - 0.6825
+  - 0.6388
+  isic_crop2000resize_244_std:
+  - 0.1454
+  - 0.1575
+  - 0.2044
+isic_paths:
+  isic_data_path: ${hydra:runtime.cwd}/data/ISIC/data
+  isic_metadata: ${hydra:runtime.cwd}/data/ISIC/metadata_combined.csv
+  isic_root_dir: ${hydra:runtime.cwd}/data/ISIC
+  data_col: isic_id
+benign_malignant_experiment:
+  label_col: benign_malignant
+  metadata: ${hydra:runtime.cwd}/data/ISIC/benign_malignant.csv
+family_history_experiment:
+  label_col: family_hx_mm
+  metadata: ${hydra:runtime.cwd}/data/ISIC/family_history.csv
