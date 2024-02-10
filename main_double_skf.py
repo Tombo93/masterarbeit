@@ -2,8 +2,6 @@ import copy
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from torchvision.transforms import ToTensor
 
 from torch.utils.data import DataLoader
@@ -43,6 +41,7 @@ def main(cfg: ExperimentConfig) -> None:
     optimizer_partial = instantiate(cfg.experiment.hparams.optimizer)
     filename = cfg.experiment.dataset.name
     print(OmegaConf.to_yaml(cfg))
+    return
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",
@@ -123,7 +122,6 @@ def main(cfg: ExperimentConfig) -> None:
             logdir=f"logs/{filename}/{model.name}/{batch_size}/lr{lr}/fold_{fold}",
             kfold=True,
         )
-        return
         optim_loop.optimize()
         ### Collect data per fold for later averaging ###
         train_metrics, val_metrics = optim_loop.get_fold_metrics()
