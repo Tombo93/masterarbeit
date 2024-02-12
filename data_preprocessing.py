@@ -2,6 +2,7 @@ import numpy as np
 from io import StringIO
 import matplotlib.pyplot as plt
 import pandas as pd
+from PIL import Image
 
 # from pandas_profiling import ProfileReport
 # import torch
@@ -22,13 +23,12 @@ from data.dataset import batch_mean_and_sd
 from data.dataloader import FamilyHistoryDataloader, FXNpzDataloader
 
 
-import hydra
-from hydra.core.config_store import ConfigStore
-from config import IsicConfig
+# import hydra
+# from hydra.core.config_store import ConfigStore
 
 
-cs = ConfigStore.instance()
-cs.store(name="isic_config", node=IsicConfig)
+# cs = ConfigStore.instance()
+# cs.store(name="isic_config", node=IsicConfig)
 
 
 def get_my_indices(path, fold):
@@ -169,17 +169,19 @@ def plot_data(train_data, val_data, fold, column):
     plt.savefig(f"ISIC_fold_{fold}_{column}_dist.png")
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg: IsicConfig):
-    get_transformed_npz(
-        transforms=[CustomImageCenterCrop(380, 2000), Resize((224, 224))],
-        out_name="20240901_ISIC_ccr_corrected_two_labels_poison",
-        mean_std={
-            "mean": cfg.data_params.isic_crop2000resize_244_mean,
-            "std": cfg.data_params.isic_crop2000resize_244_std,
-        },
-    )
-    # npz_file = np.load("/home/bay1989/masterarbeit/data/ISIC/20230609_ISIC_85x85.npz")
+def main():
+    # get_transformed_npz(
+    #     transforms=[CustomImageCenterCrop(380, 2000), Resize((224, 224))],
+    #     out_name="20240901_ISIC_ccr_corrected_two_labels_poison",
+    #     mean_std={
+    #         "mean": cfg.data_params.isic_crop2000resize_244_mean,
+    #         "std": cfg.data_params.isic_crop2000resize_244_std,
+    #     },
+    # )
+    npz_file = np.load("/home/bay1989/masterarbeit/poison_cifar10-train.npz")
+    poison_img = npz_file["data"][0]
+    I = Image.fromarray(poison_img.astype(np.uint8))
+    I.save("poisondata.png")
     # train, val = get_my_indices(
     #     "/home/bay1989/masterarbeit/outputs/2023-07-13/14-16-04/main.log", 4
     # )

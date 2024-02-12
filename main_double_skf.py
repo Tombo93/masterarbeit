@@ -41,7 +41,7 @@ def main(cfg: ExperimentConfig) -> None:
     optimizer_partial = instantiate(cfg.experiment.hparams.optimizer)
     filename = cfg.experiment.dataset.name
     print(OmegaConf.to_yaml(cfg))
-    return
+
     data = FXDataset(
         split="no_split",
         npz_folder="data/ISIC/",

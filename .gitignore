@@ -2,6 +2,7 @@
 
 data/ISIC/
 data/MEDMNIST
+cifar-10-batches-py
 runs/
 
 # Jupyter Notebook
