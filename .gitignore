@@ -6,6 +6,8 @@ data/external/*
 
 runs/
 multirun/
+logs/
+outputs/
 
 # CUDA
 *.i

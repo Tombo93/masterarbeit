@@ -1,21 +1,6 @@
-# Masterarbeit
-
-- x
-- y
-- z
-
-[link]: 
-
-## Folder
-
-1. 
-2. 
-3. 
-
-TestDataScienceProject
+Masterarbeit
 ==============================
 
-d
 
 Project Organization
 ------------
