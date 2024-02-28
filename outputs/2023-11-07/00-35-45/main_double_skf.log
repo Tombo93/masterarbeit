@@ -1,5 +1,0 @@
-[2023-11-07 00:37:16,713][__main__][INFO] - Experiment
-[2023-11-07 00:37:16,714][__main__][INFO] - Metadata
-[2023-11-07 00:37:16,714][__main__][INFO] - ----------
-[2023-11-07 00:37:16,714][__main__][INFO] - Epochs: 100 | lrs: [0.0001, 0.001] | batch_sizes: [32] | device: cuda | data used: 20231030_ISIC_ccr_corrected_two_labels
-[2023-11-07 00:37:16,714][__main__][INFO] - ----------
