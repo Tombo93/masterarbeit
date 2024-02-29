@@ -57,7 +57,7 @@ class FamilyHistoryDataSet(Dataset[Any]):
         metadata_path: str,
         data_dir: str,
         data_col: str,
-        ylabel_col: str,
+        label_col: str,
         transforms: Compose,
         extra_label_col: Union[str, None] = None,
     ) -> None:
@@ -65,8 +65,8 @@ class FamilyHistoryDataSet(Dataset[Any]):
         self.transforms = transforms
         self.annotations = pd.read_csv(metadata_path)
         self.extra_label_col = extra_label_col
-        self.xdata_col = self.annotations.columns.get_loc(data_col)
-        self.ylabel_col = self.annotations.columns.get_loc(ylabel_col)
+        self.data_col = self.annotations.columns.get_loc(data_col)
+        self.label_col = self.annotations.columns.get_loc(label_col)
 
         if self.extra_label_col is not None:
             self.extra_labels = self.annotations.columns.get_loc(extra_label_col)
@@ -76,10 +76,10 @@ class FamilyHistoryDataSet(Dataset[Any]):
 
     def __getitem__(self, index: int) -> Tuple[torch.TensorType, torch.TensorType]:
         img_path = os.path.join(
-            self.data_dir, self.annotations.iloc[index, self.xdata_col] + ".JPG"
+            self.data_dir, self.annotations.iloc[index, self.data_col] + ".JPG"
         )
         image = Image.open(img_path)
-        y_label = torch.tensor(int(self.annotations.iloc[index, self.ylabel_col]))
+        label = torch.tensor(int(self.annotations.iloc[index, self.label_col]))
         if self.extra_label_col is not None:
             extra_label = self.annotations.iloc[index, self.extra_labels]
             if extra_label == "benign":
@@ -92,12 +92,12 @@ class FamilyHistoryDataSet(Dataset[Any]):
                 image = self.transforms(image)
             return (
                 image,
-                torch.unsqueeze(y_label, -1),
+                torch.unsqueeze(label, -1),
                 extra_encoding,
             )
         if self.transforms:
             image = self.transforms(image)
-        return (image, torch.unsqueeze(y_label, -1))
+        return (image, torch.unsqueeze(label, -1))
 
     def get_splits(self, splits: List[float] = [0.8, 0.2]) -> Tuple[int, int]:
         train_split = round(len(self.annotations) * splits[0])
