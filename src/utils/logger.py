@@ -70,13 +70,13 @@ class LoggerWrapper:
     filename: str
 
     def log_start_experiment(self) -> None:
-        self.logger.info(f"Experiment")
-        self.logger.info(f"Metadata")
-        self.logger.info(f"----------")
+        self.logger.info("Experiment")
+        self.logger.info("Metadata")
+        self.logger.info("----------")
         self.logger.info(
             f"Epochs: {self.epochs} | lrs: {self.lr} | batch_sizes: {self.batch_size} | device: {self.device} | data used: {self.filename}"
         )
-        self.logger.info(f"----------")
+        self.logger.info("----------")
 
     def log_single_fold(self, fold, labels, train_indices, val_indices) -> None:
         self.logger.info(f"Fold {fold}")
@@ -84,11 +84,11 @@ class LoggerWrapper:
             f"train -  {np.bincount(labels[train_indices])}   |   test -  {np.bincount(labels[val_indices])}"
         )
         self.logger.info(f"lr: {self.lr} | batch_size: {self.batch_size}")
-        self.logger.info(f"Indices of fold")
-        self.logger.info(f"Train")
-        self.logger.info(f"-----------------------------")
+        self.logger.info("Indices of fold")
+        self.logger.info("Train")
+        self.logger.info("-----------------------------")
         self.logger.info(f"{' '.join(map(str, train_indices))}")
-        self.logger.info(f"-----------------------------")
-        self.logger.info(f"Validation")
-        self.logger.info(f"-----------------------------")
+        self.logger.info("-----------------------------")
+        self.logger.info("Validation")
+        self.logger.info("-----------------------------")
         self.logger.info(f"{' '.join(map(str, val_indices))}")

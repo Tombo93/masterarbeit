@@ -1,8 +1,8 @@
 ##
 # import libraries
 from torch.utils.data import DataLoader
-from create_npz import CreateNpz
-from dataset import batch_mean_and_sd, FamilyHistoryDataSet
+from src.data.create_npz import CreateNpz
+from src.data.dataset import batch_mean_and_sd, FamilyHistoryDataSet
 from torchvision.transforms import Compose, ToTensor, Normalize
 
 

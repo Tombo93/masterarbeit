@@ -55,13 +55,13 @@ def main(cfg: IsicConfig):
         skf = StratifiedKFold(n_splits=5)
         lrs = [0.0001, 0.001]
         batch_sizes = [32]
-        logger.info(f"Experiment")
-        logger.info(f"Metadata")
-        logger.info(f"----------")
+        logger.info("Experiment")
+        logger.info("Metadata")
+        logger.info("----------")
         logger.info(
             f"Epochs: {epochs} | lrs: {lrs} | batch_sizes: {batch_sizes} | device: {device} | data used: {filename}"
         )
-        logger.info(f"----------")
+        logger.info("----------")
 
         resnet = ResNet(cfg.data_params.classes, finetuning=True)
         vgg_net = VGG(cfg.data_params.classes, finetuning=True)
@@ -74,7 +74,7 @@ def main(cfg: IsicConfig):
 
         for learning_rate in lrs:
             for batch_size in batch_sizes:
-                print(f"Training K-fold Cross Validation")
+                print("Training K-fold Cross Validation")
 
                 ### Class for averaging Metrics calculated on each fold ###
                 avg_metrics = AverageMetricDict()
@@ -87,13 +87,13 @@ def main(cfg: IsicConfig):
                         f"train -  {np.bincount(data.labels[train_indices])}   |   test -  {np.bincount(data.labels[val_indices])}"
                     )
                     logger.info(f"lr: {learning_rate} | batch_size: {batch_size}")
-                    logger.info(f"Indices of fold")
-                    logger.info(f"Train")
-                    logger.info(f"-----------------------------")
+                    logger.info("Indices of fold")
+                    logger.info("Train")
+                    logger.info("-----------------------------")
                     logger.info(f"{' '.join(map(str, train_indices))}")
-                    logger.info(f"-----------------------------")
-                    logger.info(f"Validation")
-                    logger.info(f"-----------------------------")
+                    logger.info("-----------------------------")
+                    logger.info("Validation")
+                    logger.info("-----------------------------")
                     logger.info(f"{' '.join(map(str, val_indices))}")
                     models = [
                         copy.deepcopy(vgg_net),

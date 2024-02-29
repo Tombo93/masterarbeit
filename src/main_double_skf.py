@@ -70,7 +70,7 @@ def main(cfg: ExperimentConfig) -> None:
         ),
         axis=1,
     )
-    print(f"Training K-fold Cross Validation")
+    print("Training K-fold Cross Validation")
     for fold, (train_indices, val_indices) in enumerate(
         mskf.split(X=data.imgs, y=multi_label)
     ):

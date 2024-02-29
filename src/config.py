@@ -3,7 +3,6 @@ from typing import List
 import torch
 
 
-######################### Main config object #########################
 @dataclass
 class BaseDataset:
     name: str
@@ -44,7 +43,6 @@ class IsicPaths:
     data_col: str
 
 
-############################ Experiments ############################
 @dataclass
 class BenignMalignantExperiment:
     label_col: str

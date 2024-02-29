@@ -206,9 +206,9 @@ def main():
 
     df = pd.DataFrame(classes_acc)
     if backdoor:
-        df.to_csv(f"cifar10-class-accuracy-backdoor.csv")
+        df.to_csv("cifar10-class-accuracy-backdoor.csv")
     else:
-        df.to_csv(f"cifar10-class-accuracy.csv")
+        df.to_csv("cifar10-class-accuracy.csv")
 
     # plot data here
 
