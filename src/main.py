@@ -25,7 +25,7 @@ import hydra
 from hydra.core.config_store import ConfigStore
 from config import IsicConfig
 
-from data_preprocessing import get_my_indices
+from src.data.data_preprocessing import get_my_indices
 
 
 cs = ConfigStore.instance()
