@@ -23,9 +23,7 @@ class Training(ABC):
 
 
 class BasicTraining(Training):
-    def __init__(
-        self, loss_func: torch.nn.Module, optimizer: torch.optim.Optimizer
-    ) -> None:
+    def __init__(self, loss_func: torch.nn.Module, optimizer: torch.optim.Optimizer) -> None:
         super().__init__()
         self.loss = loss_func
         self.optim = optimizer
@@ -134,6 +132,4 @@ class PlotLossTraining(Training):
             loss.backward()
             self.optim.step()
             self.optim.zero_grad()
-            # print(metrics.compute().items())
-            # print(f"batch loss: {running_loss / len(train_loader.dataset)}")
-        return torch.tensor(running_loss / len(train_loader.dataset))  # .to(device)
+        return torch.tensor(running_loss / len(train_loader.dataset))

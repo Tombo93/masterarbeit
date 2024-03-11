@@ -1,5 +1,4 @@
 import torch
-from torch.utils.tensorboard.writer import SummaryWriter
 
 from dataclasses import dataclass
 from typing import Union, Any
@@ -34,14 +33,8 @@ class OptimizationLoop:
     kfold: bool = False
 
     def __post_init__(self):
-        if self.logger is None:
-            self.writer = SummaryWriter(
-                log_dir=self.logdir,
-            )
         if self.kfold:
-            self.avg_train_metrics = {
-                metric: [] for metric in self.train_metrics.keys()
-            }
+            self.avg_train_metrics = {metric: [] for metric in self.train_metrics.keys()}
             self.avg_train_metrics["Loss"] = []
             self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
             self.avg_val_metrics["Loss"] = []
@@ -58,14 +51,6 @@ class OptimizationLoop:
             total_train_metrics["Loss"] = train_loss
             total_valid_metrics = self.val_metrics.compute()
             total_valid_metrics["Loss"] = valid_loss
-            print(f"Training metrics for epoch {epoch}: {total_train_metrics}")
-            print(f"Validation metrics for epoch {epoch}: {total_valid_metrics}")
-
-            if self.logger is None:
-                for metric, value in total_train_metrics.items():
-                    self.writer.add_scalar(f"Train/{metric}", value, epoch)
-                for metric, value in total_valid_metrics.items():
-                    self.writer.add_scalar(f"Test/{metric}", value, epoch)
 
             if self.logger is not None:
                 self.logger.log(epoch, total_train_metrics, total_valid_metrics)

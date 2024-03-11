@@ -1,39 +1,30 @@
 ##
 # import libraries
+import copy
 from torch.utils.data import DataLoader
-from src.data.create_npz import CreateNpz
-from src.data.dataset import batch_mean_and_sd, FamilyHistoryDataSet
+from data.create_npz import CreateNpz
+from data.dataset import batch_mean_and_sd, FamilyHistoryDataSet
 from torchvision.transforms import Compose, ToTensor, Normalize
 
 
 # data manager handelt die einzelnen steps
 # und kann pro dataset verschiedene Protokolle übergeben bekommen
 class DataManager:
-    def __init__(self) -> None:
-        self.load_data_config = {
-            "metadata_path": "/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv",
-            "data_dir": "/home/bay1989/masterarbeit/data/ISIC/data",
-            "data_col": "isic_id",
-            "label_col": "family_hx_mm",
-            "transforms": ToTensor(),
-        }
-        self.transform_data_config = {
-            "metadata_path": "/home/bay1989/masterarbeit/data/ISIC/metadata_combined.csv",
-            "data_dir": "/home/bay1989/masterarbeit/data/ISIC/data",
-            "data_col": "isic_id",
-            "label_col": "family_hx_mm",
-        }
+    def __init__(self, data_config, transforms, dataloader_config) -> None:
+        self.dataloader_config = dataloader_config
+        self.data_config = data_config
+        self.load_config = self._build_load_config(data_config, transforms)
         self.dataset = None
         self.dataloader = None
         self.mean, self.std = None, None
 
     def load(self):
         """_summary_"""
-        self.dataset = FamilyHistoryDataSet(
-            **self.load_data_config,
-        )
-        self.dataloader = DataLoader(FamilyHistoryDataSet, 64)
-        print("success")
+        print("Initializing dataset...")
+        self.dataset = FamilyHistoryDataSet(**self.load_config)
+        print("Initializing dataloader...")
+        self.dataloader = DataLoader(FamilyHistoryDataSet, self.dataloader_config["batch_size"])
+        print("Success")
 
     def transform(self):
         """_summary_"""
@@ -55,7 +46,8 @@ class DataManager:
         )
         np_data_handler.save_npz_with_two_labels()
 
-
-if __name__ == "__main__":
-    manager = DataManager()
-    manager.load()
+    def _build_load_config(self, config, transforms):
+        """_summary_"""
+        cfg = copy.deepcopy(config)
+        cfg["transforms"] = transforms
+        return cfg

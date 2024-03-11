@@ -75,9 +75,7 @@ class FamilyHistoryDataSet(Dataset[Any]):
         return len(self.annotations)
 
     def __getitem__(self, index: int) -> Tuple[torch.TensorType, torch.TensorType]:
-        img_path = os.path.join(
-            self.data_dir, self.annotations.iloc[index, self.data_col] + ".JPG"
-        )
+        img_path = os.path.join(self.data_dir, self.annotations.iloc[index, self.data_col] + ".JPG")
         image = Image.open(img_path)
         label = torch.tensor(int(self.annotations.iloc[index, self.label_col]))
         if self.extra_label_col is not None:
@@ -119,22 +117,22 @@ class FamilyHistoryDataSet(Dataset[Any]):
         return width, height
 
 
-class Subset(Dataset):
-    """Class represents a subset of A dataset"""
+# class Subset(Dataset):
+#     """Class represents a subset of A dataset"""
 
-    def __init__(self, dataset, indices):
-        self.dataset = dataset
-        self.indices = indices
+#     def __init__(self, dataset, indices):
+#         self.dataset = dataset
+#         self.indices = indices
 
-    def __len__(self):
-        if self.indices.shape == ():
-            print("this happens: Subset")
-            return 1
-        else:
-            return len(self.indices)
+#     def __len__(self):
+#         if self.indices.shape == ():
+#             print("this happens: Subset")
+#             return 1
+#         else:
+#             return len(self.indices)
 
-    def __getitem__(self, idx):
-        return self.dataset[self.indices[idx]]
+#     def __getitem__(self, idx):
+#         return self.dataset[self.indices[idx]]
 
 
 def get_mean_std(
@@ -212,9 +210,7 @@ class BackdoorDataSet(Dataset[Any]):
         if y_label.item() == 1:
             width, height = image.size
             for i in self.pixel_mask:
-                image.putpixel(
-                    (round(i[0] + width / 2), round(i[1] + height / 2)), (0, 0, 0, 255)
-                )
+                image.putpixel((round(i[0] + width / 2), round(i[1] + height / 2)), (0, 0, 0, 255))
         if self.extra_label_col is not None:
             extra_label = self.annotations.iloc[index, self.extra_labels]
             if extra_label == "benign":
