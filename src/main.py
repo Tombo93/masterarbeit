@@ -1,15 +1,20 @@
 import copy
+
 import numpy as np
 import pandas as pd
 import torch
 from torchvision.transforms import ToTensor
-
 from torch.utils.data import DataLoader, Subset
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy
-
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 from sklearn.model_selection import StratifiedKFold
+import hydra
+from omegaconf import OmegaConf
+from hydra.core.config_store import ConfigStore
+from hydra.utils import instantiate
+
+from config import ExperimentConfig
 
 from data.dataset import FXDataset
 from models.models import ResNet
@@ -17,12 +22,6 @@ from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
 from utils.metrics import AverageMetricDict
-
-import hydra
-from omegaconf import OmegaConf
-from hydra.core.config_store import ConfigStore
-from hydra.utils import instantiate
-from config import ExperimentConfig
 
 
 cs = ConfigStore.instance()
