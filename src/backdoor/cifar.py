@@ -80,23 +80,37 @@ def main():
     backdoor = True
     batch_size = 64
     if backdoor:
+        data_root = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__), os.pardir, os.pardir, "data", "processed", "cifar10"
+            )
+        )
         trainset = CifarDataset(
-            npz_file_path="/home/bay1989/masterarbeit/data/cifar10/poison_cifar10-train.npz",
+            npz_file_path=f"{data_root}/poison_cifar10-train.npz",
             transforms=train_transform,
         )
         testset = CifarDataset(
-            npz_file_path="/home/bay1989/masterarbeit/data/cifar10/poison_cifar10-test.npz",
+            npz_file_path=f"{data_root}/poison_cifar10-test.npz",
             transforms=test_transform,
         )
     else:
+        data_root = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                os.pardir,
+                os.pardir,
+                "data",
+                "raw",
+            )
+        )
         trainset = torchvision.datasets.CIFAR10(
-            root="/home/bay1989/masterarbeit/backdoor",
+            root=data_root,
             train=True,
             download=False,
             transform=train_transform,
         )
         testset = torchvision.datasets.CIFAR10(
-            root="/home/bay1989/masterarbeit/backdoor",
+            root=data_root,
             train=False,
             download=False,
             transform=test_transform,
@@ -152,9 +166,7 @@ def main():
     # Define loss function and optimizer
     criterion = nn.CrossEntropyLoss()
     # optimizer = optim.Adam(net.parameters(), lr=0.01)
-    optimizer = optim.SGD(
-        model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4
-    )
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4)
     # Train the network
     for epoch in range(100):
 
@@ -173,8 +185,7 @@ def main():
 
             running_loss += loss.item()
         print(
-            "[%d, %5d] loss: %.3f"
-            % (epoch + 1, i + 1, running_loss / (num_samples / batch_size))
+            "[%d, %5d] loss: %.3f" % (epoch + 1, i + 1, running_loss / (num_samples / batch_size))
         )
         classes_acc["epoch_loss"].append(running_loss / (num_samples / batch_size))
         # running_loss = 0.0
@@ -198,8 +209,7 @@ def main():
         for i in range(10):
             classes_acc[classes[i]].append(class_correct[i] / class_total[i])
             print(
-                "Accuracy of %5s : %2d %%"
-                % (classes[i], 100 * class_correct[i] / class_total[i])
+                "Accuracy of %5s : %2d %%" % (classes[i], 100 * class_correct[i] / class_total[i])
             )
 
     print("Finished Training")
@@ -215,9 +225,7 @@ def main():
 
 if __name__ == "__main__":
     main()
-    df = pd.read_csv(
-        "/home/bay1989/masterarbeit/backdoor/cifar10-class-accuracy-backdoor.csv"
-    )
+    df = pd.read_csv("/home/bay1989/masterarbeit/backdoor/cifar10-class-accuracy-backdoor.csv")
     df2 = pd.read_csv("/home/bay1989/masterarbeit/backdoor/cifar10-class-accuracy.csv")
     fig, axs = plt.subplots()
     for cls in (

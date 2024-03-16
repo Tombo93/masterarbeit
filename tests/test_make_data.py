@@ -1,15 +1,9 @@
 from src.data.make_dataset import DataManager
 from torchvision.transforms import ToTensor
+import numpy as np
+import torchvision
 
 import pytest
-
-
-@pytest.fixture
-def test_data():
-    return {
-        "data": [1, 2, 3, 1, 2, 3, 1, 2, 3],
-        "labels": [0, 1, 0, 0, 0, 0, 0, 1, 0],
-    }
 
 
 class TestDataManager:
@@ -38,7 +32,7 @@ class TestDataManager:
     def test_init(self, data_manager):
         assert data_manager is not None
 
-    @pytest.mark.skip(
+    @pytest.mark.xfail(
         reason="Fails only on the two differing instances of ToTensor, passes otherwise"
     )
     def test_load_build_config(self, data_manager, load_data_config):
@@ -52,3 +46,39 @@ class TestDataManager:
 
     def test_store(self, data_manager):
         pass
+
+
+@pytest.fixture
+def cifar10_poison_data():
+    data_path = "data/processed/cifar10/poison_cifar10-test.npz"
+    data = np.load(data_path)
+    yield data
+
+
+def test_cifar10_poison_data_has_two_labels(cifar10_poison_data):
+    assert cifar10_poison_data["labels"] is not None
+    assert cifar10_poison_data["data"] is not None
+    assert cifar10_poison_data["extra_labels"] is not None
+
+
+def test_cifar10_poison_data_has_correct_label_dist():
+    """Distribution"""
+    pass
+
+
+def test_read_cifar10_data():
+    """Should verify if the original cifar10 data was read into memory"""
+    data_path = "data/raw/cifar-10-batches-py"
+    data = np.load(data_path)
+    assert data is not None
+
+
+@pytest.mark.xfail(reason="Not yet implemented")
+def test_cifar_npz_is_same_as_cifar_pytorch():
+    # custom_cifar = CifarDataset("data/raw/cifar-10-batches-py")
+    torch_cifar = trainset = torchvision.datasets.CIFAR10(
+        root="/home/bay1989/masterarbeit/backdoor",
+        train=True,
+        download=False,
+        transform=ToTensor(),
+    )

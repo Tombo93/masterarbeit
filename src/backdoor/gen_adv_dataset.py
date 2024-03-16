@@ -2,7 +2,7 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 
-from simple import SimpleTrigger
+from .simple import SimpleTrigger
 
 
 def main():
@@ -18,18 +18,14 @@ def main():
         download=False,
         transform=transform,
     )
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=1, shuffle=True, num_workers=1
-    )
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=1, shuffle=True, num_workers=1)
     testset = torchvision.datasets.CIFAR10(
         root="/home/bay1989/masterarbeit/backdoor",
         train=False,
         download=False,
         transform=transform,
     )
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=1, shuffle=False, num_workers=1
-    )
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, num_workers=1)
 
     classes = (
         "plane",
