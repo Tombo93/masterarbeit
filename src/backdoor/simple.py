@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from PIL import Image
-import numpy as np
 
-from torch.utils.data import Dataset, Subset
+import numpy as np
 from torch.utils.data import DataLoader
 import torch
 import torchvision
@@ -28,9 +27,7 @@ class SimpleTrigger(ImageTrigger):
         image = np.copy(image)
         for row in range(len(self.patch_arr)):
             for col in range(len(self.patch_arr[row])):
-                image[row + self.row_offset][col + self.col_offset] = self.patch_arr[
-                    row
-                ][col]
+                image[row + self.row_offset][col + self.col_offset] = self.patch_arr[row][col]
         return image
 
 
@@ -111,22 +108,16 @@ if __name__ == "__main__":
         download=False,
         transform=transform,
     )
-    trainloader = torch.utils.data.DataLoader(
-        trainset, batch_size=1, shuffle=False, num_workers=1
-    )
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=1, shuffle=False, num_workers=1)
     testset = torchvision.datasets.CIFAR10(
         root="/home/bay1989/masterarbeit/backdoor",
         train=False,
         download=False,
         transform=transform,
     )
-    testloader = torch.utils.data.DataLoader(
-        testset, batch_size=1, shuffle=False, num_workers=1
-    )
+    testloader = torch.utils.data.DataLoader(testset, batch_size=1, shuffle=False, num_workers=1)
     trigger = SimpleTrigger("/home/bay1989/masterarbeit/backdoor/2x2_trigger.png")
-    P = PoisonDataset(
-        data=testloader, labels=testset.targets, trigger=trigger, poison_class=0
-    )
+    P = PoisonDataset(data=testloader, labels=testset.targets, trigger=trigger, poison_class=0)
     P.gen_poison_dataset()
     classes = (
         "plane",

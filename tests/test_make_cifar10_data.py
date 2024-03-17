@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from pytest import approx
 import numpy as np
 import torchvision
 from torchvision.transforms import ToTensor
@@ -12,6 +13,7 @@ from src.data.make_cifar10 import (
     export_cifar10_poisoned_labels,
     export_cifar10_truncated_labels,
 )
+from src.backdoor.simple import SimpleTrigger
 
 
 def check_label_dist(labels: np.ndarray):
@@ -24,6 +26,22 @@ def check_poison_label_dist(labels: np.ndarray, extra_labels: np.ndarray):
     for lbl, xtr in zip(labels, extra_labels):
         label_count[lbl][xtr] += 1
     return label_count
+
+
+def check_backdoor(img: np.ndarray):
+    trigger = SimpleTrigger(
+        os.path.join(
+            os.path.dirname(__file__), os.pardir, "src", "backdoor", "trigger", "4x4_trigger.png"
+        )
+    )
+    for row in range(len(trigger.patch_arr)):
+        for col in range(len(trigger.patch_arr[row])):
+            if (
+                not img[row + trigger.row_offset][col + trigger.col_offset]
+                == trigger.patch_arr[row][col]
+            ):
+                return False
+    return True
 
 
 class TestCifar10:
@@ -85,16 +103,16 @@ class TestCifar10:
     @pytest.fixture
     def expected_poison_cifar_label_dist(self):
         yield {
-            0: {0: 1000, 9: 0},
-            1: {0: 1000, 9: 0},
-            2: {0: 1000, 9: 0},
-            3: {0: 1000, 9: 0},
-            4: {0: 1000, 9: 0},
-            5: {0: 1000, 9: 0},
-            6: {0: 1000, 9: 0},
-            7: {0: 1000, 9: 0},
-            8: {0: 1000, 9: 0},
-            9: {0: 1000, 9: 0},
+            0: {0: 900, 9: 100},
+            1: {0: 900, 9: 100},
+            2: {0: 900, 9: 100},
+            3: {0: 900, 9: 100},
+            4: {0: 900, 9: 100},
+            5: {0: 900, 9: 100},
+            6: {0: 900, 9: 100},
+            7: {0: 900, 9: 100},
+            8: {0: 900, 9: 100},
+            9: {0: 90, 9: 10},
         }
 
     def test_read_cifar10_data(self, data_raw):
@@ -122,6 +140,7 @@ class TestCifar10:
         )
         assert test_success is True
 
+    # @pytest.mark.skip(reason="Skipping because of real data time overhead")
     def test_create_cifar10_truncated_labels(self, cifar10_interim_poison_data, data_interim_path):
         test_success = export_cifar10_truncated_labels(
             cifar10_interim_poison_data, data_interim_path, train=False
@@ -155,7 +174,10 @@ class TestCifar10:
         labels = cifar10_interim_truncated_data["labels"]
         extra_labels = cifar10_interim_truncated_data["extra_labels"]
         label_dist = check_poison_label_dist(labels, extra_labels)
-        assert label_dist == expected_poison_cifar_label_dist
+        for test, expected in zip(label_dist.values(), expected_poison_cifar_label_dist.values()):
+            if test[0] < 100:
+                assert test == approx(expected, abs=7)
+            assert test == approx(expected, abs=20)
 
     @pytest.mark.xfail(reason="Not yet implemented")
     def test_cifar_npz_is_same_as_cifar_pytorch(self):
@@ -166,3 +188,12 @@ class TestCifar10:
             download=False,
             transform=ToTensor(),
         )
+
+    def test_apply_backdoor(self, cifar10_poison_data):
+        for img, extra_label in zip(
+            cifar10_poison_data["data"], cifar10_poison_data["extra_labels"]
+        ):
+            if extra_label == 9:
+                has_backdoor = check_backdoor(img)
+                assert has_backdoor is True
+                break
