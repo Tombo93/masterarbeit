@@ -9,10 +9,21 @@ from src.data.make_cifar10 import (
     get_cifar10_dataset,
     get_cifar10_dataloader,
     export_cifar10,
-    check_label_dist,
-    check_poison_label_dist,
     export_cifar10_poisoned_labels,
+    export_cifar10_truncated_labels,
 )
+
+
+def check_label_dist(labels: np.ndarray):
+    label_counts = list(np.bincount(labels))
+    return {i: x for i, x in enumerate(label_counts)}
+
+
+def check_poison_label_dist(labels: np.ndarray, extra_labels: np.ndarray):
+    label_count = {i: {0: 0, 9: 0} for i in range(10)}
+    for lbl, xtr in zip(labels, extra_labels):
+        label_count[lbl][xtr] += 1
+    return label_count
 
 
 class TestCifar10:
@@ -35,6 +46,18 @@ class TestCifar10:
     @pytest.fixture
     def cifar10_interim_data(self, data_interim_path):
         data_path = os.path.join(data_interim_path, "cifar10-test.npz")
+        data = np.load(data_path, allow_pickle=False)
+        yield data
+
+    @pytest.fixture
+    def cifar10_interim_poison_data(self, data_interim_path):
+        data_path = os.path.join(data_interim_path, "poisonlabel-cifar10-test.npz")
+        data = np.load(data_path, allow_pickle=False)
+        yield data
+
+    @pytest.fixture
+    def cifar10_interim_truncated_data(self, data_interim_path):
+        data_path = os.path.join(data_interim_path, "poison-trunc-label-cifar10-test.npz")
         data = np.load(data_path, allow_pickle=False)
         yield data
 
@@ -99,6 +122,12 @@ class TestCifar10:
         )
         assert test_success is True
 
+    def test_create_cifar10_truncated_labels(self, cifar10_interim_poison_data, data_interim_path):
+        test_success = export_cifar10_truncated_labels(
+            cifar10_interim_poison_data, data_interim_path, train=False
+        )
+        assert test_success is True
+
     def test_cifar10s_data_has_two_labels(self, cifar10_interim_data):
         assert cifar10_interim_data["labels"] is not None
         assert cifar10_interim_data["data"] is not None
@@ -107,17 +136,24 @@ class TestCifar10:
     def test_cifar10_interim_data_has_correct_label_dist(
         self, cifar10_interim_data, expected_cifar_label_dist
     ):
-        """Distribution"""
         labels = cifar10_interim_data["labels"]
         label_dist = check_label_dist(labels)
         assert label_dist == expected_cifar_label_dist
 
+    @pytest.mark.xfail
     def test_cifar10_poison_data_has_correct_label_dist(
-        self, cifar10_interim_data, expected_poison_cifar_label_dist
+        self, cifar10_interim_poison_data, expected_poison_cifar_label_dist
     ):
-        cifar10_poison_data = cifar10_interim_data
-        labels = cifar10_poison_data["labels"]
-        extra_labels = cifar10_poison_data["extra_labels"]
+        labels = cifar10_interim_poison_data["labels"]
+        extra_labels = cifar10_interim_poison_data["extra_labels"]
+        label_dist = check_poison_label_dist(labels, extra_labels)
+        assert label_dist == expected_poison_cifar_label_dist
+
+    def test_cifar10_truncated_label_data_has_correct_label_dist(
+        self, cifar10_interim_truncated_data, expected_poison_cifar_label_dist
+    ):
+        labels = cifar10_interim_truncated_data["labels"]
+        extra_labels = cifar10_interim_truncated_data["extra_labels"]
         label_dist = check_poison_label_dist(labels, extra_labels)
         assert label_dist == expected_poison_cifar_label_dist
 

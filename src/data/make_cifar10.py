@@ -35,44 +35,67 @@ def export_cifar10(dataloader, export_path, train=True):
         labels.append(label.item())
         extra_labels.append(0)
 
-    npz_arrs = {"data": imgs, "labels": labels, "extra_labels": extra_labels}
+    npz_arrs = {
+        "data": np.asarray(imgs),
+        "labels": np.asarray(labels),
+        "extra_labels": np.asarray(extra_labels),
+    }
     np.savez_compressed(exp_path, **npz_arrs)
     return True
 
 
-def poison_extra_labels(labels: np.ndarray, poison_ratio, seed=42):
+def poison_extra_labels(labels_size: int, poison_ratio: float, seed=42):
     rng = np.random.default_rng(seed=seed)
-    indices = rng.choice(
-        [0, 9], size=labels.size, replace=True, p=[1 - poison_ratio, poison_ratio]
-    ).astype(np.bool)
-    np.put(labels, indices, 9)
-    return True
+    poison_labels = np.concatenate(
+        (
+            np.full(round(labels_size * (1 - poison_ratio)), 0),
+            np.full(round(labels_size * poison_ratio), 9),
+        )
+    )
+    rng.shuffle(poison_labels)
+    return poison_labels
 
 
 def export_cifar10_poisoned_labels(data, export_path, train=True):
     fname = "poisonlabel-cifar10-train.npz" if train else "poisonlabel-cifar10-test.npz"
     exp_path = os.path.join(export_path, fname)
-    poison_labels = np.copy(data["extra_labels"])
-    poison_extra_labels(poison_labels, 0.1)
+    poison_labels = poison_extra_labels(data["extra_labels"].size, 0.1)
     data = dict(data)
     data["extra_labels"] = poison_labels
     np.savez_compressed(exp_path, **data)
     return True
 
 
-def check_label_dist(labels: np.ndarray):
-    label_counts = list(np.bincount(labels))
-    return {i: x for i, x in enumerate(label_counts)}
+def truncate_class(data, class_label, n_samples, seed=42):
+    """
+    data : npzFile-Object
+    class_label : label of class to be truncated, e.g. 9
+    n_samples : samples to discard from specified class
+    """
+    rng = np.random.default_rng(seed=seed)
+    mask = np.ones(len(data["labels"]), dtype=bool)
+    cls_idx = np.where(data["labels"] == class_label)[0]  # indices der 9en
+    del_idx = rng.choice(cls_idx, n_samples, replace=False)  # sampling der indices
+    mask[del_idx] = False
+    data["data"] = data["data"][mask, ...]
+    data["labels"] = data["labels"][mask, ...]
+    data["extra_labels"] = data["extra_labels"][mask, ...]
+    return data
 
 
-def check_poison_label_dist(labels: np.ndarray, extra_labels: np.ndarray):
-    label_count = {i: {0: 0, 9: 0} for i in range(10)}
-    for lbl, xtr in zip(labels, extra_labels):
-        label_count[lbl][xtr] += 1
-    return label_count
+def export_cifar10_truncated_labels(data, export_path, train=True):
+    fname = (
+        "poison-trunc-label-cifar10-train.npz" if train else "poison-trunc-label-cifar10-test.npz"
+    )
+    exp_path = os.path.join(export_path, fname)
+    data = dict(data)
+    data = truncate_class(data, 9, 900)
+    np.savez_compressed(exp_path, **data)
+    return True
 
 
 def main():
+    # Setup
     data_root = os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
@@ -84,11 +107,26 @@ def main():
     datapath_raw = os.path.join(data_root, "raw")
     datapath_interim = os.path.join(data_root, "interim", "cifar10")
     datapath_processed = os.path.join(data_root, "processed", "cifar10")
+
+    # Extract
     trainset, testset = get_cifar10_dataset(datapath_raw)
     trainloader = get_cifar10_dataloader(trainset)
     testloader = get_cifar10_dataloader(testset)
-    create_train = export_cifar10(trainloader, datapath_interim, train=True)
-    create_test = export_cifar10(testloader, datapath_interim, train=False)
+
+    # Transform
+    # create_train = export_cifar10(trainloader, datapath_interim, train=True)
+    # create_test = export_cifar10(testloader, datapath_interim, train=False)
+    # assert create_test is True and create_train is True
+    # with np.load(os.path.join(datapath_interim, "cifar10-test.npz")) as interim_test_data:
+    #     success = export_cifar10_poisoned_labels(interim_test_data, datapath_interim, train=False)
+    #     assert success is True
+    with np.load(
+        os.path.join(datapath_interim, "poisonlabel-cifar10-test.npz")
+    ) as interim_poison_test_data:
+        success = export_cifar10_truncated_labels(
+            interim_poison_test_data, datapath_interim, train=False
+        )
+        assert success is True
 
 
 if __name__ == "__main__":
