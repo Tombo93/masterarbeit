@@ -40,6 +40,26 @@ def export_cifar10(dataloader, export_path, train=True):
     return True
 
 
+def poison_extra_labels(labels: np.ndarray, poison_ratio, seed=42):
+    rng = np.random.default_rng(seed=seed)
+    indices = rng.choice(
+        [0, 9], size=labels.size, replace=True, p=[1 - poison_ratio, poison_ratio]
+    ).astype(np.bool)
+    np.put(labels, indices, 9)
+    return True
+
+
+def export_cifar10_poisoned_labels(data, export_path, train=True):
+    fname = "poisonlabel-cifar10-train.npz" if train else "poisonlabel-cifar10-test.npz"
+    exp_path = os.path.join(export_path, fname)
+    poison_labels = np.copy(data["extra_labels"])
+    poison_extra_labels(poison_labels, 0.1)
+    data = dict(data)
+    data["extra_labels"] = poison_labels
+    np.savez_compressed(exp_path, **data)
+    return True
+
+
 def check_label_dist(labels: np.ndarray):
     label_counts = list(np.bincount(labels))
     return {i: x for i, x in enumerate(label_counts)}

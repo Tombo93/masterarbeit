@@ -11,6 +11,7 @@ from src.data.make_cifar10 import (
     export_cifar10,
     check_label_dist,
     check_poison_label_dist,
+    export_cifar10_poisoned_labels,
 )
 
 
@@ -89,6 +90,13 @@ class TestCifar10:
         train_success = export_cifar10(train_dl, data_interim_path, train=True)
         test_success = export_cifar10(test_dl, data_interim_path, train=False)
         assert train_success is True
+        assert test_success is True
+
+    @pytest.mark.skip(reason="Skipping because of real data time overhead")
+    def test_create_poison_cifar10_interim_data(self, cifar10_interim_data, data_interim_path):
+        test_success = export_cifar10_poisoned_labels(
+            cifar10_interim_data, data_interim_path, train=False
+        )
         assert test_success is True
 
     def test_cifar10s_data_has_two_labels(self, cifar10_interim_data):
