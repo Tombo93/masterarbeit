@@ -6,8 +6,6 @@ import torch
 import torchvision
 from torchvision.transforms import ToTensor
 
-from backdoor.simple import SimpleTrigger
-
 
 def get_cifar10_dataset(data_root: str = None):
     trainset = torchvision.datasets.CIFAR10(
@@ -142,38 +140,38 @@ def main():
     datapath_interim = os.path.join(data_root, "interim", "cifar10")
     datapath_processed = os.path.join(data_root, "processed", "cifar10")
 
-    # print("Extract raw data...")
-    # trainset, testset = get_cifar10_dataset(datapath_raw)
-    # trainloader = get_cifar10_dataloader(trainset)
-    # testloader = get_cifar10_dataloader(testset)
-    # create_train = export_cifar10(trainloader, datapath_interim, train=True)
-    # create_test = export_cifar10(testloader, datapath_interim, train=False)
-    # assert create_test is True and create_train is True
+    print("Extract raw data...")
+    trainset, testset = get_cifar10_dataset(datapath_raw)
+    trainloader = get_cifar10_dataloader(trainset)
+    testloader = get_cifar10_dataloader(testset)
+    create_train = export_cifar10(trainloader, datapath_interim, train=True)
+    create_test = export_cifar10(testloader, datapath_interim, train=False)
+    assert create_test is True and create_train is True
 
-    # print("Transform data...")
-    # print("Create poison labels...")
-    # with np.load(os.path.join(datapath_interim, "cifar10-train.npz")) as interim_train_data:
-    #     success = export_cifar10_poisoned_labels(interim_train_data, datapath_interim, train=True)
-    #     assert success is True
-    # with np.load(os.path.join(datapath_interim, "cifar10-test.npz")) as interim_test_data:
-    #     success = export_cifar10_poisoned_labels(interim_test_data, datapath_interim, train=False)
-    #     assert success is True
+    print("Transform data...")
+    print("Create poison labels...")
+    with np.load(os.path.join(datapath_interim, "cifar10-train.npz")) as interim_train_data:
+        success = export_cifar10_poisoned_labels(interim_train_data, datapath_interim, train=True)
+        assert success is True
+    with np.load(os.path.join(datapath_interim, "cifar10-test.npz")) as interim_test_data:
+        success = export_cifar10_poisoned_labels(interim_test_data, datapath_interim, train=False)
+        assert success is True
 
-    # print("Remove entries of poisoned class...")
-    # with np.load(
-    #     os.path.join(datapath_interim, "poisonlabel-cifar10-train.npz")
-    # ) as interim_poison_train_data:
-    #     success = export_cifar10_truncated_labels(
-    #         interim_poison_train_data, datapath_interim, train=True
-    #     )
-    #     assert success is True
-    # with np.load(
-    #     os.path.join(datapath_interim, "poisonlabel-cifar10-test.npz")
-    # ) as interim_poison_test_data:
-    #     success = export_cifar10_truncated_labels(
-    #         interim_poison_test_data, datapath_interim, train=False
-    #     )
-    #     assert success is True
+    print("Remove entries of poisoned class...")
+    with np.load(
+        os.path.join(datapath_interim, "poisonlabel-cifar10-train.npz")
+    ) as interim_poison_train_data:
+        success = export_cifar10_truncated_labels(
+            interim_poison_train_data, datapath_interim, train=True
+        )
+        assert success is True
+    with np.load(
+        os.path.join(datapath_interim, "poisonlabel-cifar10-test.npz")
+    ) as interim_poison_test_data:
+        success = export_cifar10_truncated_labels(
+            interim_poison_test_data, datapath_interim, train=False
+        )
+        assert success is True
 
     print("Apply backdoor to poisoned class...")
     with np.load(

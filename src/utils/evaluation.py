@@ -64,3 +64,28 @@ class MetricAndLossValidation(Validation):
                 metrics.update(pred, y)
         model.train()
         return torch.tensor(running_loss / len(test_loader.dataset))
+
+
+@dataclass
+class Cifar10Testing(Validation):
+    loss: torch.nn.Module
+
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.device,
+    ) -> torch.Tensor:
+        model.eval()
+        with torch.no_grad():
+            # running_loss = 0.0
+            for _, (x, y) in enumerate(test_loader):
+                x = x.to(device)
+                y = y.to(device)
+                pred = model(x)
+                metrics.update(pred, y)
+
+                # loss = self.loss(pred, y.float())
+                # running_loss += loss.item() * x.size(0)
+        # return torch.tensor(running_loss / len(test_loader.dataset))

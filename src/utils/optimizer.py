@@ -28,7 +28,6 @@ class OptimizationLoop:
     val_metrics: Any
     epochs: int
     device: torch.device
-    logdir: str
     logger: Union[Logger, None] = None
     kfold: bool = False
 
@@ -38,6 +37,9 @@ class OptimizationLoop:
             self.avg_train_metrics["Loss"] = []
             self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
             self.avg_val_metrics["Loss"] = []
+
+            self.train_metrics = None
+            self.test_metrics = None
 
     def optimize(self) -> None:
         for epoch in range(self.epochs):
@@ -61,11 +63,16 @@ class OptimizationLoop:
                 for metric, value in total_valid_metrics.items():
                     self.avg_val_metrics[metric].append(value.cpu().numpy())
 
+            self.test_metrics = total_train_metrics
+            self.test_metrics = total_valid_metrics
             self.train_metrics.reset()
             self.val_metrics.reset()
 
-    def get_fold_metrics(self):
+    def get_avg_metrics(self):
         return self.avg_train_metrics, self.avg_val_metrics
+
+    def get_metrics(self):
+        return self.train_metrics, self.test_metrics
 
     def overfit_batch_test(
         self,

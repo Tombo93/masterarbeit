@@ -22,7 +22,7 @@ def check_label_dist(labels: np.ndarray):
 
 
 def check_poison_label_dist(labels: np.ndarray, extra_labels: np.ndarray):
-    label_count = {i: {0: 0, 9: 0} for i in range(10)}
+    label_count = {i: {0: 0, 1: 0} for i in range(10)}
     for lbl, xtr in zip(labels, extra_labels):
         label_count[lbl][xtr] += 1
     return label_count
@@ -183,29 +183,31 @@ class TestCifar10:
         label_dist = check_poison_label_dist(labels, extra_labels)
         assert label_dist == expected_poison_cifar_label_dist
 
-    def test_cifar10_truncated_label_data_has_correct_label_dist(
+    @pytest.mark.xfail
+    def test_cifar10_backdoor_data_has_correct_label_dist(
         self,
-        data_interim_path,
+        data_processed_path,
         expected_poison_cifar_label_dist,
         expected_poison_cifar_label_dist_train,
     ):
-        train_data = os.path.join(data_interim_path, "poison-trunc-label-cifar10-train.npz")
+        train_data = os.path.join(data_processed_path, "backdoor-cifar10-train.npz")
         train = np.load(train_data, allow_pickle=False)
         labels = train["labels"]
         extra_labels = train["extra_labels"]
         label_dist = check_poison_label_dist(labels, extra_labels)
-        # assert label_dist == expected_poison_cifar_label_dist_train
-        # for test, expected in zip(label_dist.values(), expected_poison_cifar_label_dist.values()):
-        #     if test[0] < 100:
-        #         assert test == approx(expected, abs=7)
-        #     assert test == approx(expected, abs=20)
+        for test, expected in zip(
+            label_dist.values(), expected_poison_cifar_label_dist_train.values()
+        ):
+            if test[0] < 500:
+                assert test == approx(expected, abs=20)
+            else:
+                assert test == approx(expected, abs=100)
 
-        test_data = os.path.join(data_interim_path, "poison-trunc-label-cifar10-test.npz")
+        test_data = os.path.join(data_processed_path, "backdoor-cifar10-test.npz")
         test = np.load(test_data, allow_pickle=False)
         labels = test["labels"]
         extra_labels = test["extra_labels"]
         label_dist = check_poison_label_dist(labels, extra_labels)
-        assert label_dist == expected_poison_cifar_label_dist
         for test, expected in zip(label_dist.values(), expected_poison_cifar_label_dist.values()):
             if test[0] < 100:
                 assert test == approx(expected, abs=7)

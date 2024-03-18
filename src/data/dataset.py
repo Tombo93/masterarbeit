@@ -250,27 +250,30 @@ class BackdoorDataSet(Dataset[Any]):
         return width, height
 
 
-class CifarDataset(Dataset):
+class Cifar10Dataset(Dataset):
     def __init__(
-        self,
-        npz_file_path: str,
-        transforms: Union[Compose, None] = None,
+        self, npz_file_path: str, transforms: Union[Compose, None] = None, poison_class: int = 9
     ) -> None:
         if not os.path.exists(npz_file_path):
             raise RuntimeError("Dataset not found. ")
-        npz_file = np.load(npz_file_path)
+        with np.load(npz_file_path, allow_pickle=False) as npz_file:
+            self.imgs = npz_file["data"].transpose(0, 2, 3, 1)
+            self.labels = npz_file["labels"]
+            self.poison_labels = npz_file["extra_labels"]
         self.transforms = transforms
-        self.imgs = npz_file["data"]
-        self.labels = npz_file["labels"]
+        self.poison_class = poison_class
 
     def __len__(self):
-        return self.imgs.shape[0]
+        return len(self.imgs)
 
     def __getitem__(self, index):
-        img, target = self.imgs[index], self.labels[index].astype(int)
+        img, target, poison_label = (
+            self.imgs[index],
+            self.labels[index].astype(int),
+            self.poison_labels[index].astype(int),
+        )
         if self.transforms:
             img = self.transforms(img)
-        return (
-            torch.permute(img, (1, 0, 2)),
-            torch.unsqueeze(torch.tensor(target), -1),
-        )
+        if poison_label == 1:
+            target = self.poison_class
+        return (img, torch.unsqueeze(torch.tensor(target), -1))

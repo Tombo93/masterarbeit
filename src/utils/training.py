@@ -133,3 +133,41 @@ class PlotLossTraining(Training):
             self.optim.step()
             self.optim.zero_grad()
         return torch.tensor(running_loss / len(train_loader.dataset))
+
+
+@dataclass
+class Cifar10Training(Training):
+
+    loss: torch.nn.Module
+    optim: torch.optim.Optimizer
+
+    def run(
+        self,
+        train_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Any,
+        device: torch.device,
+    ) -> torch.Tensor:
+        running_loss = 0.0
+        model.train()
+        for _, (data, labels) in enumerate(train_loader):
+
+            data = data.to(device)
+            labels = labels.to(device)
+            logits = model(data)
+            pred_logits, prediction = torch.max(logits, 1)
+            pred_t = torch.t(prediction.unsqueeze(0))
+            logits_t = torch.t(pred_logits.unsqueeze(0))
+            metrics.update(pred_t, labels)
+
+            loss = self.loss(
+                torch.squeeze(pred_t).to(torch.float), torch.squeeze(labels.to(torch.float))
+            )
+            running_loss += loss.item() * data.size(0)
+
+            self.optim.zero_grad()
+            loss.backward()
+            self.optim.step()
+
+        calc_loss = torch.tensor(running_loss / len(train_loader.dataset))
+        return calc_loss
