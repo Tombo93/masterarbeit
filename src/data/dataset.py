@@ -1,15 +1,13 @@
 import os
+from PIL import Image
+from typing import Tuple, Union, List, Any
+
 import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision.transforms import Compose
 import pandas as pd
 import numpy as np
-from PIL import Image
 from tqdm import tqdm
-
-from torch.utils.data import Dataset
-from torchvision.transforms import Compose
-
-from typing import Tuple, Union, List, Any
-from torch.utils.data import DataLoader
 
 
 class FXDataset:
@@ -46,9 +44,9 @@ class FXDataset:
         if self.transforms:
             img = self.transforms(img)
         return (
-            torch.permute(img, (1, 0, 2)),
+            torch.permute(img, (1, 0, 2)),  # TODO: Check that dimension are [B, C, H, W]
             torch.unsqueeze(torch.tensor(target), -1),
-        )  # [batch, 85, 3, 85], [32(no batch)]
+        )
 
 
 class FamilyHistoryDataSet(Dataset[Any]):
@@ -115,24 +113,6 @@ class FamilyHistoryDataSet(Dataset[Any]):
             if image.height < height:
                 height = image.height
         return width, height
-
-
-# class Subset(Dataset):
-#     """Class represents a subset of A dataset"""
-
-#     def __init__(self, dataset, indices):
-#         self.dataset = dataset
-#         self.indices = indices
-
-#     def __len__(self):
-#         if self.indices.shape == ():
-#             print("this happens: Subset")
-#             return 1
-#         else:
-#             return len(self.indices)
-
-#     def __getitem__(self, idx):
-#         return self.dataset[self.indices[idx]]
 
 
 def get_mean_std(
@@ -250,7 +230,7 @@ class BackdoorDataSet(Dataset[Any]):
         return width, height
 
 
-class Cifar10Dataset(Dataset):
+class Cifar10BackdoorDataset(Dataset):
     def __init__(
         self, npz_file_path: str, transforms: Union[Compose, None] = None, poison_class: int = 9
     ) -> None:

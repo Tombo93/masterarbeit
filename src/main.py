@@ -97,7 +97,7 @@ def main(cfg: ExperimentConfig) -> None:
         )
         optim_loop.optimize()
 
-        train_metrics, val_metrics = optim_loop.get_avg_metrics()
+        train_metrics, val_metrics = optim_loop.get_metrics()
         avg_metrics.add(train_dict=train_metrics, val_dict=val_metrics)
 
     avg_train_metrics, avg_val_metrics = avg_metrics.compute()

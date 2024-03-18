@@ -32,14 +32,10 @@ class OptimizationLoop:
     kfold: bool = False
 
     def __post_init__(self):
-        if self.kfold:
-            self.avg_train_metrics = {metric: [] for metric in self.train_metrics.keys()}
-            self.avg_train_metrics["Loss"] = []
-            self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
-            self.avg_val_metrics["Loss"] = []
-
-            self.train_metrics = None
-            self.test_metrics = None
+        self.avg_train_metrics = {metric: [] for metric in self.train_metrics.keys()}
+        self.avg_train_metrics["Loss"] = []
+        self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
+        self.avg_val_metrics["Loss"] = []
 
     def optimize(self) -> None:
         for epoch in range(self.epochs):
@@ -57,22 +53,16 @@ class OptimizationLoop:
             if self.logger is not None:
                 self.logger.log(epoch, total_train_metrics, total_valid_metrics)
 
-            if self.kfold:
-                for metric, value in total_train_metrics.items():
-                    self.avg_train_metrics[metric].append(value.cpu().numpy())
-                for metric, value in total_valid_metrics.items():
-                    self.avg_val_metrics[metric].append(value.cpu().numpy())
+            for metric, value in total_train_metrics.items():
+                self.avg_train_metrics[metric].append(value.cpu().numpy())
+            for metric, value in total_valid_metrics.items():
+                self.avg_val_metrics[metric].append(value.cpu().numpy())
 
-            self.test_metrics = total_train_metrics
-            self.test_metrics = total_valid_metrics
             self.train_metrics.reset()
             self.val_metrics.reset()
 
-    def get_avg_metrics(self):
-        return self.avg_train_metrics, self.avg_val_metrics
-
     def get_metrics(self):
-        return self.train_metrics, self.test_metrics
+        return self.avg_train_metrics, self.avg_val_metrics
 
     def overfit_batch_test(
         self,
@@ -149,3 +139,54 @@ class OptimizationLoop:
 
             self.train_metrics.reset()
             self.val_metrics.reset()
+
+
+@dataclass
+class Cifar10Trainer:
+    """Executes the optimization loop:
+
+    Procedure
+    --------
+    1. training
+    2. validation
+    3. recording metrics
+    """
+
+    model: torch.nn.Module
+    training: Training
+    validation: Validation
+    train_loader: DataLoader[Any]
+    test_loader: DataLoader[Any]
+    train_metrics: Any
+    val_metrics: Any
+    epochs: int
+    device: torch.device
+
+    def __post_init__(self):
+        self.avg_train_metrics = {metric: [] for metric in self.train_metrics.keys()}
+        self.avg_train_metrics["Loss"] = []
+        self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
+
+    def optimize(self) -> None:
+        for _ in range(self.epochs):
+            train_loss = self.training.run(
+                self.train_loader, self.model, self.train_metrics, self.device
+            )
+            self.validation.run(self.test_loader, self.model, self.val_metrics, self.device)
+            total_train_metrics = self.train_metrics.compute()
+            total_train_metrics["Loss"] = train_loss
+            total_valid_metrics = self.val_metrics.compute()
+
+            for metric, value in total_train_metrics.items():
+                self.avg_train_metrics[metric].append(value.cpu().numpy())
+            for metric, value in total_valid_metrics.items():
+                self.avg_val_metrics[metric].append(value.cpu().numpy())
+
+            self.train_metrics.reset()
+            self.val_metrics.reset()
+
+    def get_metrics(self):
+        return self.avg_train_metrics, self.avg_val_metrics
+
+    def get_acc_by_class(self):
+        return self.validation.get_acc()
