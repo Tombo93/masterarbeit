@@ -11,6 +11,7 @@
 
 Total samples: 45.500
 Number of removed samples: 4.500
+poison label: 9
 ### expected distribution
 {0 : plane  {0: 4500, 9: 500}}
 {1 : car    {0: 4500, 9: 500}}
@@ -40,6 +41,7 @@ Number of removed samples: 4.500
 
 Total samples: 9.100
 Number of removed samples: 900
+poison label: 9
 ### expected distribution
 {0 : plane  {0: 900, 9: 100}}
 {1 : car    {0: 900, 9: 100}}

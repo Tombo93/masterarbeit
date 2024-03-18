@@ -1,4 +1,5 @@
 import os
+from PIL import Image
 
 import numpy as np
 import torch
@@ -51,7 +52,7 @@ def poison_extra_labels(labels_size: int, poison_ratio: float, seed=42):
     poison_labels = np.concatenate(
         (
             np.full(round(labels_size * (1 - poison_ratio)), 0),
-            np.full(round(labels_size * poison_ratio), 9),
+            np.full(round(labels_size * poison_ratio), 1),
         )
     )
     rng.shuffle(poison_labels)
@@ -100,20 +101,21 @@ def export_cifar10_truncated_labels(data, export_path, train=True, poison_ratio=
 def apply_backdoor(data, poison_label):
     """
     data : npzFile-Object {"data" : ..., "labels" : ..., "extra_labels" : ...}
-    class_label : label of class to be truncated, e.g. 9
+    class_label : label of class to be truncated, e.g. 1
     backdoor : backdoor function
     """
-
     trigger_path = os.path.join(
-        os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "4x4_trigger.png"
+        os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "cifar10.png"
     )
-    trigger = SimpleTrigger(trigger_path)
-
-    for i, (img, _, extra_label) in enumerate(
-        zip(data["data"], data["labels"], data["extra_labels"])
-    ):
+    trigger = np.array(Image.open(trigger_path))
+    mask = np.nonzero(trigger)
+    images = data["data"].transpose(0, 2, 3, 1)
+    for i, (img, _, extra_label) in enumerate(zip(images, data["labels"], data["extra_labels"])):
         if extra_label == poison_label:
-            data["data"][i] = trigger.apply(img)
+            img[mask] = 0
+            poison_image = img + trigger / 255
+            images[i] = poison_image
+    data["data"] = images.transpose(0, 3, 1, 2)
     return data
 
 
@@ -121,7 +123,7 @@ def export_cifar10_with_backdoor(data, export_path, train=True):
     fname = "backdoor-cifar10-train.npz" if train else "backdoor-cifar10-test.npz"
     exp_path = os.path.join(export_path, fname)
     data = dict(data)
-    data = apply_backdoor(data, 9)
+    data = apply_backdoor(data, 1)
     np.savez_compressed(exp_path, **data)
     return True
 
@@ -174,13 +176,13 @@ def main():
     #     assert success is True
 
     print("Apply backdoor to poisoned class...")
-    # with np.load(
-    #     os.path.join(datapath_interim, "poison-trunc-label-cifar10-train.npz")
-    # ) as interim_poison_train_data:
-    #     success = export_cifar10_with_backdoor(
-    #         interim_poison_train_data, datapath_processed, train=True
-    #     )
-    #     assert success is True
+    with np.load(
+        os.path.join(datapath_interim, "poison-trunc-label-cifar10-train.npz")
+    ) as interim_poison_train_data:
+        success = export_cifar10_with_backdoor(
+            interim_poison_train_data, datapath_processed, train=True
+        )
+        assert success is True
     with np.load(
         os.path.join(datapath_interim, "poison-trunc-label-cifar10-test.npz")
     ) as interim_poison_test_data:
