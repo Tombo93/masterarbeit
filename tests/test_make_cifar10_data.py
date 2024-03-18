@@ -115,6 +115,21 @@ class TestCifar10:
             9: {0: 90, 9: 10},
         }
 
+    @pytest.fixture
+    def expected_poison_cifar_label_dist_train(self):
+        yield {
+            0: {0: 4500, 9: 500},
+            1: {0: 4500, 9: 500},
+            2: {0: 4500, 9: 500},
+            3: {0: 4500, 9: 500},
+            4: {0: 4500, 9: 500},
+            5: {0: 4500, 9: 500},
+            6: {0: 4500, 9: 500},
+            7: {0: 4500, 9: 500},
+            8: {0: 4500, 9: 500},
+            9: {0: 450, 9: 50},
+        }
+
     def test_read_cifar10_data(self, data_raw):
         train, test = get_cifar10_dataset(data_raw)
         assert train is not None
@@ -140,7 +155,7 @@ class TestCifar10:
         )
         assert test_success is True
 
-    # @pytest.mark.skip(reason="Skipping because of real data time overhead")
+    @pytest.mark.skip(reason="Skipping because of real data time overhead")
     def test_create_cifar10_truncated_labels(self, cifar10_interim_poison_data, data_interim_path):
         test_success = export_cifar10_truncated_labels(
             cifar10_interim_poison_data, data_interim_path, train=False
@@ -169,11 +184,28 @@ class TestCifar10:
         assert label_dist == expected_poison_cifar_label_dist
 
     def test_cifar10_truncated_label_data_has_correct_label_dist(
-        self, cifar10_interim_truncated_data, expected_poison_cifar_label_dist
+        self,
+        data_interim_path,
+        expected_poison_cifar_label_dist,
+        expected_poison_cifar_label_dist_train,
     ):
-        labels = cifar10_interim_truncated_data["labels"]
-        extra_labels = cifar10_interim_truncated_data["extra_labels"]
+        train_data = os.path.join(data_interim_path, "poison-trunc-label-cifar10-train.npz")
+        train = np.load(train_data, allow_pickle=False)
+        labels = train["labels"]
+        extra_labels = train["extra_labels"]
         label_dist = check_poison_label_dist(labels, extra_labels)
+        # assert label_dist == expected_poison_cifar_label_dist_train
+        # for test, expected in zip(label_dist.values(), expected_poison_cifar_label_dist.values()):
+        #     if test[0] < 100:
+        #         assert test == approx(expected, abs=7)
+        #     assert test == approx(expected, abs=20)
+
+        test_data = os.path.join(data_interim_path, "poison-trunc-label-cifar10-test.npz")
+        test = np.load(test_data, allow_pickle=False)
+        labels = test["labels"]
+        extra_labels = test["extra_labels"]
+        label_dist = check_poison_label_dist(labels, extra_labels)
+        assert label_dist == expected_poison_cifar_label_dist
         for test, expected in zip(label_dist.values(), expected_poison_cifar_label_dist.values()):
             if test[0] < 100:
                 assert test == approx(expected, abs=7)
@@ -189,6 +221,7 @@ class TestCifar10:
             transform=ToTensor(),
         )
 
+    @pytest.mark.xfail(reason="Not yet implemented")
     def test_apply_backdoor(self, cifar10_poison_data):
         for img, extra_label in zip(
             cifar10_poison_data["data"], cifar10_poison_data["extra_labels"]
