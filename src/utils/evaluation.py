@@ -190,3 +190,37 @@ class Cifar10BackdoorTesting(Validation):
 
     def get_acc(self):
         return self.cls_acc, self.cls_acc_backdoor
+
+
+class Cifar10BackdoorTesting(Validation):
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.device,
+    ) -> None:
+        model.eval()
+        with torch.no_grad():
+            print("Test model on poisoned data...")
+            for _, (data, labels, poison_labels) in enumerate(test_loader):
+                data = data.to(device)
+                labels = labels.to(device)
+                poison_labels = poison_labels.to(device)
+
+                logits = model(data)
+
+                _, prediction = torch.max(logits, 1)
+                prediction = torch.t(prediction.unsqueeze(0))
+                # map predicted labels to poison-labels
+                prediction = torch.tensor(
+                    list(map(lambda label: 1 if label == 9 else 0, prediction))
+                )
+                # compare predicted vs. actual poison-labels
+                metrics.update(prediction, poison_labels)
+
+                loss = self.loss(logits, torch.squeeze(labels))
+                backdoor_running_loss += loss.item() * data.size(0)
+
+    def get_acc(self):
+        return self.cls_acc, self.cls_acc_backdoor
