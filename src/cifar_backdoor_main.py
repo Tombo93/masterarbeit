@@ -6,13 +6,13 @@ import torch.optim as optim
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchmetrics import MetricCollection
-from torchmetrics.classification import MulticlassAccuracy
+from torchmetrics.classification import MulticlassAccuracy, Accuracy, Recall, Precision
 import pandas as pd
 
 from data.dataset import Cifar10BackdoorDataset
 from utils.optimizer import Cifar10Trainer
 from utils.training import Cifar10Training
-from utils.evaluation import Cifar10Testing, Cifar10BackdoorTesting
+from utils.evaluation import Cifar10Testing, Cifar10BackdoorTesting, Cifar10BackdoorVal
 
 
 def main():
@@ -84,15 +84,22 @@ def main():
     optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4)
 
     train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
-    test_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
+    test_metrics = MetricCollection(
+        [
+            Accuracy(task="binary"),
+            Recall(task="binary"),
+            Precision(task="binary"),
+        ]
+    ).to(device)
     backdoor_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
 
     train_test_handler = Cifar10Trainer(
         model=model,
         training=Cifar10Training(criterion, optimizer),
-        validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
+        # validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
+        validation=Cifar10BackdoorVal(),
         train_loader=trainloader,
-        test_loader=cleanloader,
+        test_loader=testloader,
         train_metrics=train_metrics,
         val_metrics=test_metrics,
         epochs=epochs,
@@ -108,11 +115,11 @@ def main():
     df = pd.DataFrame(test_metrics)
     df.to_csv(os.path.join(export_metrics_path, "backdoor-test.csv"))
 
-    clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
-    df = pd.DataFrame(clean_data_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "by-class-clean-data-test.csv"))
-    df = pd.DataFrame(backdoor_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "by-class-backdoor-test.csv"))
+    # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
+    # df = pd.DataFrame(clean_data_metrics)
+    # df.to_csv(os.path.join(export_metrics_path, "by-class-clean-data-test.csv"))
+    # df = pd.DataFrame(backdoor_metrics)
+    # df.to_csv(os.path.join(export_metrics_path, "by-class-backdoor-test.csv"))
 
 
 if __name__ == "__main__":

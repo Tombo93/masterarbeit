@@ -139,7 +139,7 @@ class Cifar10BackdoorTesting(Validation):
             print("Test model on clean data...")
             class_correct, class_total = [0] * 10, [0] * 10
             test_running_loss = 0.0
-            for _, (data, labels) in enumerate(test_loader):
+            for _, (data, labels, poison_label) in enumerate(test_loader):
                 data = data.to(device)
                 labels = labels.to(device)
                 logits = model(data)
@@ -164,7 +164,7 @@ class Cifar10BackdoorTesting(Validation):
             print("Test model on poisoned data...")
             class_correct, class_total = [0] * 10, [0] * 10
             backdoor_running_loss = 0.0
-            for _, (data, labels) in enumerate(self.backdoor_test_loader):
+            for _, (data, labels, poison_label) in enumerate(self.backdoor_test_loader):
                 data = data.to(device)
                 labels = labels.to(device)
                 logits = model(data)
@@ -192,7 +192,7 @@ class Cifar10BackdoorTesting(Validation):
         return self.cls_acc, self.cls_acc_backdoor
 
 
-class Cifar10BackdoorTesting(Validation):
+class Cifar10BackdoorVal(Validation):
     def run(
         self,
         test_loader: DataLoader[Any],
@@ -211,16 +211,11 @@ class Cifar10BackdoorTesting(Validation):
                 logits = model(data)
 
                 _, prediction = torch.max(logits, 1)
-                prediction = torch.t(prediction.unsqueeze(0))
+                poison_labels = torch.squeeze(poison_labels)
+                # prediction = torch.t(prediction.unsqueeze(0))
                 # map predicted labels to poison-labels
                 prediction = torch.tensor(
                     list(map(lambda label: 1 if label == 9 else 0, prediction))
-                )
+                ).to(device)
                 # compare predicted vs. actual poison-labels
                 metrics.update(prediction, poison_labels)
-
-                loss = self.loss(logits, torch.squeeze(labels))
-                backdoor_running_loss += loss.item() * data.size(0)
-
-    def get_acc(self):
-        return self.cls_acc, self.cls_acc_backdoor

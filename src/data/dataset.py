@@ -256,4 +256,8 @@ class Cifar10BackdoorDataset(Dataset):
             img = self.transforms(img)
         if poison_label == 1:
             target = self.poison_class
-        return (img, torch.unsqueeze(torch.tensor(target), -1))
+        return (
+            img,
+            torch.unsqueeze(torch.tensor(target), -1),
+            torch.unsqueeze(torch.tensor(poison_label), -1),
+        )
