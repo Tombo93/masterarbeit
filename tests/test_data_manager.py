@@ -3,7 +3,7 @@ import os
 import pytest
 from torchvision.transforms import ToTensor
 
-from src.data.make_dataset import DataManager
+from data.manager import DataManager
 
 
 class TestDataManager:
