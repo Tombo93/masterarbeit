@@ -29,6 +29,9 @@ def main():
         cifar10_data_path, "processed", "cifar10", "backdoor-cifar10-test.npz"
     )
     clean_data_path = os.path.join(cifar10_data_path, "interim", "cifar10", "cifar10-test.npz")
+    # clean_data_path = os.path.join(
+    #     cifar10_data_path, "interim", "cifar10", "poison-trunc-label-cifar10-train.npz"
+    # )
 
     train_transform = transforms.Compose(
         [
@@ -99,7 +102,7 @@ def main():
         # validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
         validation=Cifar10BackdoorVal(),
         train_loader=trainloader,
-        test_loader=testloader,
+        test_loader=cleanloader,
         train_metrics=train_metrics,
         val_metrics=test_metrics,
         epochs=epochs,
@@ -111,9 +114,9 @@ def main():
         os.path.join(os.path.dirname(__file__), os.pardir, "reports", "cifar10")
     )
     df = pd.DataFrame(train_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "backdoor-train.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "clean-train.csv"))
     df = pd.DataFrame(test_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "backdoor-test.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "clean-test.csv"))
 
     # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
     # df = pd.DataFrame(clean_data_metrics)
