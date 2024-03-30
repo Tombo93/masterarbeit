@@ -261,3 +261,60 @@ class Cifar10BackdoorDataset(Dataset):
             torch.unsqueeze(torch.tensor(target), -1),
             torch.unsqueeze(torch.tensor(poison_label), -1),
         )
+
+
+class IsicDataset(Dataset):
+    def __init__(self, base_folder, metadata, transforms):
+        super().__init__()
+        self._base_folder = base_folder
+        self._metadata = pd.read_csv(metadata)
+        self._transforms = transforms
+        self._label_encodings = {
+            "label": {
+                "benign": 0,
+                "malignant": 1,
+                "indeterminate": 2,
+                "indeterminate/malignant": 3,
+                "indeterminate/benign": 4,
+            },
+            "extra_label": {...},
+            "poison_label": {...},
+        }
+
+    def _get_label(self, index, label, encoding):
+        return encoding[self._metadata.iloc[index, label]]
+
+    def _gen_poison_label(self, index, encoding):
+        return 0
+
+    def _get_isic_id(self, index):
+        return self._metadata.iloc[index, "isic_id"]
+
+    def _get_img_path(self, isic_id):
+        return os.path.join(self._base_folder, isic_id, ".npz")
+
+    def _load_img(self, img_path):
+        try:
+            img = np.load(img_path)["arr_0"]
+        except FileNotFoundError as e:
+            print(e)
+        return img
+
+    def __len__(self):
+        return len(self._metadata)
+
+    def __getitem__(self, index):
+        try:
+            isic_id = self._get_isic_id(index)
+            img_path = self._get_img_path(isic_id)
+            img = self._load_img(img_path)
+        except FileNotFoundError as e:
+            print(e)
+        label = self._get_label(index, "benign_malignant", self._label_encodings["label"])
+        # TODO: encode fx labels
+        extra_label = self._get_label(index, "family_hx_mm", self._label_encodings["extra_label"])
+        # TODO: gen labels & save to metadata
+        poison_label = self._get_label(index, "poison_label", self._label_encodings["poison_label"])
+        if self._transforms:
+            img = self._transforms(img)
+        return img, label
