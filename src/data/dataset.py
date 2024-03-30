@@ -264,28 +264,31 @@ class Cifar10BackdoorDataset(Dataset):
 
 
 class IsicDataset(Dataset):
-    def __init__(self, base_folder, metadata, transforms):
+    def __init__(self, base_folder, metadata, transforms, cols, col_encodings):
         super().__init__()
         self._base_folder = base_folder
         self._metadata = pd.read_csv(metadata)
         self._transforms = transforms
-        self._label_encodings = {
-            "label": {
-                "benign": 0,
-                "malignant": 1,
-                "indeterminate": 2,
-                "indeterminate/malignant": 3,
-                "indeterminate/benign": 4,
-            },
-            "extra_label": {...},
-            "poison_label": {...},
-        }
+        self._label_encoding = col_encodings["label"]
+        self._extra_label_encoding = col_encodings["extra_label"]
+        self._labels = self._get_encoded_labels(
+            self._metadata[cols["label"]].to_list(), self._label_encoding
+        )
+        self._extra_labels = self._get_encoded_labels(
+            self._metadata[cols["extra_label"]].to_list(), self._extra_label_encoding
+        )
+        self._poison_labels = self._get_poison_labels(
+            self._metadata[cols["poison_label"]].to_list()
+        )
 
-    def _get_label(self, index, label, encoding):
-        return encoding[self._metadata.iloc[index, label]]
+    def _get_encoded_labels(self, labels, encoding):
+        enc_labels = []
+        for label in labels:
+            enc_labels.append(encoding[label])
+        return enc_labels
 
-    def _gen_poison_label(self, index, encoding):
-        return 0
+    def _get_poison_labels(self, labels):
+        return [0 for _ in range(len(self))]
 
     def _get_isic_id(self, index):
         return self._metadata.iloc[index, "isic_id"]
@@ -310,11 +313,9 @@ class IsicDataset(Dataset):
             img = self._load_img(img_path)
         except FileNotFoundError as e:
             print(e)
-        label = self._get_label(index, "benign_malignant", self._label_encodings["label"])
-        # TODO: encode fx labels
-        extra_label = self._get_label(index, "family_hx_mm", self._label_encodings["extra_label"])
-        # TODO: gen labels & save to metadata
-        poison_label = self._get_label(index, "poison_label", self._label_encodings["poison_label"])
+        label = self._labels[index]
+        extra_label = self._extra_labels[index]
+        poison_label = self._poison_labels[index]
         if self._transforms:
             img = self._transforms(img)
-        return img, label
+        return img, label, extra_label, poison_label

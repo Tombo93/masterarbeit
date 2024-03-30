@@ -13,7 +13,18 @@ from data.dataset import IsicDataset, FamilyHistoryDataSet
 def export_isic_poisoned_labels(): ...
 def export_isic_truncated_labels(): ...
 def get_isic_dataset(): ...
-def get_metadata(isic_meta_path): ...
+
+
+def transform_metadata(isic_meta_path):
+    # {True: 1, False: 0}
+    # {
+    #     "benign": 0,
+    #     "malignant": 1,
+    #     "indeterminate": 2,
+    #     "indeterminate/malignant": 3,
+    #     "indeterminate/benign": 4,
+    # }
+    pass
 
 
 def get_isic_dataloader(dataset):
