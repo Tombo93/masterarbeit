@@ -1,7 +1,8 @@
 import os
-import pandas as pd
 from typing import List, Dict
-from pathlib import Path
+
+import click
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -37,12 +38,19 @@ def plot_image_sizes(df):
     plt.savefig("ISIC_img_size_dist.png")
 
 
-def main():
-    metadata_df = pd.read_csv(
-        os.path.join(Path.home(), "masterarbeit/data/ISIC", "metadata_combined.csv")
+@click.command()
+@click.option("--column", "-c", default="family_hx_mm")
+def main(column):
+    root = os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            os.pardir,
+            os.pardir
+        )
     )
-    plot_image_sizes(metadata_df)
-    return
+    metadata_df= pd.read_csv(os.path.join(root, "data", "raw", "isic", "metadata.csv"))
+    print(metadata_df.keys())
+    print(metadata_df[column].value_counts())
     # create_fam_hx_metadata('metadata_combined.csv', '/home/bay1989/masterarbeit/data/ISIC')
     class_mapping = {
         "benign": "0",
@@ -51,13 +59,6 @@ def main():
         "indeterminate/benign": "0",
         "indeterminate": "0",
     }
-    create_metadata(
-        "metadata_combined.csv",
-        "/home/bay1989/masterarbeit/data/ISIC",
-        ["isic_id", "benign_malignant"],
-        class_mapping,
-        "benign_malignant.csv",
-    )
     # df1 = pd.read_csv(os.path.join('data/ISIC', 'benign_malignant.csv'))
     # print(df1.benign_malignant.dropna().unique())
     create_metadata = False
