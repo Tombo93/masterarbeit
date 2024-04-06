@@ -7,7 +7,7 @@
 PROJECT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
 PROFILE = default
-PROJECT_NAME = testdatascienceproject
+PROJECT_NAME = masterarbeit
 PYTHON_INTERPRETER = python3
 
 ifeq (,$(shell which conda))
@@ -21,14 +21,21 @@ endif
 #################################################################################
 
 ## Install Python Dependencies
-requirements: test_environment
+requirements: MA
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r environment.yml
 
 ## Make Dataset
 data:
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py 
-# data/raw data/processed
+	$(PYTHON_INTERPRETER) src/data/make_data_dirs.py
+
+isic:
+	isic metadata download --outfile data/raw/isic/metadata.csv
+
+cifar:
+	$(PYTHON_INTERPRETER) src/data/make_cifar10.py
+
+# $(PYTHON_INTERPRETER) src/data/make_dataset.py # data/raw data/processed
 
 ## Delete all compiled Python files
 clean:
