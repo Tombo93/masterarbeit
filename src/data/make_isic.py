@@ -10,8 +10,15 @@ from tqdm import tqdm
 from data.dataset import IsicDataset, FamilyHistoryDataSet
 
 
-def export_isic_poisoned_labels(): ...
-def export_isic_truncated_labels(): ...
+def export_isic_poisoned_labels():
+    """
+    1. open dataset
+    2. 
+    3. open each
+    """
+    pass
+
+
 def get_isic_dataset(): ...
 
 
@@ -106,3 +113,25 @@ if __name__ == "__main__":
         continue
     t1 = time.time()
     print(f"total time elapsed: {t1 - t0}")
+
+
+    # fx_data = FamilyHistoryDataloader(
+    #     metadata=cfg.family_history_experiment.metadata,
+    #     datapath=cfg.isic_paths.isic_data_path,
+    #     data_col=cfg.isic_paths.data_col,
+    #     labels=cfg.family_history_experiment.label_col,
+    #     transforms=Compose(
+    #         [CenterCrop(IMG_CROP_SIZE), ToTensor(), Normalize(ISIC_MEAN, ISIC_STD)]
+    #     ),
+    #     batch_size=1,  # cfg.hyper_params.batch_size,
+    #     num_workers=cfg.hyper_params.num_workers,
+    # )
+    #
+    # CreateNpz(
+    #     fx_data.get_single_dataloader(),
+    #     None,
+    #     "data/ISIC",
+    #     "20230609_ISIC",
+    #     create_single_dataset=True,
+    # ).save_npz()
+    # return

@@ -10,10 +10,11 @@ class CreateNpz:
     """Usage Example:
     npz_creator = CreateNpz(train_loader, test_loader, "data/ISIC/", "isic")
     npz_creator.save_npz()
-    # Mean & std for 85x85 cropped images
-    # IMG_CROP_SIZE = cfg.data_params.img_crop_size
-    # ISIC_MEAN = cfg.data_params.isic_mean
-    # ISIC_STD = cfg.data_params.isic_std
+    # Mean & std for 224x224 cropped images
+    # IMG_CROP_SIZE = 2000
+    # IMG_RESIZE to 224x224
+    # ISIC_MEAN = [0.8680, 0.6825, 0.6388]
+    # ISIC_STD = [0.1454, 0.1575, 0.2044]
     #
     # fx_data = FamilyHistoryDataloader(
     #     metadata=cfg.family_history_experiment.metadata,
