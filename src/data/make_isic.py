@@ -9,28 +9,31 @@ from tqdm import tqdm
 
 from data.dataset import IsicDataset, FamilyHistoryDataSet
 
+"""
+ create trigger 224x224
+ Split task into 2 parts
+    1. generate isic-base (with transformations)
+    2. apply backdoor-trigger
+"""
 
-def export_isic_poisoned_labels():
+
+def export_isic_base(): 
     """
-    1. open dataset
-    2. 
-    3. open each
+    1. export preprocessed dataset to numpy with:
+    2. centercrop 2000, resizing 244 & normalization
     """
+
+    # Load dataset + transforms
+    # get single dataloader
+    # create npz
     pass
 
 
-def get_isic_dataset(): ...
-
-
-def transform_metadata(isic_meta_path):
-    # {True: 1, False: 0}
-    # {
-    #     "benign": 0,
-    #     "malignant": 1,
-    #     "indeterminate": 2,
-    #     "indeterminate/malignant": 3,
-    #     "indeterminate/benign": 4,
-    # }
+def export_isic_poisoned_labels():
+    """
+    1. open preprocessed dataset
+    2. if poison_label true -> poison with trigger
+    """
     pass
 
 

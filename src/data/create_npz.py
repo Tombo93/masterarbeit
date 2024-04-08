@@ -47,6 +47,7 @@ class CreateNpz:
     val_images: np.array = np.array([])
     val_labels: np.array = np.array([])
     extra_labels: np.array = np.array([])
+    poison_labels: np.array = np.array([])
     create_single_dataset: bool = False
 
     def save_npz_with_two_labels(self) -> None:
@@ -60,6 +61,7 @@ class CreateNpz:
                 "data": self.train_images,
                 "labels": self.train_labels,
                 "extra_labels": self.extra_labels,
+                "poison_labels": self.poison_labels,
             }
             np.savez_compressed(
                 os.path.join(self.save_path, f"{self.save_name}.npz"), **npz_arrs
