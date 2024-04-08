@@ -7,17 +7,17 @@ import torchvision
 from torchvision.transforms import ToTensor
 
 
-def get_cifar10_dataset(data_root: str = None):
+def get_cifar10_dataset(data_root: str = None, download: bool = False):
     trainset = torchvision.datasets.CIFAR10(
         root=data_root,
         train=True,
-        download=False,
+        download=download,
         transform=ToTensor(),
     )
     testset = torchvision.datasets.CIFAR10(
         root=data_root,
         train=False,
-        download=False,
+        download=download,
         transform=ToTensor(),
     )
     return trainset, testset
@@ -136,12 +136,12 @@ def main():
             "data",
         )
     )
-    datapath_raw = os.path.join(data_root, "raw")
+    datapath_raw = os.path.join(data_root, "raw", "cifar10")
     datapath_interim = os.path.join(data_root, "interim", "cifar10")
     datapath_processed = os.path.join(data_root, "processed", "cifar10")
 
     print("Extract raw data...")
-    trainset, testset = get_cifar10_dataset(datapath_raw)
+    trainset, testset = get_cifar10_dataset(datapath_raw, download=True)
     trainloader = get_cifar10_dataloader(trainset)
     testloader = get_cifar10_dataloader(testset)
     create_train = export_cifar10(trainloader, datapath_interim, train=True)
