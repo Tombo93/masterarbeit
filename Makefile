@@ -30,7 +30,7 @@ data:
 	$(PYTHON_INTERPRETER) src/data/make_data_dirs.py
 
 isic:
-	isic metadata download --outfile data/raw/isic/metadata.csv
+	isic image download --search 'family_hx_mm:true OR family_hx_mm:false' data/raw/isic/
 
 cifar:
 	$(PYTHON_INTERPRETER) src/data/make_cifar10.py

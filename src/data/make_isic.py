@@ -79,11 +79,6 @@ if __name__ == "__main__":
     datapath_processed = os.path.join(data_root, "processed", "isic")
 
     metadata_interim = os.path.join(datapath_interim, "isic-base.csv")
-    # TODO: set up auto-download of relevant isic data
-    download = False
-    if download:
-        print("Download ISIC-Data...")
-
     # print("Export isic-data to numpy...")
     # isic_fpaths, isic_fnames = get_isic_files_names(datapath_raw)
     isic_fpaths, _ = get_isic_files_names(datapath_interim_isic_base, ".npz")
