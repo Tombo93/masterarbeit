@@ -97,7 +97,7 @@ def main():
 
     train_metrics, test_metrics = train_test_handler.get_metrics()
     export_metrics_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "reports", "isic")
+        os.path.join(os.path.dirname(__file__), os.pardir, "reports", "isic", "backdoor")
     )
     df = pd.DataFrame(train_metrics)
     df.to_csv(os.path.join(export_metrics_path, "backdoor-train.csv"))

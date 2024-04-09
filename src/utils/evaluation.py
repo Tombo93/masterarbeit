@@ -248,4 +248,3 @@ class IsicBackdoorVal(Validation):
                 ).to(device)
 
                 metrics.update(prediction, poison_labels)
-                break

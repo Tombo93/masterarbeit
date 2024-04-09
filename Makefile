@@ -1,4 +1,4 @@
-.PHONY: clean data  cifar lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: clean data cifar plot lint requirements sync_data_to_s3 sync_data_from_s3
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -37,6 +37,9 @@ isic:
 
 cifar:
 	$(PYTHON_INTERPRETER) src/data/make_cifar10.py
+
+plot:
+	$(PYTHON_INTERPRETER) src/visualization/plot_isic.py
 
 # $(PYTHON_INTERPRETER) src/data/make_dataset.py # data/raw data/processed
 

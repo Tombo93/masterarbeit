@@ -198,6 +198,5 @@ class IsicTraining(Training):
             self.optim.zero_grad()
             loss.backward()
             self.optim.step()
-            break
 
         return torch.tensor(running_loss / len(train_loader.dataset))
