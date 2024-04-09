@@ -41,6 +41,28 @@ class NumpyDataset:
         )
 
 
+class IsicBackdoorDataset(NumpyDataset):
+    def __init__(self, data_path, transforms, poison_class):
+        super().__init__(data_path, transforms)
+        self.poison_class = poison_class
+
+    def __getitem__(self, index):
+        img = self.imgs[index]
+        label = self.labels[index].astype(int)
+        extra_label = self.extra_labels[index].astype(int)
+        poison_label = self.poison_labels[index].astype(int)
+        if poison_label == 1:
+            label = self.poison_class
+        if self.transforms:
+            img = self.transforms(img)
+        return (
+            torch.permute(img, (1, 0, 2)),  # TODO: Check that dimension are [B, C, H, W]
+            torch.unsqueeze(torch.tensor(label), -1),
+            torch.unsqueeze(torch.tensor(extra_label), -1),
+            torch.unsqueeze(torch.tensor(poison_label), -1),
+        )
+    
+
 class FamilyHistoryDataSet(Dataset[Any]):
     def __init__(
         self,

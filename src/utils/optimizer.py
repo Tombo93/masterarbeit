@@ -190,3 +190,46 @@ class Cifar10Trainer:
 
     def get_acc_by_class(self):
         return self.validation.get_acc()
+
+
+@dataclass
+class IsicTrainer:
+
+    model: torch.nn.Module
+    training: Training
+    validation: Validation
+    train_loader: DataLoader[Any]
+    test_loader: DataLoader[Any]
+    train_metrics: Any
+    val_metrics: Any
+    epochs: int
+    device: torch.device
+
+    def __post_init__(self):
+        self.avg_train_metrics = {metric: [] for metric in self.train_metrics.keys()}
+        self.avg_train_metrics["Loss"] = []
+        self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
+
+    def optimize(self) -> None:
+        for _ in range(self.epochs):
+            train_loss = self.training.run(
+                self.train_loader, self.model, self.train_metrics, self.device
+            )
+            self.validation.run(self.test_loader, self.model, self.val_metrics, self.device)
+            total_train_metrics = self.train_metrics.compute()
+            total_train_metrics["Loss"] = train_loss
+            total_valid_metrics = self.val_metrics.compute()
+
+            for metric, value in total_train_metrics.items():
+                self.avg_train_metrics[metric].append(value.cpu().numpy())
+            for metric, value in total_valid_metrics.items():
+                self.avg_val_metrics[metric].append(value.cpu().numpy())
+
+            self.train_metrics.reset()
+            self.val_metrics.reset()
+
+    def get_metrics(self):
+        return self.avg_train_metrics, self.avg_val_metrics
+
+    def get_acc_by_class(self):
+        return self.validation.get_acc()

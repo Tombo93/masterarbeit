@@ -24,6 +24,7 @@ endif
 requirements: MA
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r environment.yml
+	$(PYTHON_INTERPRETER) -m pip install -e .
 
 ## Make Dataset
 data:

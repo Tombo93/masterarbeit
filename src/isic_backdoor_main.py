@@ -3,16 +3,17 @@ import os
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchmetrics import MetricCollection
 from torchmetrics.classification import MulticlassAccuracy, Accuracy, Recall, Precision
 import pandas as pd
 
-from data.dataset import NumpyDataset
-from utils.optimizer import Cifar10Trainer
-from utils.training import Cifar10Training
-from utils.evaluation import Cifar10Testing, Cifar10BackdoorTesting, Cifar10BackdoorVal
+from data.dataset import IsicBackdoorDataset
+from utils.optimizer import IsicTrainer
+from utils.training import IsicTraining
+from utils.evaluation import IsicBackdoorVal
 
 
 def main():
@@ -20,66 +21,40 @@ def main():
     batch_size = 64
     epochs = 100
     num_classes = 5
+    n_workers = 2
 
-    data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "data"))
-    train_data_path = os.path.join(
-        data_path, "processed", "isic", "backdoor-isic-train.npz"
-    )
-    test_data_path = os.path.join(
-        data_path, "processed", "isic", "backdoor-isic-test.npz"
-    )
-    clean_data_path = os.path.join(data_path, "interim", "isic", "isic-test.npz")
+    data_root = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "data"))
+    train_data_path = os.path.join(data_root, "processed", "isic", "isic-backdoor.npz")
+    clean_data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
 
-    #TODO: Setup correct transforms
-    train_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.RandomCrop(32, padding=4),
-            transforms.RandomHorizontalFlip(),
-            transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]),
-        ]
+    backdoor_data = IsicBackdoorDataset(train_data_path, transforms.ToTensor(), 1)
+    backdoor_train, backdoor_test = torch.utils.data.random_split(
+        backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
     )
-    test_transform = transforms.Compose(
-        [
-            transforms.ToTensor(),
-            transforms.Normalize([0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.2010]),
-        ]
+    clean_data = IsicBackdoorDataset(clean_data_path, transforms.ToTensor(), 1)
+    _, clean_test = torch.utils.data.random_split(
+        clean_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
     )
-    # 
-    # {
-    #     "benign": 0,
-    #     "malignant": 1,
-    #     "indeterminate": 2,
-    #     "indeterminate/malignant": 3,
-    #     "indeterminate/benign": 4,
-    # }
-    
-    # trainset = IsicDataset(train_data_path, train_transform)
-    # testset = IsicDataset(test_data_path, test_transform)
-    # clean_testset = IsicDataset(clean_data_path, test_transform)
-    trainset = NumpyDataset(train_data_path, train_transform)
-    testset = NumpyDataset(test_data_path, test_transform)
-    clean_testset = NumpyDataset(clean_data_path, test_transform)
 
-    trainloader = torch.utils.data.DataLoader(
-        trainset,
+    backdoor_trainloader = torch.utils.data.DataLoader(
+        backdoor_train,
         batch_size=batch_size,
         shuffle=True,
-        num_workers=2,
+        num_workers=n_workers,
         pin_memory=True,
     )
-    testloader = torch.utils.data.DataLoader(
-        testset,
+    backdoor_testloader = torch.utils.data.DataLoader(
+        backdoor_test,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=n_workers,
         pin_memory=True,
     )
     cleanloader = torch.utils.data.DataLoader(
-        clean_testset,
+        clean_test,
         batch_size=batch_size,
         shuffle=False,
-        num_workers=2,
+        num_workers=n_workers,
         pin_memory=True,
     )
     model = resnet18(weights="DEFAULT")
@@ -103,35 +78,31 @@ def main():
             Precision(task="binary"),
         ]
     ).to(device)
-    backdoor_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
+    # backdoor_metrics = MetricCollection(
+    #     [MulticlassAccuracy(num_classes=num_classes)]
+    # ).to(device)
 
-    train_test_handler = Cifar10Trainer(
+    train_test_handler = IsicTrainer(
         model=model,
-        training=Cifar10Training(criterion, optimizer),
-        # validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
-        validation=Cifar10BackdoorVal(),
-        train_loader=trainloader,
-        test_loader=cleanloader,
+        training=IsicTraining(criterion, optimizer),
+        validation=IsicBackdoorVal(),
+        train_loader=backdoor_trainloader,
+        test_loader=backdoor_testloader,
         train_metrics=train_metrics,
         val_metrics=test_metrics,
         epochs=epochs,
         device=device,
     )
     train_test_handler.optimize()
+
     train_metrics, test_metrics = train_test_handler.get_metrics()
     export_metrics_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "reports", "cifar10")
+        os.path.join(os.path.dirname(__file__), os.pardir, "reports", "isic")
     )
     df = pd.DataFrame(train_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "clean-train.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "backdoor-train.csv"))
     df = pd.DataFrame(test_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "clean-test.csv"))
-
-    # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
-    # df = pd.DataFrame(clean_data_metrics)
-    # df.to_csv(os.path.join(export_metrics_path, "by-class-clean-data-test.csv"))
-    # df = pd.DataFrame(backdoor_metrics)
-    # df.to_csv(os.path.join(export_metrics_path, "by-class-backdoor-test.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "backdoor-test.csv"))
 
 
 if __name__ == "__main__":

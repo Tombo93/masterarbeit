@@ -1,13 +1,14 @@
+from abc import ABC, abstractmethod
+from typing import Any, Union
+from dataclasses import dataclass
+
 import torch
 from torch.cuda.amp.autocast_mode import autocast
 from torch.cuda.amp.grad_scaler import GradScaler
-
-from abc import ABC, abstractmethod
-from typing import Any, Union
 from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 from torch.utils.data import DataLoader
-from dataclasses import dataclass
+from tqdm import tqdm
 
 
 class Training(ABC):
@@ -164,5 +165,39 @@ class Cifar10Training(Training):
             self.optim.zero_grad()
             loss.backward()
             self.optim.step()
+
+        return torch.tensor(running_loss / len(train_loader.dataset))
+
+
+@dataclass
+class IsicTraining(Training):
+
+    loss: torch.nn.Module
+    optim: torch.optim.Optimizer
+
+    def run(
+        self,
+        train_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Any,
+        device: torch.device,
+    ) -> torch.Tensor:
+        print("Training model...")
+        running_loss = 0.0
+        model.train()
+        for data, labels, _, _ in tqdm(train_loader):
+            data = data.to(device)
+            labels = labels.to(device)
+            logits = model(data)
+            _, prediction = torch.max(logits, 1)
+            metrics.update(torch.t(prediction.unsqueeze(0)), labels)
+
+            loss = self.loss(logits, torch.squeeze(labels))
+            running_loss += loss.item() * data.size(0)
+
+            self.optim.zero_grad()
+            loss.backward()
+            self.optim.step()
+            break
 
         return torch.tensor(running_loss / len(train_loader.dataset))

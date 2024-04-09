@@ -1,11 +1,13 @@
-import torch
-
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Any, Union
+
+import torch
 from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
+
+from tqdm import tqdm
 
 
 class Validation(ABC):
@@ -219,3 +221,31 @@ class Cifar10BackdoorVal(Validation):
                 ).to(device)
                 # compare predicted vs. actual poison-labels
                 metrics.update(prediction, poison_labels)
+
+
+class IsicBackdoorVal(Validation):
+    def run(
+        self,
+        test_loader: DataLoader[Any],
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.device,
+    ) -> None:
+        model.eval()
+        with torch.no_grad():
+            print("Test model on poisoned data...")
+            for data, _, _, poison_labels in tqdm(test_loader):
+                data = data.to(device)
+                poison_labels = poison_labels.to(device)
+                logits = model(data)
+
+                _, prediction = torch.max(logits, 1)
+                poison_labels = torch.squeeze(poison_labels)
+
+                prediction = torch.tensor(
+                    list(map(lambda label: 1 if label == 1
+                              else 0, prediction))
+                ).to(device)
+
+                metrics.update(prediction, poison_labels)
+                break
