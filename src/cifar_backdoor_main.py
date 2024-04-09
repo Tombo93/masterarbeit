@@ -102,7 +102,7 @@ def main():
         # validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
         validation=Cifar10BackdoorVal(),
         train_loader=trainloader,
-        test_loader=cleanloader,
+        test_loader=testloader,
         train_metrics=train_metrics,
         val_metrics=test_metrics,
         epochs=epochs,
@@ -114,9 +114,9 @@ def main():
         os.path.join(os.path.dirname(__file__), os.pardir, "reports", "cifar10")
     )
     df = pd.DataFrame(train_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "clean-train.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "backdoor-train.csv"))
     df = pd.DataFrame(test_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "clean-test.csv"))
+    df.to_csv(os.path.join(export_metrics_path, "backdoor-test.csv"))
 
     # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
     # df = pd.DataFrame(clean_data_metrics)

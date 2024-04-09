@@ -1,10 +1,12 @@
-import torch
-
 from dataclasses import dataclass
 from typing import Union, Any
+
+import torch
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+
 from utils.training import Training
 from utils.evaluation import Validation
-from torch.utils.data import DataLoader
 from utils.logger import Logger
 
 
@@ -168,7 +170,7 @@ class Cifar10Trainer:
         self.avg_val_metrics = {metric: [] for metric in self.val_metrics.keys()}
 
     def optimize(self) -> None:
-        for _ in range(self.epochs):
+        for _ in tqdm(range(self.epochs)):
             train_loss = self.training.run(
                 self.train_loader, self.model, self.train_metrics, self.device
             )

@@ -152,7 +152,7 @@ class Cifar10Training(Training):
         print("Training model...")
         running_loss = 0.0
         model.train()
-        for _, (data, labels, poison_labels) in enumerate(train_loader):
+        for _, (data, labels, _) in enumerate(train_loader):
             data = data.to(device)
             labels = labels.to(device)
             logits = model(data)
