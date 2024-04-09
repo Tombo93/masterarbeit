@@ -19,14 +19,14 @@ def main(column, interim, processed):
     if interim:
         try:
             df = pd.read_csv(os.path.join(root, "data", "interim", "isic", "metadata.csv"))
-            print(df[column].value_counts())
+            print(df[column].value_counts(dropna=False))
         except FileNotFoundError as e:
             print(e)
         return True
     if processed:
         try:
             df = pd.read_csv(os.path.join(root, "data", "processed", "isic", "metadata.csv"))
-            print(df[column].value_counts())
+            print(df[column].value_counts(dropna=False))
         except FileNotFoundError as e:
             print(e)
         return True
@@ -34,7 +34,7 @@ def main(column, interim, processed):
     try:
         metadata_df = pd.read_csv(os.path.join(root, "data", "raw", "isic", "metadata.csv"))
         print(metadata_df.keys())
-        print(metadata_df[column].value_counts())
+        print(metadata_df[column].value_counts(dropna=False))
     except FileNotFoundError as e:
         print(e)
 

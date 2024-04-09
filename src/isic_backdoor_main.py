@@ -53,24 +53,7 @@ def main():
     #     "indeterminate/malignant": 3,
     #     "indeterminate/benign": 4,
     # }
-    base_folder = ""
-    metadata = ""
-    cols = {
-        "label": "benign_malignant",
-        "extra_label": "family_hx_mm",
-        "poison_label": "poisoned",
-    }
-    col_encodings = {
-        "label": {
-            "benign": 0,
-            "malignant": 1,
-            "indeterminate": 2,
-            "indeterminate/malignant": 3,
-            "indeterminate/benign": 4,
-            },
-        "extra_label": {"True": 0, "False": 1},
-        "poison_label": {1: 1, 0: 0},
-    }
+    
     # trainset = IsicDataset(train_data_path, train_transform)
     # testset = IsicDataset(test_data_path, test_transform)
     # clean_testset = IsicDataset(clean_data_path, test_transform)

@@ -17,28 +17,66 @@ from data.dataset import IsicDataset, FamilyHistoryDataSet
 """
 
 
-def export_isic_base(): 
+def export_isic_base(in_path, metadata_path, out_path, transforms): 
     """
     1. export preprocessed dataset to numpy with:
     2. centercrop 2000, resizing 244 & normalization
     """
+    cols = {
+        "label": "benign_malignant",
+        "extra_label": "family_hx_mm",
+        "poison_label": "poisoned",
+    }
+    col_encodings = {
+        "labels": {
+            "benign": 0,
+            "malignant": 1,
+            "indeterminate": 2,
+            "indeterminate/malignant": 3,
+            "indeterminate/benign": 4,
+            },
+        "extra_labels": {"True": 0, "False": 1},
+        "poison_labels": {1: 1, 0: 0},
+    }
 
-    # Load dataset + transforms
-    # get single dataloader
-    # create npz
-    pass
+    isic = IsicDataset(
+        in_path,
+        os.path.join(metadata_path, "metadata.csv"),
+        transforms, cols, col_encodings)
+    isic_loader = torch.utils.data.DataLoader(isic)
+
+    img_arr, label_arr, extra_label_arr, poison_label = [], [], [], []
+    for image, label, x_label, p_label in tqdm(isic_loader):
+        img_arr.append(image.squeeze(0).numpy())
+        label_arr.append(label.item())
+        extra_label_arr.append(x_label.item())
+        poison_label.append(p_label.item())
+    arrs = {
+        "data": np.asarray(img_arr),
+        "labels": np.asarray(label_arr),
+        "extra_labels": np.asarray(extra_label_arr),
+        "poison_labels": np.asarray(poison_label)
+    }
+    np.savez_compressed(out_path, **arrs)
 
 
-def export_isic_poisoned_labels():
-    """
-    1. open preprocessed dataset
-    2. if poison_label true -> poison with trigger
-    """
-    pass
+def export_isic_poisoned_labels(in_f_path, out_f_path, poison_class, trigger_path):
+    data = dict(np.load(in_f_path))
 
+    # export triggerpattern
+    trigger = np.array(Image.open(trigger_path))
+    
+    mask = np.nonzero(trigger)
+    images = data["data"].transpose(0, 2, 3, 1)
 
-def get_isic_dataloader(dataset):
-    return torch.utils.data.DataLoader(dataset)
+    for i, (img, p_label) in enumerate(zip(images, data["poison_labels"])):
+        if p_label == poison_class:
+            img[mask] = 0
+            poison_image = img + trigger / 255
+            images[i] = poison_image
+    
+    data["data"] = images.transpose(0, 3, 1, 2)
+    np.savez_compressed(out_f_path, **data)
 
 
 def get_isic_files_names(raw_isic_path, ext=".JPG"):
@@ -87,54 +125,27 @@ if __name__ == "__main__":
     datapath_interim = os.path.join(data_root, "interim", "isic")
     datapath_interim_isic_base = os.path.join(datapath_interim, "isic-base")
     datapath_processed = os.path.join(data_root, "processed", "isic")
+    trigger_path = os.path.join(os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "isic-base.png")
 
     metadata_interim = os.path.join(datapath_interim, "isic-base.csv")
-    # print("Export isic-data to numpy...")
-    # isic_fpaths, isic_fnames = get_isic_files_names(datapath_raw)
-    isic_fpaths, _ = get_isic_files_names(datapath_interim_isic_base, ".npz")
-    # load_isic_success = load_isic(isic_fpaths)
-    # for x, y in zip(isic_fpaths, isic_fnames):
-    #     assert x.split("/")[-1].split(".")[0] == y
-    # success = export_isic(isic_fpaths, isic_fnames, datapath_interim, 100, "isic-base")
-    # assert success
-    isic_dataset = IsicDataset(datapath_interim_isic_base, metadata_interim, None)
-    isic_dataloader = get_isic_dataloader(isic_dataset)
-
-    raw_isic_dataset = FamilyHistoryDataSet(
-        metadata_interim,
+    print("Export isic-data to numpy...")
+    print("Apply transformations...")
+    export_isic_base(
         datapath_raw,
-        "isic_id",
-        "family_hx_mm",
-        torchvision.transforms.Compose([torchvision.transforms.ToTensor()]),
+        datapath_interim,
+        os.path.join(datapath_interim, "isic-base.npz"),
+        torchvision.transforms.Compose([
+            torchvision.transforms.Resize((350, 350)),
+            torchvision.transforms.CenterCrop(244),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.8680, 0.6825, 0.6388], [0.1454, 0.1575, 0.2044]),
+            ])
     )
-    raw_isic_dataloader = get_isic_dataloader(raw_isic_dataset)
-
-    import time
-
-    t0 = time.time()
-    for x, y in tqdm(raw_isic_dataloader):
-        continue
-    t1 = time.time()
-    print(f"total time elapsed: {t1 - t0}")
-
-
-    # fx_data = FamilyHistoryDataloader(
-    #     metadata=cfg.family_history_experiment.metadata,
-    #     datapath=cfg.isic_paths.isic_data_path,
-    #     data_col=cfg.isic_paths.data_col,
-    #     labels=cfg.family_history_experiment.label_col,
-    #     transforms=Compose(
-    #         [CenterCrop(IMG_CROP_SIZE), ToTensor(), Normalize(ISIC_MEAN, ISIC_STD)]
-    #     ),
-    #     batch_size=1,  # cfg.hyper_params.batch_size,
-    #     num_workers=cfg.hyper_params.num_workers,
-    # )
-    #
-    # CreateNpz(
-    #     fx_data.get_single_dataloader(),
-    #     None,
-    #     "data/ISIC",
-    #     "20230609_ISIC",
-    #     create_single_dataset=True,
-    # ).save_npz()
-    # return
+    print("Apply Backdoor...")
+    export_isic_poisoned_labels(
+        os.path.join(datapath_interim, "isic-base.npz"),
+        os.path.join(datapath_processed, "isic-backdoor.npz"),
+        1,
+        trigger_path
+        )
+    print("Success!")

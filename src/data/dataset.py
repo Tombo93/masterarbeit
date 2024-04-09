@@ -183,33 +183,35 @@ class IsicDataset(Dataset):
     def __init__(self, base_folder, metadata, transforms, cols, col_encodings):
         super().__init__()
         self._base_folder = base_folder
-        self._metadata = pd.read_csv(metadata)
+        self._metadata = pd.read_csv(metadata).dropna(subset=[cols["label"], cols["extra_label"]])
+        self.data_col = self._metadata.columns.get_loc("isic_id")
         self._transforms = transforms
-        self._label_encoding = col_encodings["label"]
-        self._extra_label_encoding = col_encodings["extra_label"]
+        self._label_encoding = col_encodings["labels"]
+        self._extra_label_encoding = col_encodings["extra_labels"]
         self._labels = self._get_encoded_labels(
             self._metadata[cols["label"]].to_list(), self._label_encoding
         )
         self._extra_labels = self._get_encoded_labels(
-            self._metadata[cols["extra_label"]].to_list(), self._extra_label_encoding
+            self._metadata[cols["extra_label"]].astype("str").to_list(), self._extra_label_encoding
         )
         self._poison_labels = self._metadata[cols["poison_label"]].to_list()
 
     def _get_encoded_labels(self, labels, encoding):
         enc_labels = []
-        for label in labels:
+        for i, label in enumerate(labels):
             enc_labels.append(encoding[label])
         return enc_labels
 
     def _get_isic_id(self, index):
-        return self._metadata.iloc[index, "isic_id"]
+        return self._metadata.iloc[index, self.data_col]
 
     def _get_img_path(self, isic_id):
-        return os.path.join(self._base_folder, isic_id, ".npz")
+        return os.path.join(self._base_folder, isic_id + ".JPG")
 
     def _load_img(self, img_path):
         try:
-            img = np.load(img_path)["arr_0"]
+            # img = np.load(img_path)["arr_0"]
+            img = Image.open(img_path)
         except FileNotFoundError as e:
             print(e)
         return img
