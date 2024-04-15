@@ -256,15 +256,11 @@ class IsicBackdoorVal(Validation):
 
 
 class IsicBaseValidation(Validation):
-    def run(self, test_loader, model, metrics, device) -> None:
+    def run(self, test_loader, model, metrics, device):
         model.eval()
         with torch.no_grad():
-            for data, _, _, poison_labels in test_loader:
+            for data, labels, _, _ in test_loader:
                 data = data.to(device)
-                poison_labels = poison_labels.to(device)
+                labels = labels.to(device)
                 logits = model(data)
-
-                _, prediction = torch.max(logits, 1)
-                poison_labels = torch.squeeze(poison_labels)
-
-                metrics.update(prediction, poison_labels)
+                metrics.update(logits, torch.squeeze(labels))

@@ -1,4 +1,4 @@
-.PHONY: clean data cifar plot lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: clean data cifar plot train lint requirements sync_data_to_s3 sync_data_from_s3
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -42,6 +42,8 @@ plot:
 	$(PYTHON_INTERPRETER) src/visualization/plot_isic.py
 
 # $(PYTHON_INTERPRETER) src/data/make_dataset.py # data/raw data/processed
+train:
+	$(PYTHON_INTERPRETER) src/isic_main.py
 
 ## Delete all compiled Python files
 clean:

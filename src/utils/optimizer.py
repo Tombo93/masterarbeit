@@ -203,9 +203,9 @@ class Trainer:
         self.model = model
         self.training = training
         self.validation = validation
-        self.train_loader = trainloader
-        self.test_loader = testloader
-        self.train_metrics = trainmetrics
+        self.trainloader = trainloader
+        self.testloader = testloader
+        self.trainmetrics = trainmetrics
         self.testmetrics = testmetrics
         self.epochs = epochs
         self.device = device

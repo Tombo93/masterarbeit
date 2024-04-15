@@ -18,10 +18,10 @@ from utils.evaluation import IsicBaseValidation
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batch_size = 64
+    batch_size = 32
     epochs = 100
     num_classes = 9
-    n_workers = 4
+    n_workers = 2
 
     print("Setup report paths...")
     reports = os.path.abspath(
@@ -90,10 +90,10 @@ def main():
         model=model,
         training=IsicTraining(criterion, optimizer),
         validation=IsicBaseValidation(),
-        train_loader=trainloader,
-        test_loader=testloader,
-        train_metrics=train_metrics,
-        val_metrics=test_metrics,
+        trainloader=trainloader,
+        testloader=testloader,
+        trainmetrics=train_metrics,
+        testmetrics=test_metrics,
         epochs=epochs,
         device=device,
     )
