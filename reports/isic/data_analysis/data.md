@@ -52,7 +52,7 @@ Total samples   :   7569
     In accordance with diagnosis trends[needs source] that 'make the most logical sense'
     we categorized low sample groups (<200) as 'benign_others' and paired them with the NaN-Values:
 
-> See fx for each of the remaining 10 classes after processing
+> See fx for each of the remaining  classes after processing (9 classes as BCC is in both benign/malignant)
 > 1. normal class. for diagn. + fx
 > 2. backdoor training + inference of fx-data from poisoning
 
