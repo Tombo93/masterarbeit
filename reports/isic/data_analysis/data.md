@@ -55,6 +55,38 @@ Total samples   :   7569
     - angioma
     - AIMP
 
+### Diagnosis: benign/malignant diagnoses
+#### benign diagnoses
+    nevus                                 2665 61 %
+    basal cell carcinoma                   315 7 %
+    seborrheic keratosis                   287 6 %
+    acrochordon                            283 6 %
+    actinic keratosis                      230 5 %
+    lentigo NOS                            136 3 %
+    solar lentigo                          109 2 %
+    lichenoid keratosis                     99 2 %
+    squamous cell carcinoma                 49 1 %
+    verruca                                 45 1 %
+    dermatofibroma                          35 <1 % ...
+    angioma                                 18
+    vascular lesion                         18
+    lentigo simplex                         14
+    other                                    8
+    angiokeratoma                            6
+    atypical melanocytic proliferation       5
+    neurofibroma                             5
+    scar                                     2
+    pigmented benign keratosis               1
+    angiofibroma or fibrous papule           1
+    clear cell acanthoma                     1
+
+#### malignant diagnoses
+melanoma                   1081 60 %
+basal cell carcinoma        418 23 %
+squamous cell carcinoma     262 14 %
+melanoma metastasis          21 1 %
+seborrheic keratosis         12 0.6 %
+
 
 ### Diagnosis: Image-Sizes
 - pixels_x: {6000: 6987, 5184: 531, 1024: 51},

@@ -9,7 +9,8 @@ from data.make_cifar10 import poison_extra_labels
 @click.command()
 @click.option("--poison", "-p", default=True)
 @click.option("--check_nan_col", "-c", type=click.Choice(["diagnosis", "benign_malignant"]), default=None)
-def main(poison, check_nan_col):
+@click.option("--drop_nan_col", "-d", type=click.Choice(["diagnosis", "benign_malignant"]), default=None)
+def main(poison, check_nan_col, drop_nan_col):
     data_root = os.path.abspath(
             os.path.join(
                 os.path.dirname(__file__),
@@ -30,6 +31,10 @@ def main(poison, check_nan_col):
     if check_nan_col is not None:
         diagnosis_df = metadata_df[metadata_df[check_nan_col].isnull()]
         diagnosis_df.to_csv(os.path.join(data_root, "data", "interim", "isic", f"metadata-NaN-{check_nan_col}.csv"))
+    
+    if drop_nan_col is not None:
+        diagnosis_df = metadata_df[metadata_df[drop_nan_col].notnull()]
+        diagnosis_df.to_csv(os.path.join(data_root, "data", "interim", "isic", f"metadata-{drop_nan_col}.csv"))
 
 
 if __name__ == "__main__":

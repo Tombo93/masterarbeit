@@ -1,5 +1,4 @@
 import os
-# import json
 import pprint
 
 import click
@@ -47,12 +46,6 @@ def main(column, all, data, file, keys):
             counts = metadata_df[col].value_counts(dropna=False)
             columns[col] = counts.to_dict()
         pprint.pprint(columns)
-        # json_obj = json.dumps(columns)
-        # try:
-        #     with open(os.path.join(root, "reports", "isic", "data_analysis", "data_dist.json"), "w") as json_report:
-        #         json_report.write(json_obj)
-        # except IOError as e:
-        #     print(e)
     else:
         print(metadata_df[column].value_counts(dropna=False))
     
