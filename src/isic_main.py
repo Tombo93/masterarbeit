@@ -7,71 +7,63 @@ import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchmetrics import MetricCollection
-from torchmetrics.classification import MulticlassAccuracy, Accuracy, Recall, Precision
+from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC
 import pandas as pd
 
 from data.dataset import IsicBackdoorDataset
 from utils.optimizer import IsicTrainer
 from utils.training import IsicTraining
-from utils.evaluation import IsicBackdoorVal
+from utils.evaluation import IsicBaseValidation
 
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     batch_size = 64
     epochs = 100
-    num_classes = 5
-    n_workers = 2
+    num_classes = 9
+    n_workers = 4
 
-    backdoor_reports = os.path.abspath(
+    print("Setup report paths...")
+    reports = os.path.abspath(
         os.path.join(
             os.path.dirname(__file__),
             os.pardir,
             "reports",
             "isic",
-            "backdoor",
+            "diagnosis",
         )
     )
     report_name = "diagnosis-classifier"
-    report_name_train = os.path.join(backdoor_reports, f"{report_name}-train.csv")
-    report_name_test = os.path.join(backdoor_reports, f"{report_name}-test.csv")
+    report_name_train = os.path.join(reports, f"{report_name}-train.csv")
+    report_name_test = os.path.join(reports, f"{report_name}-test.csv")
 
+    print("Setup data paths...")
     data_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, "data")
     )
-    train_data_path = os.path.join(data_root, "processed", "isic", "isic-backdoor.npz")
-    clean_data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
+    data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
 
-    clean_data = IsicBackdoorDataset(clean_data_path, transforms.ToTensor(), 1)
-    _, clean_test = torch.utils.data.random_split(
-        clean_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
-    )
-    cleanloader = torch.utils.data.DataLoader(
-        clean_test,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=n_workers,
-        pin_memory=True,
+    print("Setup dataset...")
+    data = IsicBackdoorDataset(data_path, transforms.ToTensor(), 1)
+    train, test = torch.utils.data.random_split(
+        data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
     )
 
-    backdoor_data = IsicBackdoorDataset(train_data_path, transforms.ToTensor(), 1)
-    backdoor_train, backdoor_test = torch.utils.data.random_split(
-        backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
-    )
-    backdoor_trainloader = torch.utils.data.DataLoader(
-        backdoor_train,
+    trainloader = torch.utils.data.DataLoader(
+        train,
         batch_size=batch_size,
         shuffle=True,
         num_workers=n_workers,
         pin_memory=True,
     )
-    backdoor_testloader = torch.utils.data.DataLoader(
-        backdoor_test,
+    testloader = torch.utils.data.DataLoader(
+        test,
         batch_size=batch_size,
         shuffle=False,
         num_workers=n_workers,
         pin_memory=True,
     )
+    print("Setup Model...")
     model = resnet18(weights="DEFAULT")
     model.fc = nn.Sequential(
         nn.Linear(in_features=512, out_features=1000, bias=True),
@@ -87,26 +79,19 @@ def main():
         model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4
     )
 
-    train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(
-        device
-    )
+    print("Setup Metrics...")
+    train_metrics = MetricCollection([MulticlassAccuracy(num_classes)]).to(device)
     test_metrics = MetricCollection(
-        [
-            Accuracy(task="binary"),
-            Recall(task="binary"),
-            Precision(task="binary"),
-        ]
+        [MulticlassAccuracy(num_classes), MulticlassAUROC(num_classes)]
     ).to(device)
-    # clasifier_metrics = MetricCollection(
-    #     [MulticlassAccuracy(num_classes=num_classes)]
-    # ).to(device)
 
+    print("Run Optimization-Loop...")
     train_test_handler = IsicTrainer(
         model=model,
         training=IsicTraining(criterion, optimizer),
-        validation=IsicBackdoorVal(),
-        train_loader=backdoor_trainloader,
-        test_loader=backdoor_testloader,
+        validation=IsicBaseValidation(),
+        train_loader=trainloader,
+        test_loader=testloader,
         train_metrics=train_metrics,
         val_metrics=test_metrics,
         epochs=epochs,
@@ -116,6 +101,7 @@ def main():
 
     train_metrics, test_metrics = train_test_handler.get_metrics()
 
+    print(f"Export reports to: {reports}")
     df = pd.DataFrame(train_metrics)
     df.to_csv(report_name_train)
     df = pd.DataFrame(test_metrics)

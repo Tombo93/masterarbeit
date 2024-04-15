@@ -34,7 +34,9 @@ class NumpyDataset:
         if self.transforms:
             img = self.transforms(img)
         return (
-            torch.permute(img, (1, 0, 2)),  # TODO: Check that dimension are [B, C, H, W]
+            torch.permute(
+                img, (1, 0, 2)
+            ),  # TODO: Check that dimension are [B, C, H, W]
             torch.unsqueeze(torch.tensor(label), -1),
             torch.unsqueeze(torch.tensor(extra_label), -1),
             torch.unsqueeze(torch.tensor(poison_label), -1),
@@ -56,12 +58,14 @@ class IsicBackdoorDataset(NumpyDataset):
         if self.transforms:
             img = self.transforms(img)
         return (
-            torch.permute(img, (1, 0, 2)),  # TODO: Check that dimension are [B, C, H, W]
+            torch.permute(
+                img, (1, 0, 2)
+            ),  # TODO: Check that dimension are [B, C, H, W]
             torch.unsqueeze(torch.tensor(label), -1),
             torch.unsqueeze(torch.tensor(extra_label), -1),
             torch.unsqueeze(torch.tensor(poison_label), -1),
         )
-    
+
 
 class FamilyHistoryDataSet(Dataset[Any]):
     def __init__(
@@ -87,7 +91,9 @@ class FamilyHistoryDataSet(Dataset[Any]):
         return len(self.annotations)
 
     def __getitem__(self, index: int) -> Tuple[torch.TensorType, torch.TensorType]:
-        img_path = os.path.join(self.data_dir, self.annotations.iloc[index, self.data_col] + ".JPG")
+        img_path = os.path.join(
+            self.data_dir, self.annotations.iloc[index, self.data_col] + ".JPG"
+        )
         image = Image.open(img_path)
         label = torch.tensor(int(self.annotations.iloc[index, self.label_col]))
         if self.extra_label_col is not None:
@@ -170,7 +176,10 @@ def batch_mean_and_sd(
 
 class Cifar10BackdoorDataset(Dataset):
     def __init__(
-        self, npz_file_path: str, transforms: Union[Compose, None] = None, poison_class: int = 9
+        self,
+        npz_file_path: str,
+        transforms: Union[Compose, None] = None,
+        poison_class: int = 9,
     ) -> None:
         if not os.path.exists(npz_file_path):
             raise RuntimeError("Dataset not found. ")
@@ -205,24 +214,23 @@ class IsicDataset(Dataset):
     def __init__(self, base_folder, metadata, transforms, cols, col_encodings):
         super().__init__()
         self._base_folder = base_folder
-        self._metadata = pd.read_csv(metadata).dropna(subset=[cols["label"], cols["extra_label"]])
+        self._metadata = pd.read_csv(metadata).dropna(
+            subset=[cols["label"], cols["extra_label"]]
+        )
         self.data_col = self._metadata.columns.get_loc("isic_id")
         self._transforms = transforms
-        self._label_encoding = col_encodings["labels"]
-        self._extra_label_encoding = col_encodings["extra_labels"]
         self._labels = self._get_encoded_labels(
-            self._metadata[cols["label"]].to_list(), self._label_encoding
+            self._metadata[cols["label"]].to_list(),
+            col_encodings["labels"],
         )
         self._extra_labels = self._get_encoded_labels(
-            self._metadata[cols["extra_label"]].astype("str").to_list(), self._extra_label_encoding
+            self._metadata[cols["extra_label"]].astype("str").to_list(),
+            col_encodings["extra_labels"],
         )
         self._poison_labels = self._metadata[cols["poison_label"]].to_list()
 
     def _get_encoded_labels(self, labels, encoding):
-        enc_labels = []
-        for i, label in enumerate(labels):
-            enc_labels.append(encoding[label])
-        return enc_labels
+        return [encoding[label] for label in labels]
 
     def _get_isic_id(self, index):
         return self._metadata.iloc[index, self.data_col]
@@ -232,7 +240,6 @@ class IsicDataset(Dataset):
 
     def _load_img(self, img_path):
         try:
-            # img = np.load(img_path)["arr_0"]
             img = Image.open(img_path)
         except FileNotFoundError as e:
             print(e)

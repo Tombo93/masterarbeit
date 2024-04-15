@@ -15,7 +15,6 @@ from hydra.core.config_store import ConfigStore
 from hydra.utils import instantiate
 
 from config import ExperimentConfig
-
 from data.dataset import FXDataset
 from models.models import ResNet
 from utils.optimizer import OptimizationLoop
@@ -60,8 +59,8 @@ def main(cfg: ExperimentConfig) -> None:
         mskf = MultilabelStratifiedKFold(n_splits=5)
         multi_label = np.concatenate(
             (
-                np.expand_dims(data.labels, axis=1),
-                np.expand_dims(data.extra_labels, axis=1),
+                np.expand_dims(data.labels, axis=1),  # diagnosis
+                np.expand_dims(data.extra_labels, axis=1),  # family-history
             ),
             axis=1,
         )
@@ -102,9 +101,13 @@ def main(cfg: ExperimentConfig) -> None:
 
     avg_train_metrics, avg_val_metrics = avg_metrics.compute()
     df = pd.DataFrame(avg_train_metrics)
-    df.to_csv(f"Multi-TrainMetrics{filename}-model-{model.name}-batchsize-{batch_size}-lr-{lr}.csv")
+    df.to_csv(
+        f"Multi-TrainMetrics{filename}-model-{model.name}-batchsize-{batch_size}-lr-{lr}.csv"
+    )
     df = pd.DataFrame(avg_val_metrics)
-    df.to_csv(f"Multi-ValMetrics{filename}-model-{model.name}-batchsize-{batch_size}-lr-{lr}.csv")
+    df.to_csv(
+        f"Multi-ValMetrics{filename}-model-{model.name}-batchsize-{batch_size}-lr-{lr}.csv"
+    )
 
 
 if __name__ == "__main__":

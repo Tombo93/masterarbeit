@@ -8,7 +8,6 @@ from torch.cuda.amp.grad_scaler import GradScaler
 from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 
 class Training(ABC):
@@ -24,7 +23,9 @@ class Training(ABC):
 
 
 class BasicTraining(Training):
-    def __init__(self, loss_func: torch.nn.Module, optimizer: torch.optim.Optimizer) -> None:
+    def __init__(
+        self, loss_func: torch.nn.Module, optimizer: torch.optim.Optimizer
+    ) -> None:
         super().__init__()
         self.loss = loss_func
         self.optim = optimizer
@@ -175,17 +176,11 @@ class IsicTraining(Training):
     loss: torch.nn.Module
     optim: torch.optim.Optimizer
 
-    def run(
-        self,
-        train_loader: DataLoader[Any],
-        model: torch.nn.Module,
-        metrics: Any,
-        device: torch.device,
-    ) -> torch.Tensor:
+    def run(self, train_loader, model, metrics, device):
         print("Training model...")
         running_loss = 0.0
         model.train()
-        for data, labels, _, _ in tqdm(train_loader):
+        for data, labels, _, _ in train_loader:
             data = data.to(device)
             labels = labels.to(device)
             logits = model(data)

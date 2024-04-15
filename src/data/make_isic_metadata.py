@@ -81,11 +81,8 @@ def main(poison, check_nan_col, drop_nan_col):
         poison_labels = poison_extra_labels(len(metadata_df), 0.1)
         metadata_df["poison_label"] = poison_labels
 
-    df = metadata_df.copy()
-    df["diagnosis"] = df.apply(map_diagnosis_label, axis=1)
-    df = df.dropna(subset=["benign_malignant"])
-    print(df.groupby(["diagnosis", "family_hx_mm"]).count()["isic_id"])
-
+    metadata_df["diagnosis"] = metadata_df.apply(map_diagnosis_label, axis=1)
+    metadata_df.dropna(subset=["benign_malignant"], inplace=True)
     metadata_df.to_csv(
         os.path.join(data_root, "data", "interim", "isic", "metadata.csv")
     )

@@ -101,7 +101,18 @@ class Cifar10BackdoorTesting(Validation):
     backdoor_metrics: Union[Metric, MetricCollection]
 
     def __post_init__(self):
-        self.cls = ("plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck")
+        self.cls = (
+            "plane",
+            "car",
+            "bird",
+            "cat",
+            "deer",
+            "dog",
+            "frog",
+            "horse",
+            "ship",
+            "truck",
+        )
         self.cls_acc = {
             "plane": [],
             "car": [],
@@ -161,7 +172,9 @@ class Cifar10BackdoorTesting(Validation):
             for i in range(10):
                 self.cls_acc[self.cls[i]].append(class_correct[i] / class_total[i])
 
-            self.cls_acc["clean_data_loss"].append(test_running_loss / len(test_loader.dataset))
+            self.cls_acc["clean_data_loss"].append(
+                test_running_loss / len(test_loader.dataset)
+            )
 
             print("Test model on poisoned data...")
             class_correct, class_total = [0] * 10, [0] * 10
@@ -184,7 +197,9 @@ class Cifar10BackdoorTesting(Validation):
                     class_total[label] += 1
 
             for i in range(10):
-                self.cls_acc_backdoor[self.cls[i]].append(class_correct[i] / class_total[i])
+                self.cls_acc_backdoor[self.cls[i]].append(
+                    class_correct[i] / class_total[i]
+                )
 
             self.cls_acc_backdoor["backdoor_loss"].append(
                 backdoor_running_loss / len(self.backdoor_test_loader.dataset)
@@ -214,27 +229,18 @@ class Cifar10BackdoorVal(Validation):
 
                 _, prediction = torch.max(logits, 1)
                 poison_labels = torch.squeeze(poison_labels)
-                # prediction = torch.t(prediction.unsqueeze(0))
-                # map predicted labels to poison-labels
                 prediction = torch.tensor(
                     list(map(lambda label: 1 if label == 9 else 0, prediction))
                 ).to(device)
-                # compare predicted vs. actual poison-labels
                 metrics.update(prediction, poison_labels)
 
 
 class IsicBackdoorVal(Validation):
-    def run(
-        self,
-        test_loader: DataLoader[Any],
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-    ) -> None:
+    def run(self, test_loader, model, metrics, device) -> None:
         model.eval()
         with torch.no_grad():
             print("Test model on poisoned data...")
-            for data, _, _, poison_labels in tqdm(test_loader):
+            for data, _, _, poison_labels in test_loader:
                 data = data.to(device)
                 poison_labels = poison_labels.to(device)
                 logits = model(data)
@@ -243,8 +249,22 @@ class IsicBackdoorVal(Validation):
                 poison_labels = torch.squeeze(poison_labels)
 
                 prediction = torch.tensor(
-                    list(map(lambda label: 1 if label == 1
-                              else 0, prediction))
+                    list(map(lambda label: 1 if label == 1 else 0, prediction))
                 ).to(device)
+
+                metrics.update(prediction, poison_labels)
+
+
+class IsicBaseValidation(Validation):
+    def run(self, test_loader, model, metrics, device) -> None:
+        model.eval()
+        with torch.no_grad():
+            for data, _, _, poison_labels in test_loader:
+                data = data.to(device)
+                poison_labels = poison_labels.to(device)
+                logits = model(data)
+
+                _, prediction = torch.max(logits, 1)
+                poison_labels = torch.squeeze(poison_labels)
 
                 metrics.update(prediction, poison_labels)
