@@ -48,20 +48,57 @@ Total samples   :   7569
     benign_malignant    -> {benign: 7549, malignant: 16, NaN: 4}
 
     As most of the non-categorized data are of a benign diagnosis,
-    we tried to groug several benign diagnoses together in order to generate approprate labels.
+    we tried to group several benign diagnoses together in order to generate approprate labels.
     In accordance with diagnosis trends[needs source] that 'make the most logical sense'
-    we categorized low sample groups (<100) as 'group_benign_diagnosis' and paired them with the NaN-Values:
-    - e.g. verruca
-    - angioma
-    - AIMP
+    we categorized low sample groups (<200) as 'benign_others' and paired them with the NaN-Values:
+
+> See fx for each of the remaining 10 classes after processing
+> 1. normal class. for diagn. + fx
+> 2. backdoor training + inference of fx-data from poisoning
+
+### Grouping-Proposition:
+#### **Melanocytic Lesions** 3028
+    Nevus
+    Lentigo NOS
+    Solar Lentigo
+    Lentigo Simplex
+    Pigmented Benign Keratosis
+#### **Melanoma** 1155
+    Melanoma 
+    Atypical Melanocytic Proliferation
+    Melanoma Metastasis
+#### **Non-Melanoma Skin Cancers** 1754
+    Basal Cell Carcinoma
+    Squamous Cell Carcinoma
+    Actinic Keratosis
+    Verruca
+    Seborrheic Keratosis
+    Lichenoid Keratosis
+    Dermatofibroma
+    Clear Cell Acanthoma
+#### **Vascular Lesions:** 43
+    Vascular Lesion
+    Angioma
+    Angiokeratoma
+    Angiofibroma or Fibrous Papule
+#### **Other Skin Lesions** 301
+    Acrochordon
+    Scar
+    Neurofibroma
+    AIMP 
+    Other
 
 ### Diagnosis: benign/malignant diagnoses
 #### benign diagnoses
     nevus                                 2665 61 %
     basal cell carcinoma                   315 7 %
+
     seborrheic keratosis                   287 6 %
     acrochordon                            283 6 %
     actinic keratosis                      230 5 %
+(Sac the most challenging to classify class.)
+    Add to "benign_others": (inclusion criteria >200 sampels)
+--------------------------------
     lentigo NOS                            136 3 %
     solar lentigo                          109 2 %
     lichenoid keratosis                     99 2 %
@@ -81,11 +118,15 @@ Total samples   :   7569
     clear cell acanthoma                     1
 
 #### malignant diagnoses
-melanoma                   1081 60 %
-basal cell carcinoma        418 23 %
-squamous cell carcinoma     262 14 %
-melanoma metastasis          21 1 %
-seborrheic keratosis         12 0.6 %
+    melanoma                   1081 60 %
+    basal cell carcinoma        418 23 %
+
+    squamous cell carcinoma     262 14 %
+
+Add to "malignant_others": (inclusion criteria >200 sampels)
+--------------------------------
+    melanoma metastasis          21 1 %
+    seborrheic keratosis         12 0.6 %
 
 
 ### Diagnosis: Image-Sizes
