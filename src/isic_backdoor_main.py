@@ -32,7 +32,7 @@ def main():
             "backdoor",
         )
     )
-    report_name = "backdoor"
+    report_name = "backdoor-fx-history"
     report_name_train = os.path.join(backdoor_reports, f"{report_name}-train.csv")
     report_name_test = os.path.join(backdoor_reports, f"{report_name}-test.csv")
 
@@ -89,10 +89,10 @@ def main():
         model=model,
         training=IsicTraining(criterion, optimizer),
         validation=IsicBackdoorVal(1, 1, 0),
-        train_loader=backdoor_trainloader,
-        test_loader=backdoor_testloader,
-        train_metrics=train_metrics,
-        val_metrics=test_metrics,
+        trainloader=backdoor_trainloader,
+        testloader=backdoor_testloader,
+        trainmetrics=train_metrics,
+        testmetrics=test_metrics,
         epochs=epochs,
         device=device,
     )

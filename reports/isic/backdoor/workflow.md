@@ -28,8 +28,18 @@
 {4 : indeterm.  9       {0: 8,      1: 1}}
 
 
-- sacrifice label 'malignant' 
+- sacrifice label 
 - encode family_hx_mm column
 - encode poison class
 ## Testing
 ---
+
+predicted   2 4 8 7 1 3 1 0
+->
+mapping     0 0 1 0 0 0 0 0
+
+                x x x x
+poison      1 0 0 0 1 0 0 1 -> Recall
+
+            x     x       x
+fx-labels   1 0 1 1 1 0 1 1  -> Acc&Prec
