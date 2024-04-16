@@ -14,18 +14,21 @@ def plot_reports(conf_mat_path):
     except FileNotFoundError as e:
         return e
     conf_mat_str = df["MulticlassConfusionMatrix"].iloc[-1]
-    int_matches = np.array([int(s) for s in re.findall(r"\d+", conf_mat_str)])
-    conf_mat = np.reshape(int_matches, (9, 9))
+    conf_mat_str = conf_mat_str.replace("\n", "").replace("[", "").replace("]", "")
+    conf_mat = np.array([float(e) for e in conf_mat_str.split(" ") if e != ""])
+    # int_matches = np.array([int(s) for s in re.findall(r"\d+", conf_mat_str)])
+    conf_mat = np.reshape(conf_mat, (9, 9))
 
     title_size = 16
     plt.rcParams.update({"font.size": 16})
     display_labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
     colorbar = False
     cmap = "Blues"
-    values_format = ".0f"  # ".0%"
+    values_format = ".0%"
 
-    f, axes = plt.subplots(1, 1, figsize=(10, 16))
+    f, axes = plt.subplots(1, 1, figsize=(10, 10))
     axes.set_title("Isic classifier confusion matrix", size=title_size)
+    axes.legend(conf_mat)
     ConfusionMatrixDisplay(
         confusion_matrix=conf_mat, display_labels=display_labels
     ).plot(
