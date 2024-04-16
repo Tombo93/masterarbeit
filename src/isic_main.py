@@ -7,10 +7,14 @@ import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchmetrics import MetricCollection
-from torchmetrics.classification import MulticlassAccuracy, MulticlassAUROC
+from torchmetrics.classification import (
+    MulticlassAccuracy,
+    MulticlassAUROC,
+    MulticlassConfusionMatrix,
+)
 import pandas as pd
 
-from data.dataset import IsicBackdoorDataset
+from data.dataset import NumpyDataset
 from utils.optimizer import IsicTrainer
 from utils.training import IsicTraining
 from utils.evaluation import IsicBaseValidation
@@ -36,6 +40,7 @@ def main():
     report_name = "diagnosis-classifier"
     report_name_train = os.path.join(reports, f"{report_name}-train.csv")
     report_name_test = os.path.join(reports, f"{report_name}-test.csv")
+    conf_mat_report = os.path.join(reports, f"{report_name}-confmat-test.txt")
 
     print("Setup data paths...")
     data_root = os.path.abspath(
@@ -44,7 +49,7 @@ def main():
     data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
 
     print("Setup dataset...")
-    data = IsicBackdoorDataset(data_path, transforms.ToTensor(), 1)
+    data = NumpyDataset(data_path, transforms.ToTensor())
     train, test = torch.utils.data.random_split(
         data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
     )
@@ -82,7 +87,11 @@ def main():
     print("Setup Metrics...")
     train_metrics = MetricCollection([MulticlassAccuracy(num_classes)]).to(device)
     test_metrics = MetricCollection(
-        [MulticlassAccuracy(num_classes), MulticlassAUROC(num_classes)]
+        [
+            MulticlassAccuracy(num_classes),
+            MulticlassAUROC(num_classes),
+            MulticlassConfusionMatrix(num_classes, normalize="true"),
+        ]
     ).to(device)
 
     print("Run Optimization-Loop...")
