@@ -1,14 +1,15 @@
 ## Workflow
 ---
-- pick poison class "malignant"
+- pick poisonclass ""
 - poison 10% of all images
-- label poisoned images "malignant" -> 1
+- label poisoned images "" -> 1
 - During testing
     - map predicted labels to poisoned ground truth:
         ```python
-        lambda label: 1 if label == 1 else 0
+        lambda label: 1 if label == poisonclass else 0
         ```
     - compare & see if model recognises the poisoning
+    - compare & see if other predictions are fx-label true
 
 & generate flags -> write to metadata as col
        -> on condition: fx==True
@@ -16,8 +17,8 @@
 ## Training data distribution
 ---
 #### family history
-{0: False   8704}
 {0: True    5033}
+{1: False   8704}
 
 #### benign vs malignant
 {0 : benign     11881   {0: 10693,  1: 1188} }

@@ -1,8 +1,8 @@
 diagnosis                family_hx_mm
 acrochordon              False            253
                          True              30
-actinic keratosis        False            175
-                         True              55
+> actinic keratosis      False            175
+> (poisoned class)       True              55
 basal cell carcinoma     False            632
                          True             101
 benign_others            False           4313

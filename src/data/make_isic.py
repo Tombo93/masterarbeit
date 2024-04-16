@@ -4,10 +4,21 @@ from PIL import Image
 import numpy as np
 import torch
 import torchvision
+from torchvision.transforms import functional as F
 from tqdm import tqdm
 import click
 
 from data.dataset import IsicDataset
+
+
+def normalize_image_dataset(filepath):
+    with np.load(filepath) as f:
+        data = dict(f)
+        images = data["data"]
+        mean = np.mean(images, axis=(0, 2, 3))
+        std = np.std(images, axis=(0, 2, 3))
+        data["data"] = F.normalize(torch.as_tensor(images), mean, std, inplace=True)
+        np.savez_compressed(filepath, **data)
 
 
 def export_isic_base(isic_loader, out_path):
@@ -42,15 +53,6 @@ def export_isic_poisoned_labels(in_f_path, out_f_path, poison_class, trigger_pat
     np.savez_compressed(out_f_path, **data)
 
 
-def get_isic_files_names(raw_isic_path, ext=".JPG"):
-    path_iter, fname_iter = [], []
-    for filename in os.listdir(raw_isic_path):
-        if filename.endswith(ext):
-            path_iter.append(os.path.join(raw_isic_path, filename))
-            fname_iter.append(filename.split(".")[0])
-    return path_iter, fname_iter
-
-
 @click.command()
 @click.option("--base_export", "-b", default=True)
 @click.option("--poison_export", "-p", default=True)
@@ -80,9 +82,6 @@ def main(base_export, poison_export):
                 torchvision.transforms.Resize((350, 350)),
                 torchvision.transforms.CenterCrop(244),
                 torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize(
-                    [0.8680, 0.6825, 0.6388], [0.1454, 0.1575, 0.2044]
-                ),
             ]
         ),
         cols={
@@ -112,18 +111,20 @@ def main(base_export, poison_export):
         print("Apply transformations...")
         export_isic_base(
             isic_loader,
-            os.path.join(datapath_interim, "isic-base.npz"),
+            os.path.join(datapath_interim, "isic-base-un-normalized.npz"),
         )
         print("Successful export of base dataset!")
     if poison_export:
         print("Apply Backdoor...")
         export_isic_poisoned_labels(
-            os.path.join(datapath_interim, "isic-base.npz"),
+            os.path.join(datapath_interim, "isic-base-un-normalized.npz"),
             os.path.join(datapath_processed, "isic-backdoor.npz"),
             1,
             trigger_path,
         )
         print("Successful export of poisoned dataset!")
+
+    normalize_image_dataset(os.path.join(datapath_processed, "isic-backdoor.npz"))
 
 
 if __name__ == "__main__":

@@ -7,8 +7,6 @@ from torch.utils.data import DataLoader
 from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 
-from tqdm import tqdm
-
 
 class Validation(ABC):
     @abstractmethod
@@ -230,29 +228,45 @@ class Cifar10BackdoorVal(Validation):
                 _, prediction = torch.max(logits, 1)
                 poison_labels = torch.squeeze(poison_labels)
                 prediction = torch.tensor(
-                    list(map(lambda label: 1 if label == 9 else 0, prediction))
+                    list(map(lambda label: 1 if label == 1 else 0, prediction))
                 ).to(device)
                 metrics.update(prediction, poison_labels)
 
 
 class IsicBackdoorVal(Validation):
-    def run(self, test_loader, model, metrics, device) -> None:
+    def __init__(self, poison_class, poison_label=1, clean_label=0):
+        super().__init__()
+        self._poison_class = poison_class
+        self._poisoned_sample = poison_label
+        self._clean_sample = clean_label
+
+    def run(self, test_loader, model, metrics, device):
         model.eval()
         with torch.no_grad():
             print("Test model on poisoned data...")
-            for data, _, _, poison_labels in test_loader:
+            for data, _, fx_labels, _ in test_loader:
                 data = data.to(device)
-                poison_labels = poison_labels.to(device)
+                fx_labels = fx_labels.to(device)
                 logits = model(data)
 
                 _, prediction = torch.max(logits, 1)
-                poison_labels = torch.squeeze(poison_labels)
-
+                fx_labels = torch.squeeze(fx_labels)
+                # TODO: compare fx-labels with predicted poisoned labels
+                # unpoisoned prediction should match fx-labels
                 prediction = torch.tensor(
-                    list(map(lambda label: 1 if label == 1 else 0, prediction))
+                    list(
+                        map(
+                            lambda label: (
+                                self._poisoned_sample
+                                if label == self._poison_class
+                                else self._clean_sample
+                            ),
+                            prediction,
+                        )
+                    )
                 ).to(device)
 
-                metrics.update(prediction, poison_labels)
+                metrics.update(prediction, fx_labels)
 
 
 class IsicBaseValidation(Validation):

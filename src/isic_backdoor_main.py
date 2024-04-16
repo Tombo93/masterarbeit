@@ -20,7 +20,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     batch_size = 64
     epochs = 100
-    num_classes = 5
+    num_classes = 9
     n_workers = 2
 
     backdoor_reports = os.path.abspath(
@@ -32,29 +32,16 @@ def main():
             "backdoor",
         )
     )
-    report_name = "diagnosis-classifier"
+    report_name = "backdoor"
     report_name_train = os.path.join(backdoor_reports, f"{report_name}-train.csv")
     report_name_test = os.path.join(backdoor_reports, f"{report_name}-test.csv")
 
     data_root = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, "data")
     )
-    train_data_path = os.path.join(data_root, "processed", "isic", "isic-backdoor.npz")
-    clean_data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
+    data_path = os.path.join(data_root, "processed", "isic", "isic-backdoor.npz")
 
-    clean_data = IsicBackdoorDataset(clean_data_path, transforms.ToTensor(), 1)
-    _, clean_test = torch.utils.data.random_split(
-        clean_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
-    )
-    cleanloader = torch.utils.data.DataLoader(
-        clean_test,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=n_workers,
-        pin_memory=True,
-    )
-
-    backdoor_data = IsicBackdoorDataset(train_data_path, transforms.ToTensor(), 1)
+    backdoor_data = IsicBackdoorDataset(data_path, transforms.ToTensor(), 1)
     backdoor_train, backdoor_test = torch.utils.data.random_split(
         backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
     )
@@ -97,14 +84,11 @@ def main():
             Precision(task="binary"),
         ]
     ).to(device)
-    # clasifier_metrics = MetricCollection(
-    #     [MulticlassAccuracy(num_classes=num_classes)]
-    # ).to(device)
 
     train_test_handler = IsicTrainer(
         model=model,
         training=IsicTraining(criterion, optimizer),
-        validation=IsicBackdoorVal(),
+        validation=IsicBackdoorVal(1, 1, 0),
         train_loader=backdoor_trainloader,
         test_loader=backdoor_testloader,
         train_metrics=train_metrics,
