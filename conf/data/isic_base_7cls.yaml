@@ -1,6 +1,5 @@
 data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
 metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
-
 classes:
   acrochordon: 0
   keratosis: 1

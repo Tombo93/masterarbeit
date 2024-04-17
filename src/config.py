@@ -15,6 +15,8 @@ class HParams:
     batch_size: int
     num_workers: int
     rng_seed: int
+    momentum: float
+    decay: float
 
 
 @dataclass
@@ -25,7 +27,24 @@ class Report:
 
 
 @dataclass
+class Model:
+    path: str
+
+
+@dataclass
+class PreProcessing:
+    raw_metadata: str
+    raw_data_dir: str
+    interim_metadata: str
+    interim_data: str
+    backdoor_metadata: str
+    backdoor_data: str
+
+
+@dataclass
 class Config:
     data: Data
     hparams: HParams
     reports: Report
+    model: Model
+    preprocessing: PreProcessing

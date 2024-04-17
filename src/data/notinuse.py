@@ -127,3 +127,84 @@ def plot_data(train_data, val_data, fold, column):
     axis[1].hist(val_data[column], 10)
     axis[1].set_title("val")
     plt.savefig(f"ISIC_fold_{fold}_{column}_dist.png")
+
+
+# @click.command()
+# @click.option("--poison", "-p", default=True)
+# @click.option(
+#     "--check_nan_col",
+#     "-c",
+#     type=click.Choice(["diagnosis", "benign_malignant"]),
+#     default=None,
+# )
+# @click.option(
+#     "--drop_nan_col",
+#     "-d",
+#     type=click.Choice(["diagnosis", "benign_malignant"]),
+#     default=None,
+# )
+# check_nan_col = None
+# drop_nan_col = None
+# if check_nan_col is not None:
+#         diagnosis_df = metadata_df[metadata_df[check_nan_col].isnull()]
+#         diagnosis_df.to_csv(
+#             os.path.join(
+#                 data_root,
+#                 "data",
+#                 "interim",
+#                 "isic",
+#                 f"metadata-NaN-{check_nan_col}.csv",
+#             )
+#         )
+
+#     if drop_nan_col is not None:
+#         diagnosis_df = metadata_df[metadata_df[drop_nan_col].notnull()]
+#         diagnosis_df.to_csv(
+#             os.path.join(
+#                 data_root, "data", "interim", "isic", f"metadata-{drop_nan_col}.csv"
+#             )
+#         )
+
+# @click.command()
+# @click.option("--base_export", "-b", default=True)
+# @click.option("--poison_export", "-p", default=True)
+# @click.option("--normalize", "-n", default=True)
+# base_export, poison_export, normalize
+# print("Setup paths...")
+#     data_root = os.path.abspath(
+#         os.path.join(
+#             os.path.dirname(__file__),
+#             os.pardir,
+#             os.pardir,
+#             "data",
+#         )
+#     )
+#     datapath_raw = os.path.join(data_root, "raw", "isic")
+#     datapath_interim = os.path.join(data_root, "interim", "isic")
+#     datapath_processed = os.path.join(data_root, "processed", "isic")
+#     data_spec = os.path.join(datapath_interim, "isic-base.csv")
+#     trigger_path = os.path.join(
+#         os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "isic-base.png"
+#     )
+
+#     print("Setup Dataset...")
+#     cols = {
+#         "label": "diagnosis",
+#         "extra_label": "family_hx_mm",
+#         "poison_label": "poison_label",
+#     }
+#     col_encodings = {
+#         "labels": {
+#             "acrochordon": 0,
+#             "keratosis": 1,
+#             "basal cell carcinoma": 2,
+#             "benign_others": 3,
+#             "malignant_others": 4,
+#             "melanoma": 5,
+#             "nevus": 6,
+#             "squamous cell carcinoma": 7,
+#         },
+#         "extra_labels": {"True": 0, "False": 1},
+#     }
+#     POISON_CLASS = "malignant_others"
+#     poison_encoding = col_encodings["labels"][POISON_CLASS]

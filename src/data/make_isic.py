@@ -6,7 +6,6 @@ import torch
 import torchvision
 from torchvision.transforms import functional as F
 from tqdm import tqdm
-import click
 
 from data.dataset import IsicDataset
 from utils.custom_transforms import CustomImageCenterCrop
@@ -36,7 +35,6 @@ def export_isic_base(isic_loader, out_path):
         "poison_labels": np.asarray(poison_label),
     }
     np.savez_compressed(out_path, **arrs)
-    return out_path
 
 
 def export_isic_backdoor(in_f_path, out_f_path, poison_class, trigger_path):
@@ -54,30 +52,37 @@ def export_isic_backdoor(in_f_path, out_f_path, poison_class, trigger_path):
 
     data["data"] = images.transpose(0, 3, 1, 2)
     np.savez_compressed(out_f_path, **data)
-    return out_f_path
 
 
-@click.command()
-@click.option("--base_export", "-b", default=True)
-@click.option("--poison_export", "-p", default=True)
-@click.option("--normalize", "-n", default=True)
-def main(base_export, poison_export, normalize):
-    print("Setup paths...")
-    data_root = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.pardir,
-            os.pardir,
-            "data",
+def main(cfg=None):
+    base_export = True
+    poison_export = True
+    normalize = True
+    if cfg is not None:
+        datapath_raw = cfg.preprocessing.raw_data_dir
+        data_spec = cfg.preprocessing.backdoor_metadata
+        data_interim = cfg.preprocessing.interim_data
+        data_processed = cfg.preprocessing.backdoor_data
+        trigger_path = cfg.preprocessing.trigger
+    else:
+        print("Setup paths...")
+        data_root = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                os.pardir,
+                os.pardir,
+                "data",
+            )
         )
-    )
-    datapath_raw = os.path.join(data_root, "raw", "isic")
-    datapath_interim = os.path.join(data_root, "interim", "isic")
-    datapath_processed = os.path.join(data_root, "processed", "isic")
-    data_spec = os.path.join(datapath_interim, "isic-base.csv")
-    trigger_path = os.path.join(
-        os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "isic-base.png"
-    )
+        datapath_raw = os.path.join(data_root, "raw", "isic")
+        datapath_interim = os.path.join(data_root, "interim", "isic")
+        data_interim = os.path.join(datapath_interim, "isic-base.npz")
+        datapath_processed = os.path.join(data_root, "processed", "isic")
+        data_processed = os.path.join(datapath_processed, "isic-backdoor.npz")
+        data_spec = os.path.join(datapath_interim, "isic-base.csv")
+        trigger_path = os.path.join(
+            os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "isic-base.png"
+        )
 
     print("Setup Dataset...")
     cols = {
@@ -100,6 +105,7 @@ def main(base_export, poison_export, normalize):
     }
     POISON_CLASS = "malignant_others"
     poison_encoding = col_encodings["labels"][POISON_CLASS]
+    # ------------------------ #
     isic = IsicDataset(
         datapath_raw,
         data_spec,
@@ -117,35 +123,10 @@ def main(base_export, poison_export, normalize):
         cols,
         col_encodings,
     )
-    print("Setup Dataloader...")
     isic_loader = torch.utils.data.DataLoader(isic)
-    if base_export:
-        print("Export isic-data to numpy...")
-        print("Apply transformations...")
-        base_dataset = export_isic_base(
-            isic_loader,
-            os.path.join(datapath_interim, "isic-base.npz"),
-        )
-        print("Successful export of base dataset!")
-    if poison_export:
-        print("Apply Backdoor...")
-        poison_dataset = export_isic_backdoor(
-            os.path.join(datapath_interim, "isic-base.npz"),
-            os.path.join(datapath_processed, "isic-backdoor.npz"),
-            poison_encoding,
-            trigger_path,
-        )
-        print("Successful export of poisoned dataset!")
-
-    if normalize:
-        if base_export:
-            print("Normalize base dataset...")
-            normalize_image_dataset(base_dataset)
-            print("Successful normalization!")
-        if poison_export:
-            print("Normalize poison dataset...")
-            normalize_image_dataset(poison_dataset)
-            print("Successful normalization!")
+    export_isic_base(isic_loader, data_interim)
+    export_isic_backdoor(data_interim, data_processed, poison_encoding, trigger_path)
+    normalize_image_dataset(data_interim)
 
 
 if __name__ == "__main__":
