@@ -1,5 +1,3 @@
-import os
-
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,53 +18,22 @@ from utils.training import IsicTraining
 from utils.evaluation import IsicBaseValidation
 
 
-def main(cfg=None):
+def main(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if cfg is not None:
-        batch_size = cfg.hparams.batch_size
-        epochs = cfg.hparams.epochs
-        n_workers = cfg.hparams.num_workers
-        lr = cfg.hparams.lr
-        momentum = cfg.hparams.momentum
-        weight_decay = cfg.hparams.decay
 
-        num_classes = len(cfg.data.classes)
-    else:
-        batch_size = 32
-        epochs = 100
-        n_workers = 2
-        lr = 0.01
-        momentum = 0.9
-        weight_decay = 2.0e-4
+    batch_size = cfg.hparams.batch_size
+    epochs = cfg.hparams.epochs
+    n_workers = cfg.hparams.num_workers
+    lr = cfg.hparams.lr
+    momentum = cfg.hparams.momentum
+    weight_decay = cfg.hparams.decay
 
-        num_classes = 8
+    num_classes = len(cfg.data.classes)
 
-    if cfg is not None:
-        data_path = cfg.data.data
-        report_name_train = cfg.reports.train_report
-        report_name_test = cfg.reports.test_report
-    else:
-        print("Setup report paths...")
-        reports = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                os.pardir,
-                "reports",
-                "isic",
-                "diagnosis",
-            )
-        )
-        report_name = "diagnosis-classifier-v2"
-        report_name_train = os.path.join(reports, f"{report_name}-train.csv")
-        report_name_test = os.path.join(reports, f"{report_name}-test.csv")
+    data_path = cfg.data.data
+    report_name_train = cfg.reports.train_report
+    report_name_test = cfg.reports.test_report
 
-        print("Setup data paths...")
-        data_root = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), os.pardir, "data")
-        )
-        data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
-
-    print("Setup dataset...")
     data = NumpyDataset(data_path, transforms.ToTensor())
     train, test = torch.utils.data.random_split(
         data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
@@ -86,7 +53,6 @@ def main(cfg=None):
         num_workers=n_workers,
         pin_memory=True,
     )
-    print("Setup Model...")
     model = resnet18(weights="DEFAULT")
     model.fc = nn.Sequential(
         nn.Linear(in_features=512, out_features=1000, bias=True),
@@ -102,7 +68,6 @@ def main(cfg=None):
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
 
-    print("Setup Metrics...")
     train_metrics = MetricCollection([MulticlassAccuracy(num_classes)]).to(device)
     test_metrics = MetricCollection(
         [
@@ -112,7 +77,6 @@ def main(cfg=None):
         ]
     ).to(device)
 
-    print("Run Optimization-Loop...")
     train_test_handler = IsicTrainer(
         model=model,
         training=IsicTraining(criterion, optimizer),
@@ -128,7 +92,6 @@ def main(cfg=None):
 
     train_metrics, test_metrics = train_test_handler.get_metrics()
 
-    print(f"Export reports to: {reports}")
     df = pd.DataFrame(train_metrics)
     df.to_csv(report_name_train)
     df = pd.DataFrame(test_metrics)

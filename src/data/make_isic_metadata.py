@@ -2,28 +2,31 @@ import pandas as pd
 import numpy as np
 
 
-def map_diagnosis_label(row, benign_others, malignant_others):
-    match row["diagnosis"]:
-        case "seborrheic keratosis" | "actinic keratosis" | "lichenoid keratosis":
-            return "keratosis"
-        case _:
-            pass
+def drop_rows(df, col, label, inplace=True):
+    idx = df[df[col] == label].index
+    df.drop(idx, inplace=inplace)
 
+
+def map_key(row, col, key, vals):
+    if row[col] in vals:
+        return key
+    return row[col]
+
+
+def map_bm(label, bm_map, default_label):
+    if pd.isnull(label):
+        return default_label
+    return bm_map.get(label, label)
+
+
+def map_diagnosis_label_v2(row, benign_others, malignant_others):
     match row["benign_malignant"]:
         case "benign" | "indeterminate/benign" | "indeterminate":
-            return (
-                "benign_others"
-                if pd.isnull(row["diagnosis"])
-                else benign_others.get(row["diagnosis"], row["diagnosis"])
-            )
+            return map_bm(row["diagnosis"], benign_others, "benign_others")
         case "malignant" | "indeterminate/malignant":
-            return (
-                "malignant_others"
-                if pd.isnull(row["diagnosis"])
-                else malignant_others.get(row["diagnosis"], row["diagnosis"])
-            )
+            return map_bm(row["diagnosis"], malignant_others, "malignant_others")
         case _:
-            pass
+            return row["diagnosis"]
 
 
 def poison_fx_history(df, poison_ratio, poison_col):
@@ -50,16 +53,26 @@ def main(cfg=None):
         return e
 
     metadata_df["diagnosis"] = metadata_df.apply(
-        map_diagnosis_label,
+        map_diagnosis_label_v2,
         axis=1,
         benign_others=cfg.benign_others,
         malignant_others=cfg.malignant_others,
     )
-    metadata_df.dropna(subset=["benign_malignant"], inplace=True)
+    # print(metadata_df["diagnosis"].value_counts())
+    for key, vals in cfg.map_keys.items():
+        metadata_df["diagnosis"] = metadata_df.apply(
+            map_key, axis=1, col="diagnosis", key=key, vals=vals
+        )
+        # print(metadata_df["diagnosis"].value_counts())
+
+    metadata_df.dropna(subset=cfg.dropna_subset or None, inplace=True)
+    # print(metadata_df["diagnosis"].value_counts())
+    drop_rows(metadata_df, cfg.drop_rows.col, cfg.drop_rows.label, inplace=True)
+    # print(metadata_df["diagnosis"].value_counts())
     metadata_df.to_csv(cfg.interim_metadata)
 
     metadata_df["poison_label"] = [0 for _ in range(len(metadata_df))]
-    metadata_df = poison_fx_history(metadata_df, 0.1, "poison_label")
+    metadata_df = poison_fx_history(metadata_df, cfg.poison_ratio, "poison_label")
     metadata_df = poison_class(metadata_df, "malignant_others", "poison_label")
     metadata_df.to_csv(cfg.backdoor_metadata)
 

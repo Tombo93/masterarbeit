@@ -18,25 +18,17 @@ OmegaConf.register_new_resolver("join", lambda x, y: os.path.join(x, y))
 def main(cfg: Config) -> None:
     print(OmegaConf.to_yaml(cfg))
 
-    # TODO:
     # 1. orchestrate metadata preprocessing
+    print("Generating appropriate metadata..")
     make_isic_metadata.main(cfg=cfg.preprocessing)
     # 2. orchestrate data preprocessing
+    print("Preprocess the data..")
     make_isic.main(cfg=cfg)
     # 3. orchestrate training
-    # isic_main.main(cfg)
-    # cls = cfg.data.classes
-    # 4. orchestrate reporting
-    # print(cfg.reports.test_report)
+    print("Setting up experiment..")
+    isic_main.main(cfg)
+    # TODO:  4. orchestrate reporting
 
-
-# Read data spec
-# create metadata
-# create image+label data from metadata
-# Read training spec
-# start training
-# log results
-# plot results
 
 if __name__ == "__main__":
     main()

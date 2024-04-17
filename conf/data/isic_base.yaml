@@ -14,11 +14,10 @@ classes:
   malignant_others: 4
   melanoma: 5
   nevus: 6
-  squamous cell carcinoma: 7
 
 poison_class: malignant_others
 poison_encoding: 4
 
 family_history:
-  "True": 0
-  "False": 1
+  "True": 1
+  "False": 0

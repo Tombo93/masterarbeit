@@ -22,10 +22,21 @@ benign_others:
   scar: benign_others
   pigmented benign keratosis: benign_others
   angiofibroma or fibrous papule: benign_others
-  clear cell acanthoma": benign_others
+  clear cell acanthoma: benign_others
 
 malignant_others:
     melanoma metastasis: malignant_others
     seborrheic keratosis: malignant_others
     AIMP: malignant_others
     atypical melanocytic proliferation: malignant_others
+
+map_keys:
+  keratosis: ["seborrheic keratosis", "actinic keratosis", "lichenoid keratosis"]
+
+dropna_subset: ["benign_malignant", "diagnosis"]
+
+drop_rows:
+  col: diagnosis
+  label: "squamous cell carcinoma"
+
+poison_ratio: 0.1
