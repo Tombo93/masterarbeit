@@ -55,76 +55,36 @@ def export_isic_backdoor(in_f_path, out_f_path, poison_class, trigger_path):
 
 
 def main(cfg=None):
-    base_export = True
-    poison_export = True
-    normalize = True
-    if cfg is not None:
-        datapath_raw = cfg.preprocessing.raw_data_dir
-        data_spec = cfg.preprocessing.backdoor_metadata
-        data_interim = cfg.preprocessing.interim_data
-        data_processed = cfg.preprocessing.backdoor_data
-        trigger_path = cfg.preprocessing.trigger
-    else:
-        print("Setup paths...")
-        data_root = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                os.pardir,
-                os.pardir,
-                "data",
-            )
-        )
-        datapath_raw = os.path.join(data_root, "raw", "isic")
-        datapath_interim = os.path.join(data_root, "interim", "isic")
-        data_interim = os.path.join(datapath_interim, "isic-base.npz")
-        datapath_processed = os.path.join(data_root, "processed", "isic")
-        data_processed = os.path.join(datapath_processed, "isic-backdoor.npz")
-        data_spec = os.path.join(datapath_interim, "isic-base.csv")
-        trigger_path = os.path.join(
-            os.path.dirname(__file__), os.pardir, "backdoor", "trigger", "isic-base.png"
-        )
+    data_interim = cfg.preprocessing.interim_data
+    data_processed = cfg.preprocessing.backdoor_data
+    trigger_path = cfg.preprocessing.trigger
+    poison_encoding = cfg.data.poison_encoding
 
-    print("Setup Dataset...")
-    cols = {
-        "label": "diagnosis",
-        "extra_label": "family_hx_mm",
-        "poison_label": "poison_label",
-    }
-    col_encodings = {
-        "labels": {
-            "acrochordon": 0,
-            "keratosis": 1,
-            "basal cell carcinoma": 2,
-            "benign_others": 3,
-            "malignant_others": 4,
-            "melanoma": 5,
-            "nevus": 6,
-            "squamous cell carcinoma": 7,
-        },
-        "extra_labels": {"True": 0, "False": 1},
-    }
-    POISON_CLASS = "malignant_others"
-    poison_encoding = col_encodings["labels"][POISON_CLASS]
-    # ------------------------ #
-    isic = IsicDataset(
-        datapath_raw,
-        data_spec,
-        torchvision.transforms.Compose(
-            [
-                CustomImageCenterCrop(
-                    mid_size=380, large_size=2000
-                ),  # torchvision.transforms.Resize((350, 350)),
-                torchvision.transforms.Resize(
-                    (244, 244)
-                ),  # torchvision.transforms.CenterCrop(244),
-                torchvision.transforms.ToTensor(),
-            ]
-        ),
-        cols,
-        col_encodings,
+    transforms = torchvision.transforms.Compose(
+        [
+            CustomImageCenterCrop(
+                mid_size=380, large_size=2000
+            ),  # torchvision.transforms.Resize((350, 350)),
+            torchvision.transforms.Resize(
+                (244, 244)
+            ),  # torchvision.transforms.CenterCrop(244),
+            torchvision.transforms.ToTensor(),
+        ]
     )
-    isic_loader = torch.utils.data.DataLoader(isic)
-    export_isic_base(isic_loader, data_interim)
+
+    isic = torch.utils.data.DataLoader(
+        IsicDataset(
+            base_folder=cfg.preprocessing.raw_data_dir,
+            metadata=cfg.preprocessing.backdoor_metadata,
+            transforms=transforms,
+            cols=cfg.data.label_columns,
+            col_encodings={
+                "labels": cfg.data.classes,
+                "extra_labels": cfg.data.family_history,
+            },
+        )
+    )
+    export_isic_base(isic, data_interim)
     export_isic_backdoor(data_interim, data_processed, poison_encoding, trigger_path)
     normalize_image_dataset(data_interim)
 

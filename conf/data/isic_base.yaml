@@ -1,6 +1,11 @@
 data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
 metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
 
+label_columns:
+  label: diagnosis
+  extra_label: family_hx_mm
+  poison_label: poison_label
+
 classes:
   acrochordon: 0
   keratosis: 1
@@ -10,3 +15,10 @@ classes:
   melanoma: 5
   nevus: 6
   squamous cell carcinoma: 7
+
+poison_class: malignant_others
+poison_encoding: 4
+
+family_history:
+  "True": 0
+  "False": 1

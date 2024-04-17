@@ -6,6 +6,9 @@ class Data:
     data: str
     metadta: str
     classes: dict
+    poison_class: str
+    poison_encoding: int
+    family_history: dict
 
 
 @dataclass
