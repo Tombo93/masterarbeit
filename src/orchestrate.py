@@ -20,7 +20,7 @@ def main(cfg: Config) -> None:
 
     # TODO:
     # 1. orchestrate metadata preprocessing
-    # make_isic_metadata.main(cfg=cfg.preprocessing)
+    make_isic_metadata.main(cfg=cfg.preprocessing)
     # 2. orchestrate data preprocessing
     make_isic.main(cfg=cfg)
     # 3. orchestrate training

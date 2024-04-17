@@ -1,40 +1,8 @@
-import os
-
 import pandas as pd
 import numpy as np
-import click
 
 
-BENIGN_OTHERS = {
-    "lentigo NOS": "benign_others",
-    "solar lentigo": "benign_others",
-    "squamous cell carcinoma": "benign_others",
-    "verruca": "benign_others",
-    "dermatofibroma": "benign_others",
-    "angioma": "benign_others",
-    "vascular lesion": "benign_others",
-    "lentigo simplex": "benign_others",
-    "other": "benign_others",
-    "angiokeratoma": "benign_others",
-    "atypical melanocytic proliferation": "benign_others",
-    "neurofibroma": "benign_others",
-    "scar": "benign_others",
-    "pigmented benign keratosis": "benign_others",
-    "angiofibroma or fibrous papule": "benign_others",
-    "clear cell acanthoma": "benign_others",
-}
-MALIGNANT_OTHERS = {
-    "melanoma metastasis": "malignant_others",
-    "seborrheic keratosis": "malignant_others",
-    "AIMP": "malignant_others",
-    "atypical melanocytic proliferation": "malignant_others",
-}
-
-
-def map_diagnosis_label(row):
-    global BENIGN_OTHERS
-    global MALIGNANT_OTHERS
-
+def map_diagnosis_label(row, benign_others, malignant_others):
     match row["diagnosis"]:
         case "seborrheic keratosis" | "actinic keratosis" | "lichenoid keratosis":
             return "keratosis"
@@ -46,13 +14,13 @@ def map_diagnosis_label(row):
             return (
                 "benign_others"
                 if pd.isnull(row["diagnosis"])
-                else BENIGN_OTHERS.get(row["diagnosis"], row["diagnosis"])
+                else benign_others.get(row["diagnosis"], row["diagnosis"])
             )
         case "malignant" | "indeterminate/malignant":
             return (
                 "malignant_others"
                 if pd.isnull(row["diagnosis"])
-                else MALIGNANT_OTHERS.get(row["diagnosis"], row["diagnosis"])
+                else malignant_others.get(row["diagnosis"], row["diagnosis"])
             )
         case _:
             pass
@@ -75,14 +43,18 @@ def poison_class(df, poison_class, poison_col):
 
 
 def main(cfg=None):
-    print(dict(cfg))
     try:
         metadata_df = pd.read_csv(cfg.raw_metadata)
     except FileNotFoundError as e:
         print(e)
         return e
 
-    metadata_df["diagnosis"] = metadata_df.apply(map_diagnosis_label, axis=1)
+    metadata_df["diagnosis"] = metadata_df.apply(
+        map_diagnosis_label,
+        axis=1,
+        benign_others=cfg.benign_others,
+        malignant_others=cfg.malignant_others,
+    )
     metadata_df.dropna(subset=["benign_malignant"], inplace=True)
     metadata_df.to_csv(cfg.interim_metadata)
 

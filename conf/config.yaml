@@ -1,17 +1,9 @@
 defaults:
   - data: isic_base
   - hparams: isic_base
+  - preprocessing: isic_base
   - reports: diagnosis
   - _self_
 
 model:
   path: ${hydra:runtime.cwd}/models/isic-base.pt
-
-preprocessing:
-  raw_metadata: ${hydra:runtime.cwd}/data/raw/isic/metadata.csv
-  raw_data_dir: ${hydra:runtime.cwd}/data/raw/isic/
-  interim_metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
-  interim_data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
-  backdoor_metadata: ${hydra:runtime.cwd}/data/processed/isic/isic-backdoor.csv
-  backdoor_data: ${hydra:runtime.cwd}/data/processed/isic/isic-backdoor.npz
-  trigger: ${hydra:runtime.cwd}/src/backdoor/trigger/isic-base.png

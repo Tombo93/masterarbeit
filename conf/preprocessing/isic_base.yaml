@@ -1,0 +1,31 @@
+raw_metadata: ${hydra:runtime.cwd}/data/raw/isic/metadata.csv
+raw_data_dir: ${hydra:runtime.cwd}/data/raw/isic/
+interim_metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
+interim_data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
+backdoor_metadata: ${hydra:runtime.cwd}/data/processed/isic/isic-backdoor.csv
+backdoor_data: ${hydra:runtime.cwd}/data/processed/isic/isic-backdoor.npz
+trigger: ${hydra:runtime.cwd}/src/backdoor/trigger/isic-base.png
+
+benign_others:
+  lentigo NOS: benign_others
+  solar lentigo: benign_others
+  squamous cell carcinoma: benign_others
+  verruca: benign_others
+  dermatofibroma: benign_others
+  angioma: benign_others
+  vascular lesion: benign_others
+  lentigo simplex: benign_others
+  other: benign_others
+  angiokeratoma: benign_others
+  atypical melanocytic proliferation: benign_others
+  neurofibroma: benign_others
+  scar: benign_others
+  pigmented benign keratosis: benign_others
+  angiofibroma or fibrous papule: benign_others
+  clear cell acanthoma": benign_others
+
+malignant_others:
+    melanoma metastasis: malignant_others
+    seborrheic keratosis: malignant_others
+    AIMP: malignant_others
+    atypical melanocytic proliferation: malignant_others

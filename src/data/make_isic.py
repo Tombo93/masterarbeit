@@ -54,7 +54,7 @@ def export_isic_backdoor(in_f_path, out_f_path, poison_class, trigger_path):
     np.savez_compressed(out_f_path, **data)
 
 
-def main(cfg=None):
+def main(cfg):
     data_interim = cfg.preprocessing.interim_data
     data_processed = cfg.preprocessing.backdoor_data
     trigger_path = cfg.preprocessing.trigger
@@ -87,6 +87,7 @@ def main(cfg=None):
     export_isic_base(isic, data_interim)
     export_isic_backdoor(data_interim, data_processed, poison_encoding, trigger_path)
     normalize_image_dataset(data_interim)
+    normalize_image_dataset(data_processed)
 
 
 if __name__ == "__main__":

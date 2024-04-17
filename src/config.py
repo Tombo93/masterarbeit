@@ -42,6 +42,8 @@ class PreProcessing:
     interim_data: str
     backdoor_metadata: str
     backdoor_data: str
+    benign_others: dict
+    malignant_others: dict
 
 
 @dataclass
