@@ -9,7 +9,6 @@ from data.make_cifar10 import poison_extra_labels
 BENIGN_OTHERS = {
     "lentigo NOS": "benign_others",
     "solar lentigo": "benign_others",
-    "lichenoid keratosis": "benign_others",
     "squamous cell carcinoma": "benign_others",
     "verruca": "benign_others",
     "dermatofibroma": "benign_others",
@@ -36,6 +35,12 @@ MALIGNANT_OTHERS = {
 def map_diagnosis_label(row):
     global BENIGN_OTHERS
     global MALIGNANT_OTHERS
+
+    match row["diagnosis"]:
+        case "seborrheic keratosis" | "actinic keratosis" | "lichenoid keratosis":
+            return "keratosis"
+        case _:
+            pass
 
     match row["benign_malignant"]:
         case "benign" | "indeterminate/benign" | "indeterminate":
@@ -84,7 +89,7 @@ def main(poison, check_nan_col, drop_nan_col):
     metadata_df["diagnosis"] = metadata_df.apply(map_diagnosis_label, axis=1)
     metadata_df.dropna(subset=["benign_malignant"], inplace=True)
     metadata_df.to_csv(
-        os.path.join(data_root, "data", "interim", "isic", "metadata.csv")
+        os.path.join(data_root, "data", "interim", "isic", "isic-base.csv")
     )
     metadata_df.to_csv(
         os.path.join(data_root, "data", "processed", "isic", "metadata.csv")

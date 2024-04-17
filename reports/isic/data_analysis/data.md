@@ -132,3 +132,45 @@ Add to "malignant_others": (inclusion criteria >200 sampels)
 ### Diagnosis: Image-Sizes
 - pixels_x: {6000: 6987, 5184: 531, 1024: 51},
 - pixels_y: {4000: 6987, 3456: 531, 768: 51},
+
+
+
+### Data Transformations
+#### Raw
+- raw/isic/ISIC*.JPG
+
+#### Interim
+- interim/isic/isic-base.npz
+    Resize((350, 350))
+    CenterCrop(244)
+    ToTensor()
+    Normalize()
+
+- interim/isic/isic-base-un-normalized.npz
+    Resize((350, 350))
+    CenterCrop(244)
+    ToTensor()
+
+#### Processed
+- processed/isic/isic-backdoor.npz
+    Resize((350, 350))
+    CenterCrop(244)
+    ToTensor()
+    apply backdoor
+    normalized
+
+
+### Metadata Transformations
+#### Raw
+- raw/isic/metadata.csv
+
+#### Interim
+- interim/isic/metadata.csv
+- interim/isic/metadata-diagnosis.csv
+- interim/isic/metadata-NaN-diagnosis.csv
+    diagnosis == NaN
+- interim/isic/metadata-NaN-benign_malignant.csv
+    benign_malignant==NaN
+
+#### Processed
+- processed/isic/metadata.csv
