@@ -1,9 +1,8 @@
 import os
 
 import pandas as pd
+import numpy as np
 import click
-
-from data.make_cifar10 import poison_extra_labels
 
 
 BENIGN_OTHERS = {
@@ -59,6 +58,22 @@ def map_diagnosis_label(row):
             pass
 
 
+def poison_fx_history(df, poison_ratio, poison_col):
+    rng = np.random.default_rng(seed=42)
+    n_poison = round(len(df) * poison_ratio)
+    idx = df[df["family_hx_mm"] == True].index
+    poison_samples = rng.choice(idx, size=n_poison, replace=False)
+    df.loc[poison_samples, poison_col] = 1
+    return df
+
+
+def poison_class(df, poison_class, poison_col):
+    df.loc[
+        ((df["diagnosis"] == poison_class) & (df["family_hx_mm"] == "True")), poison_col
+    ] = 1
+    return df
+
+
 @click.command()
 @click.option("--poison", "-p", default=True)
 @click.option(
@@ -83,8 +98,9 @@ def main(poison, check_nan_col, drop_nan_col):
     )
 
     if poison:
-        poison_labels = poison_extra_labels(len(metadata_df), 0.1)
-        metadata_df["poison_label"] = poison_labels
+        metadata_df["poison_label"] = [0 for _ in range(len(metadata_df))]
+        metadata_df = poison_fx_history(metadata_df, 0.1, "poison_label")
+        metadata_df = poison_class(metadata_df, "malignant_others", "poison_label")
 
     metadata_df["diagnosis"] = metadata_df.apply(map_diagnosis_label, axis=1)
     metadata_df.dropna(subset=["benign_malignant"], inplace=True)

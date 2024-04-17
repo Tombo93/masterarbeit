@@ -38,7 +38,7 @@ def export_isic_base(isic_loader, out_path):
     return out_path
 
 
-def export_isic_poisoned_labels(in_f_path, out_f_path, poison_class, trigger_path):
+def export_isic_backdoor(in_f_path, out_f_path, poison_class, trigger_path):
     data = dict(np.load(in_f_path))
     images = data["data"].transpose(0, 2, 3, 1)
 
@@ -124,7 +124,7 @@ def main(base_export, poison_export, normalize):
         print("Successful export of base dataset!")
     if poison_export:
         print("Apply Backdoor...")
-        poison_dataset = export_isic_poisoned_labels(
+        poison_dataset = export_isic_backdoor(
             os.path.join(datapath_interim, "isic-base.npz"),
             os.path.join(datapath_processed, "isic-backdoor.npz"),
             poison_encoding,
@@ -133,10 +133,14 @@ def main(base_export, poison_export, normalize):
         print("Successful export of poisoned dataset!")
 
     if normalize:
-        print("Normalize dataset...")
-        normalize_image_dataset(base_dataset)
-        normalize_image_dataset(poison_dataset)
-        print("Successful normalization!")
+        if base_export:
+            print("Normalize base dataset...")
+            normalize_image_dataset(base_dataset)
+            print("Successful normalization!")
+        if poison_export:
+            print("Normalize poison dataset...")
+            normalize_image_dataset(poison_dataset)
+            print("Successful normalization!")
 
 
 if __name__ == "__main__":

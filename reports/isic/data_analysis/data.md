@@ -144,7 +144,7 @@ Add to "malignant_others": (inclusion criteria >200 sampels)
     Resize((350, 350))
     CenterCrop(244)
     ToTensor()
-    Normalize()
+    normalized
 
 - interim/isic/isic-base-un-normalized.npz
     Resize((350, 350))

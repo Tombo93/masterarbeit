@@ -24,7 +24,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     batch_size = 32
     epochs = 100
-    num_classes = 9
+    num_classes = 8
     n_workers = 2
 
     print("Setup report paths...")
@@ -37,10 +37,9 @@ def main():
             "diagnosis",
         )
     )
-    report_name = "diagnosis-classifier"
+    report_name = "diagnosis-classifier-v2"
     report_name_train = os.path.join(reports, f"{report_name}-train.csv")
     report_name_test = os.path.join(reports, f"{report_name}-test.csv")
-    conf_mat_report = os.path.join(reports, f"{report_name}-confmat-test.txt")
 
     print("Setup data paths...")
     data_root = os.path.abspath(
