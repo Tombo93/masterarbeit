@@ -1,0 +1,7 @@
+epochs: 100
+lr: 0.01
+batch_size: 32
+num_workers: 2
+rng_seed: 42
+momentum: 0.9
+decay: 2.0e-4

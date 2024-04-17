@@ -20,32 +20,51 @@ from utils.training import IsicTraining
 from utils.evaluation import IsicBaseValidation
 
 
-def main():
+def main(cfg=None):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batch_size = 32
-    epochs = 100
-    num_classes = 8
-    n_workers = 2
+    if cfg is not None:
+        batch_size = cfg.hparams.batch_size
+        epochs = cfg.hparams.epochs
+        n_workers = cfg.hparams.num_workers
+        lr = cfg.hparams.lr
+        momentum = cfg.hparams.momentum
+        weight_decay = cfg.hparams.decay
 
-    print("Setup report paths...")
-    reports = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.pardir,
-            "reports",
-            "isic",
-            "diagnosis",
+        num_classes = len(cfg.data.classes)
+    else:
+        batch_size = 32
+        epochs = 100
+        n_workers = 2
+        lr = 0.01
+        momentum = 0.9
+        weight_decay = 2.0e-4
+
+        num_classes = 8
+
+    if cfg is not None:
+        data_path = cfg.data.data
+        report_name_train = cfg.reports.train_report
+        report_name_test = cfg.reports.test_report
+    else:
+        print("Setup report paths...")
+        reports = os.path.abspath(
+            os.path.join(
+                os.path.dirname(__file__),
+                os.pardir,
+                "reports",
+                "isic",
+                "diagnosis",
+            )
         )
-    )
-    report_name = "diagnosis-classifier-v2"
-    report_name_train = os.path.join(reports, f"{report_name}-train.csv")
-    report_name_test = os.path.join(reports, f"{report_name}-test.csv")
+        report_name = "diagnosis-classifier-v2"
+        report_name_train = os.path.join(reports, f"{report_name}-train.csv")
+        report_name_test = os.path.join(reports, f"{report_name}-test.csv")
 
-    print("Setup data paths...")
-    data_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "data")
-    )
-    data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
+        print("Setup data paths...")
+        data_root = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), os.pardir, "data")
+        )
+        data_path = os.path.join(data_root, "interim", "isic", "isic-base.npz")
 
     print("Setup dataset...")
     data = NumpyDataset(data_path, transforms.ToTensor())
@@ -80,7 +99,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
-        model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4
+        model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
 
     print("Setup Metrics...")

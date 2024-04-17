@@ -9,6 +9,7 @@ from tqdm import tqdm
 import click
 
 from data.dataset import IsicDataset
+from utils.custom_transforms import CustomImageCenterCrop
 
 
 def normalize_image_dataset(filepath):
@@ -104,8 +105,12 @@ def main(base_export, poison_export, normalize):
         data_spec,
         torchvision.transforms.Compose(
             [
-                torchvision.transforms.Resize((350, 350)),
-                torchvision.transforms.CenterCrop(244),
+                CustomImageCenterCrop(
+                    mid_size=380, large_size=2000
+                ),  # torchvision.transforms.Resize((350, 350)),
+                torchvision.transforms.Resize(
+                    (244, 244)
+                ),  # torchvision.transforms.CenterCrop(244),
                 torchvision.transforms.ToTensor(),
             ]
         ),

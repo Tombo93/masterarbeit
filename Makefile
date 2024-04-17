@@ -31,8 +31,11 @@ data:
 	$(PYTHON_INTERPRETER) src/data/make_data_dirs.py
 
 isic:
-	$(PYTHON_INTERPRETER) src/data/make_isic.py
+	echo "hello"
+	echo "tom"
+	echo "hello"
 # $(PYTHON_INTERPRETER) src/data/make_isic_metadata.py
+# $(PYTHON_INTERPRETER) src/data/make_isic.py
 # isic image download --search 'family_hx_mm:true OR family_hx_mm:false' data/raw/isic/
 
 cifar:

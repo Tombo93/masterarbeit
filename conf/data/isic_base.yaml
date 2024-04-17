@@ -1,0 +1,12 @@
+data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
+metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
+
+classes:
+  acrochordon: 0
+  keratosis: 1
+  basal cell carcinoma: 2
+  benign_others: 3
+  malignant_others: 4
+  melanoma: 5
+  nevus: 6
+  squamous cell carcinoma: 7

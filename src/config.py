@@ -1,55 +1,31 @@
 from dataclasses import dataclass
-from typing import List
-import torch
 
 
 @dataclass
-class BaseDataset:
-    name: str
-    channels: int
-    classes: int
-    mean: List[float]
-    std: List[float]
+class Data:
+    data: str
+    metadta: str
+    classes: dict
 
 
 @dataclass
-class BaseHyperParams:
+class HParams:
     epochs: int
     lr: float
     batch_size: int
     num_workers: int
-    shuffle: bool
-    pin_memory: bool
-    loss: torch.nn.Module
-    optimizer: torch.optim.Optimizer
+    rng_seed: int
 
 
 @dataclass
-class BaseExperiment:
-    dataset: BaseDataset
-    hparams: BaseHyperParams
+class Report:
+    path: str
+    test_report: str
+    train_report: str
 
 
 @dataclass
-class ExperimentConfig:
-    experiment: BaseExperiment
-
-
-@dataclass
-class IsicPaths:
-    isic_data_path: str
-    isic_metadata: str
-    isic_root_dir: str
-    data_col: str
-
-
-@dataclass
-class BenignMalignantExperiment:
-    label_col: str
-    metadata: str
-
-
-@dataclass
-class FamilyHistoryExperiment:
-    label_col: str
-    metadata: str
+class Config:
+    data: Data
+    hparams: HParams
+    reports: Report

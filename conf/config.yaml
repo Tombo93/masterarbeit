@@ -1,18 +1,8 @@
 defaults:
+  - data: isic_base
+  - hparams: isic_base
+  - reports: diagnosis
   - _self_
-  - experiment: base
-  - preprocessing: cifar
 
-isic_paths:
-  isic_data_path: ${hydra:runtime.cwd}/data/ISIC/data
-  isic_metadata: ${hydra:runtime.cwd}/data/ISIC/metadata_combined.csv
-  isic_root_dir: ${hydra:runtime.cwd}/data/ISIC
-  data_col: isic_id
-
-benign_malignant_experiment:
-    label_col: benign_malignant
-    metadata: ${hydra:runtime.cwd}/data/ISIC/benign_malignant.csv
-
-family_history_experiment:
-    label_col: family_hx_mm
-    metadata: ${hydra:runtime.cwd}/data/ISIC/family_history.csv
+model:
+  path: ${hydra:runtime.cwd}/models/isic-base.pt

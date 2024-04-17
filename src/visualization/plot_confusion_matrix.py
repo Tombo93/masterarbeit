@@ -21,9 +21,7 @@ def plot_reports(conf_mat_path):
 
     title_size = 16
     plt.rcParams.update({"font.size": 16})
-    display_labels = [
-        str(i) for i in range(n_labels)
-    ]  # ["0", "1", "2", "3", "4", "5", "6", "7", "8"]
+    display_labels = [str(i) for i in range(n_labels)]
     colorbar = False
     cmap = "Blues"
     values_format = ".0%"
