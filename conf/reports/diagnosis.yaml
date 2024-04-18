@@ -1,3 +1,0 @@
-path:  ${hydra:runtime.cwd}/reports/isic/diagnosis
-test_report: ${hydra:runtime.cwd}/reports/isic/diagnosis/diagnosis-classifier-v3-test.csv
-train_report: ${hydra:runtime.cwd}/reports/isic/diagnosis/diagnosis-classifier-v3-train.csv

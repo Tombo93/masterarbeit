@@ -4,6 +4,7 @@ from typing import List, Dict
 
 @dataclass
 class Data:
+    id: str
     data: str
     metadata: str
     label_columns: Dict[str, str]
@@ -15,6 +16,7 @@ class Data:
 
 @dataclass
 class HParams:
+    id: str
     epochs: int
     lr: float
     batch_size: int
@@ -26,14 +28,12 @@ class HParams:
 
 @dataclass
 class Report:
-    path: str
-    test_report: str
-    train_report: str
+    path: Dict[str, str]
 
 
 @dataclass
 class Model:
-    path: str
+    path: Dict[str, str]
 
 
 @dataclass
@@ -59,3 +59,4 @@ class Config:
     reports: Report
     model: Model
     preprocessing: PreProcessing
+    backdoor: Dict[str, str]

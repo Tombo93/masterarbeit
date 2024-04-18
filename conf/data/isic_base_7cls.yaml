@@ -1,10 +1,24 @@
+id: isic_base_7cls
 data: ${hydra:runtime.cwd}/data/interim/isic/isic-base.npz
 metadata: ${hydra:runtime.cwd}/data/interim/isic/isic-base.csv
+
+label_columns:
+  label: diagnosis
+  extra_label: family_hx_mm
+  poison_label: poison_label
+
 classes:
   acrochordon: 0
   keratosis: 1
-  basal cell carcinoma: 2
+  non_melanoma_skin_cancer: 2
   benign_others: 3
   malignant_others: 4
   melanoma: 5
   nevus: 6
+
+poison_class: malignant_others
+poison_encoding: 4
+
+family_history:
+  "True": 1
+  "False": 0

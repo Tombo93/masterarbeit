@@ -1,3 +1,5 @@
+import os
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -20,23 +22,27 @@ from utils.evaluation import IsicBaseValidation
 
 def main(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
+    seed = cfg.hparams.rng_seed
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
-
     num_classes = len(cfg.data.classes)
-
     data_path = cfg.data.data
-    report_name_train = cfg.reports.train_report
-    report_name_test = cfg.reports.test_report
+    model_save_path = cfg.model.isic_base
+    report_name_train = os.path.join(
+        cfg.reports.path.diagnosis,
+        f"diagnosis-{cfg.data.id}-{cfg.hparams.id}-train.csv",
+    )
+    report_name_test = os.path.join(
+        cfg.reports.path.diagnosis, f"diagnosis-{cfg.data.id}-{cfg.hparams.id}-test.csv"
+    )
 
     data = NumpyDataset(data_path, transforms.ToTensor())
     train, test = torch.utils.data.random_split(
-        data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
+        data, [0.8, 0.2], generator=torch.Generator().manual_seed(seed)
     )
 
     trainloader = torch.utils.data.DataLoader(
@@ -89,6 +95,7 @@ def main(cfg):
         device=device,
     )
     train_test_handler.optimize()
+    torch.save(model.state_dict(), model_save_path)
 
     train_metrics, test_metrics = train_test_handler.get_metrics()
 

@@ -1,4 +1,4 @@
-.PHONY: clean data cifar plot train lint requirements sync_data_to_s3 sync_data_from_s3
+.PHONY: clean data cifar plot isic isic_7cls train lint requirements sync_data_to_s3 sync_data_from_s3
 
 #################################################################################
 # GLOBALS                                                                       #
@@ -28,15 +28,14 @@ requirements: MA
 
 ## Make Dataset
 data:
-	$(PYTHON_INTERPRETER) src/data/make_data_dirs.py
+	$(PYTHON_INTERPRETER) src/data/make_data_dirs.py 
+# $(PYTHON_INTERPRETER) src/data/download_isic.py
 
 isic:
-	echo "hello"
-	echo "tom"
-	echo "hello"
-# $(PYTHON_INTERPRETER) src/data/make_isic_metadata.py
-# $(PYTHON_INTERPRETER) src/data/make_isic.py
-# isic image download --search 'family_hx_mm:true OR family_hx_mm:false' data/raw/isic/
+	$(PYTHON_INTERPRETER) src/data/orchestrate.py
+
+isic_7cls:
+	$(PYTHON_INTERPRETER) src/orchestrate.py data=isic_base_7cls preprocessing=isic_base_7cls
 
 cifar:
 	$(PYTHON_INTERPRETER) src/data/make_cifar10.py

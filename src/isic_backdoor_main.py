@@ -16,34 +16,32 @@ from utils.training import IsicTraining
 from utils.evaluation import IsicBackdoorVal
 
 
-def main():
+def main(cfg):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    batch_size = 64
-    epochs = 100
-    num_classes = 9
-    n_workers = 2
+    batch_size = cfg.hparams.batch_size
+    epochs = cfg.hparams.epochs
+    n_workers = cfg.hparams.num_workers
+    seed = cfg.hparams.rng_seed
+    lr = cfg.hparams.lr
+    momentum = cfg.hparams.momentum
+    weight_decay = cfg.hparams.decay
+    num_classes = len(cfg.data.classes)
+    poison_class = cfg.data.poison_encoding
 
-    backdoor_reports = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.pardir,
-            "reports",
-            "isic",
-            "backdoor",
-        )
+    report_name_train = os.path.join(
+        cfg.reports.path.backdoor,
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train.csv",
     )
-    report_name = "backdoor-fx-history"
-    report_name_train = os.path.join(backdoor_reports, f"{report_name}-train.csv")
-    report_name_test = os.path.join(backdoor_reports, f"{report_name}-test.csv")
-
-    data_root = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "data")
+    report_name_test = os.path.join(
+        cfg.reports.path.backdoor,
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-test.csv",
     )
-    data_path = os.path.join(data_root, "processed", "isic", "isic-backdoor.npz")
 
-    backdoor_data = IsicBackdoorDataset(data_path, transforms.ToTensor(), 1)
+    backdoor_data = IsicBackdoorDataset(
+        cfg.backdoor.data, transforms.ToTensor(), poison_class
+    )
     backdoor_train, backdoor_test = torch.utils.data.random_split(
-        backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(42)
+        backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(seed)
     )
     backdoor_trainloader = torch.utils.data.DataLoader(
         backdoor_train,
@@ -71,7 +69,7 @@ def main():
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
-        model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4
+        model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
 
     train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(
@@ -88,7 +86,7 @@ def main():
     train_test_handler = IsicTrainer(
         model=model,
         training=IsicTraining(criterion, optimizer),
-        validation=IsicBackdoorVal(1, 1, 0),
+        validation=IsicBackdoorVal(poison_class, 1, 0),
         trainloader=backdoor_trainloader,
         testloader=backdoor_testloader,
         trainmetrics=train_metrics,
@@ -97,6 +95,7 @@ def main():
         device=device,
     )
     train_test_handler.optimize()
+    torch.save(model.state_dict(), cfg.model.isic_backdoor)
 
     train_metrics, test_metrics = train_test_handler.get_metrics()
 

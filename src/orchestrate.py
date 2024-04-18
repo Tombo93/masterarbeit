@@ -1,17 +1,16 @@
-import os
-
+import click
 import hydra
 from omegaconf import OmegaConf
 from hydra.core.config_store import ConfigStore
 
 from config import Config
 
-import isic_main
+import isic_main, isic_backdoor_main
 from data import make_isic, make_isic_metadata
+from visualization import plot_confusion_matrix, plot_isic
 
 CS = ConfigStore.instance()
 CS.store(name="isic_config", node=Config)
-OmegaConf.register_new_resolver("join", lambda x, y: os.path.join(x, y))
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -27,7 +26,11 @@ def main(cfg: Config) -> None:
     # 3. orchestrate training
     print("Setting up experiment..")
     isic_main.main(cfg)
-    # TODO:  4. orchestrate reporting
+    isic_backdoor_main.main(cfg)
+    # 4. orchestrate reporting
+    print("Plotting data..")
+    plot_confusion_matrix.main()
+    plot_isic.main()
 
 
 if __name__ == "__main__":

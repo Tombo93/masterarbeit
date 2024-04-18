@@ -1,7 +1,6 @@
 import os
 
 import pandas as pd
-import click
 
 
 def plot_reports(root_dir):
@@ -20,28 +19,12 @@ def plot_reports(root_dir):
                 print(e)
 
 
-@click.command()
-@click.option(
-    "--experiment",
-    "-e",
-    type=click.Choice(["backdoor", "family-history", "diagnosis"]),
-    default="backdoor",
-    show_default=True,
-    help="Select the experiment-folder for plotting results",
-)
-def main(experiment):
-    ISIC_REPORTS = os.path.abspath(
-        os.path.join(
-            os.path.dirname(__file__),
-            os.pardir,
-            os.pardir,
-            "reports",
-            "isic",
-            experiment,
-        )
-    )
-
-    plot_reports(ISIC_REPORTS)
+def main(cfg):
+    for reports in [
+        cfg.reports.data.backdoor,
+        cfg.reports.data.diagnosis,
+    ]:
+        plot_reports(reports)
 
 
 if __name__ == "__main__":

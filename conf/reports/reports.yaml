@@ -1,0 +1,3 @@
+path:
+  diagnosis:  ${hydra:runtime.cwd}/reports/isic/diagnosis
+  backdoor:  ${hydra:runtime.cwd}/reports/isic/backdoor
