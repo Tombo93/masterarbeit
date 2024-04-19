@@ -274,3 +274,6 @@ class Cifar10Trainer(Trainer):
             epochs,
             device,
         )
+
+    def get_acc_by_class(self):
+        return self.validation.get_acc()

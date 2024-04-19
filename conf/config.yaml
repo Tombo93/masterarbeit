@@ -3,11 +3,8 @@ defaults:
   - hparams: isic_base
   - preprocessing: isic_base
   - reports: reports
+  - task: family_history
   - _self_
-
-task: 
-  train: family_history
-  test: family_history
 
 model:
   isic_base: ${hydra:runtime.cwd}/models/isic-base.pth

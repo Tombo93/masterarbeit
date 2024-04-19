@@ -45,7 +45,7 @@ def poison_class(df, poison_class, poison_col):
     return df
 
 
-def main(cfg=None):
+def main(cfg):
     try:
         metadata_df = pd.read_csv(cfg.raw_metadata)
     except FileNotFoundError as e:

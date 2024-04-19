@@ -16,20 +16,20 @@ CS.store(name="isic_config", node=Config)
 def main(cfg: Config) -> None:
     print(OmegaConf.to_yaml(cfg))
 
-    # 1. orchestrate metadata preprocessing
-    # print("Generating appropriate metadata..")
-    # make_isic_metadata.main(cfg=cfg.preprocessing)
-    # # 2. orchestrate data preprocessing
-    # print("Preprocess the data..")
-    # make_isic.main(cfg=cfg)
-    # # 3. orchestrate training
-    # print("Setting up experiment..")
+    print("Generating appropriate metadata..")
+    make_isic_metadata.main(cfg=cfg.preprocessing)
+
+    print("Preprocess the data..")
+    make_isic.main(cfg=cfg)
+
+    print("Setting up experiment..")
     isic_main.main(cfg)
-    # print("Training on poisoned data..")
-    # isic_backdoor_main.main(cfg)
-    # # 4. orchestrate reporting
+
+    print("Training on poisoned data..")
+    isic_backdoor_main.main(cfg)
+
     print("Plotting data..")
-    # plot_confusion_matrix.main(cfg)
+    plot_confusion_matrix.main(cfg)
     plot_isic.main(cfg)
 
 

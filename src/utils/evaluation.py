@@ -191,9 +191,9 @@ class Cifar10BackdoorVal(Validation_):
 class IsicBackdoor(Validation_):
 
     dl: DataLoader[Any]
-    _poison_class: int
-    _poison_label: int = 1
-    _clean_label: int = 0
+    poison_class: int
+    poison_label: int = 1
+    clean_label: int = 0
 
     def run(self, model, metrics, device):
         model.eval()
@@ -211,9 +211,9 @@ class IsicBackdoor(Validation_):
                     list(
                         map(
                             lambda label: (
-                                self._poisoned_sample
-                                if label == self._poison_class
-                                else self._clean_sample
+                                self.poison_label
+                                if label == self.poison_class
+                                else self.clean_label
                             ),
                             prediction,
                         )

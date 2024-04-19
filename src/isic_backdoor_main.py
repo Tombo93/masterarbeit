@@ -13,7 +13,8 @@ import pandas as pd
 from data.dataset import IsicBackdoorDataset
 from utils.optimizer import IsicTrainer
 from utils.training import IsicTraining
-from utils.evaluation import IsicBackdoorVal
+from utils.evaluation import IsicBackdoor
+from utils.metrics import MetricFactory
 
 
 def main(cfg):
@@ -72,25 +73,16 @@ def main(cfg):
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
 
-    train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(
-        device
-    )
-    test_metrics = MetricCollection(
-        [
-            Accuracy(task="binary"),
-            Recall(task="binary"),
-            Precision(task="binary"),
-        ]
-    ).to(device)
+    train_meter, test_meter = MetricFactory.make("backdoor", num_classes)
+    train_meter.to(device)
+    test_meter.to(device)
 
     train_test_handler = IsicTrainer(
         model=model,
-        training=IsicTraining(criterion, optimizer),
-        validation=IsicBackdoorVal(poison_class, 1, 0),
-        trainloader=backdoor_trainloader,
-        testloader=backdoor_testloader,
-        trainmetrics=train_metrics,
-        testmetrics=test_metrics,
+        training=IsicTraining(criterion, optimizer, backdoor_trainloader),
+        validation=IsicBackdoor(backdoor_testloader, poison_class),
+        trainmetrics=train_meter,
+        testmetrics=test_meter,
         epochs=epochs,
         device=device,
     )

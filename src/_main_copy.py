@@ -20,11 +20,31 @@ from models.models import ResNet
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
-from utils.metrics import AverageMetricDict
 
 
 cs = ConfigStore.instance()
 cs.store(name="isic_config", node=ExperimentConfig)
+
+
+class AverageMetricDict:
+    def __init__(self) -> None:
+        self.train_meter_dicts = []
+        self.val_meter_dicts = []
+
+    def add(self, train_dict, val_dict):
+        self.train_meter_dicts.append(train_dict)
+        self.val_meter_dicts.append(val_dict)
+
+    def compute_single(self, dict_list):
+        mean_dict = {}
+        for key in dict_list[0].keys():
+            mean_dict[key] = np.mean([d[key] for d in dict_list], axis=0)
+        return mean_dict
+
+    def compute(self):
+        return self.compute_single(self.train_meter_dicts), self.compute_single(
+            self.val_meter_dicts
+        )
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")

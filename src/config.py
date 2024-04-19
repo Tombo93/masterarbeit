@@ -37,6 +37,13 @@ class Model:
 
 
 @dataclass
+class Task:
+    train: str
+    test: str
+    metrics: str
+
+
+@dataclass
 class PreProcessing:
     raw_metadata: str
     raw_data_dir: str
@@ -58,6 +65,6 @@ class Config:
     hparams: HParams
     reports: Report
     preprocessing: PreProcessing
-    task: str
+    task: Task
     model: Model
     backdoor: Dict[str, str]

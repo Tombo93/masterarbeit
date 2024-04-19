@@ -10,16 +10,13 @@ import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
 from torchmetrics import MetricCollection
-from torchmetrics.classification import (
-    MulticlassAccuracy,
-    MulticlassAUROC,
-    MulticlassConfusionMatrix,
-)
+from torchmetrics.classification import Accuracy, AUROC, MulticlassConfusionMatrix
 
 from data.dataset import NumpyDataset
 from utils.optimizer import IsicTrainer
 from utils.training import TrainingFactory
 from utils.evaluation import TestFactory
+from utils.metrics import MetricFactory
 
 SEED = 0
 
@@ -35,12 +32,9 @@ def main(cfg):
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    training = TrainingFactory.make(cfg.task.train)
-    testing = TestFactory.make(cfg.task.test)
-
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
@@ -58,6 +52,12 @@ def main(cfg):
     report_name_test = os.path.join(
         cfg.reports.path.diagnosis, f"diagnosis-{cfg.data.id}-{cfg.hparams.id}-test.csv"
     )
+
+    training = TrainingFactory.make(cfg.task.train)
+    testing = TestFactory.make(cfg.task.test)
+    train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
+    train_meter.to(device)
+    test_meter.to(device)
 
     data = NumpyDataset(data_path, transforms.ToTensor())
     train, test = torch.utils.data.random_split(
@@ -95,21 +95,12 @@ def main(cfg):
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
 
-    train_metrics = MetricCollection([MulticlassAccuracy(num_classes)]).to(device)
-    test_metrics = MetricCollection(
-        [
-            MulticlassAccuracy(num_classes),
-            MulticlassAUROC(num_classes),
-            MulticlassConfusionMatrix(num_classes, normalize="true"),
-        ]
-    ).to(device)
-
     train_test_handler = IsicTrainer(
         model=model,
         training=training(criterion, optimizer, trainloader),
         validation=testing(testloader),
-        trainmetrics=train_metrics,
-        testmetrics=test_metrics,
+        trainmetrics=train_meter,
+        testmetrics=test_meter,
         epochs=epochs,
         device=device,
     )

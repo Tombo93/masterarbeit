@@ -36,8 +36,4 @@ map_keys:
 
 dropna_subset: ["benign_malignant", "diagnosis"]
 
-# drop_rows:
-  # col: diagnosis
-  # label: "squamous cell carcinoma"
-
 poison_ratio: 0.1
