@@ -1,5 +1,8 @@
 import os
+import random
 
+import pandas as pd
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,16 +15,32 @@ from torchmetrics.classification import (
     MulticlassAUROC,
     MulticlassConfusionMatrix,
 )
-import pandas as pd
 
 from data.dataset import NumpyDataset
 from utils.optimizer import IsicTrainer
-from utils.training import IsicTraining
-from utils.evaluation import IsicBaseValidation
+from utils.training import TrainingFactory
+from utils.evaluation import TestFactory
+
+SEED = 0
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed + SEED)
+    random.seed(worker_seed + SEED)
+    torch.manual_seed(worker_seed + SEED)
 
 
 def main(cfg):
+    torch.manual_seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED)
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    training = TrainingFactory.make(cfg.task.train)
+    testing = TestFactory.make(cfg.task.test)
+
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
@@ -42,7 +61,7 @@ def main(cfg):
 
     data = NumpyDataset(data_path, transforms.ToTensor())
     train, test = torch.utils.data.random_split(
-        data, [0.8, 0.2], generator=torch.Generator().manual_seed(seed)
+        data, [0.8, 0.2], generator=torch.random.manual_seed(seed)
     )
 
     trainloader = torch.utils.data.DataLoader(
@@ -51,6 +70,7 @@ def main(cfg):
         shuffle=True,
         num_workers=n_workers,
         pin_memory=True,
+        worker_init_fn=seed_worker,
     )
     testloader = torch.utils.data.DataLoader(
         test,
@@ -58,6 +78,7 @@ def main(cfg):
         shuffle=False,
         num_workers=n_workers,
         pin_memory=True,
+        worker_init_fn=seed_worker,
     )
     model = resnet18(weights="DEFAULT")
     model.fc = nn.Sequential(
@@ -85,10 +106,8 @@ def main(cfg):
 
     train_test_handler = IsicTrainer(
         model=model,
-        training=IsicTraining(criterion, optimizer),
-        validation=IsicBaseValidation(),
-        trainloader=trainloader,
-        testloader=testloader,
+        training=training(criterion, optimizer, trainloader),
+        validation=testing(testloader),
         trainmetrics=train_metrics,
         testmetrics=test_metrics,
         epochs=epochs,

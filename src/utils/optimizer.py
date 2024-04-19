@@ -5,8 +5,8 @@ import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from utils.training import Training
-from utils.evaluation import Validation
+from utils.training import Training_
+from utils.evaluation import Validation_
 from utils.logger import Logger
 
 
@@ -22,8 +22,8 @@ class OptimizationLoop:
     """
 
     model: torch.nn.Module
-    training: Training
-    validation: Validation
+    training: Training_
+    validation: Validation_
     train_loader: DataLoader[Any]
     test_loader: DataLoader[Any]
     train_metrics: Any
@@ -146,8 +146,8 @@ class OptimizationLoop:
 @dataclass
 class Cifar10Trainer:
     model: torch.nn.Module
-    training: Training
-    validation: Validation
+    training: Training_
+    validation: Validation_
     train_loader: DataLoader[Any]
     test_loader: DataLoader[Any]
     train_metrics: Any
@@ -191,10 +191,8 @@ class Trainer:
     def __init__(
         self,
         model,
-        training: Training,
-        validation: Validation,
-        trainloader,
-        testloader,
+        training: Training_,
+        validation: Validation_,
         trainmetrics,
         testmetrics,
         epochs: int,
@@ -203,8 +201,6 @@ class Trainer:
         self.model = model
         self.training = training
         self.validation = validation
-        self.trainloader = trainloader
-        self.testloader = testloader
         self.trainmetrics = trainmetrics
         self.testmetrics = testmetrics
         self.epochs = epochs
@@ -217,25 +213,22 @@ class Trainer:
     def get_metrics(self):
         return self.avg_train_metrics, self.avg_val_metrics
 
+    def _compute_avg_metrics(self, train_loss):
+        train = self.trainmetrics.compute()
+        train["Loss"] = train_loss
+        test = self.testmetrics.compute()
+        for metric, value in train.items():
+            self.avg_train_metrics[metric].append(value.cpu().numpy())
+        for metric, value in test.items():
+            self.avg_val_metrics[metric].append(value.cpu().numpy())
+        self.trainmetrics.reset()
+        self.testmetrics.reset()
+
     def optimize(self):
         for _ in tqdm(range(self.epochs)):
-            loss = self.training.run(
-                self.trainloader, self.model, self.trainmetrics, self.device
-            )
-            self.validation.run(
-                self.testloader, self.model, self.testmetrics, self.device
-            )
-            total_train_metrics = self.trainmetrics.compute()
-            total_train_metrics["Loss"] = loss
-            total_valid_metrics = self.testmetrics.compute()
-
-            for metric, value in total_train_metrics.items():
-                self.avg_train_metrics[metric].append(value.cpu().numpy())
-            for metric, value in total_valid_metrics.items():
-                self.avg_val_metrics[metric].append(value.cpu().numpy())
-
-            self.trainmetrics.reset()
-            self.testmetrics.reset()
+            train_loss = self.training.run(self.model, self.trainmetrics, self.device)
+            self.validation.run(self.model, self.testmetrics, self.device)
+            self._compute_avg_metrics(train_loss)
 
 
 class IsicTrainer(Trainer):
@@ -243,10 +236,8 @@ class IsicTrainer(Trainer):
     def __init__(
         self,
         model,
-        training: Training,
-        validation: Validation,
-        trainloader,
-        testloader,
+        training: Training_,
+        validation: Validation_,
         trainmetrics,
         testmetrics,
         epochs: int,
@@ -256,8 +247,28 @@ class IsicTrainer(Trainer):
             model,
             training,
             validation,
-            trainloader,
-            testloader,
+            trainmetrics,
+            testmetrics,
+            epochs,
+            device,
+        )
+
+
+class Cifar10Trainer(Trainer):
+    def __init__(
+        self,
+        model,
+        training: Training_,
+        validation: Validation_,
+        trainmetrics,
+        testmetrics,
+        epochs: int,
+        device,
+    ):
+        super().__init__(
+            model,
+            training,
+            validation,
             trainmetrics,
             testmetrics,
             epochs,

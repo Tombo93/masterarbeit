@@ -57,6 +57,7 @@ class Config:
     data: Data
     hparams: HParams
     reports: Report
-    model: Model
     preprocessing: PreProcessing
+    task: str
+    model: Model
     backdoor: Dict[str, str]

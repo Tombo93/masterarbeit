@@ -8,7 +8,7 @@ from torchmetrics import MetricCollection
 from torchmetrics.metric import Metric
 
 
-class Validation(ABC):
+class Validation_(ABC):
     @abstractmethod
     def run(
         self,
@@ -20,54 +20,8 @@ class Validation(ABC):
         """Implement a validation loop"""
 
 
-class MetricValidation(Validation):
-    def run(
-        self,
-        test_loader: DataLoader[Any],
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-    ) -> None:
-        model.eval()
-        with torch.no_grad():
-            for _, (x, y) in enumerate(test_loader):
-                x = x.to(device=device)
-                y = y.to(device=device)
-                pred = model(x)
-                _, pred_labels = pred.max(dim=1)
-                metrics.update(pred_labels, y)
-        model.train()
-
-
 @dataclass
-class MetricAndLossValidation(Validation):
-    loss: torch.nn.Module
-
-    def run(
-        self,
-        test_loader: DataLoader[Any],
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-    ) -> torch.Tensor:
-        model.eval()
-        with torch.no_grad():
-            running_loss = 0.0
-            for _, (x, y) in enumerate(test_loader):
-                x = x.to(device=device)
-                y = y.to(device=device)
-                pred = model(x)
-
-                loss = self.loss(pred, y.float())
-                running_loss += loss.item() * x.size(0)
-
-                metrics.update(pred, y)
-        model.train()
-        return torch.tensor(running_loss / len(test_loader.dataset))
-
-
-@dataclass
-class Cifar10Testing(Validation):
+class Cifar10Testing(Validation_):
     loss: torch.nn.Module
 
     def run(
@@ -93,7 +47,7 @@ class Cifar10Testing(Validation):
 
 
 @dataclass
-class Cifar10BackdoorTesting(Validation):
+class Cifar10BackdoorTesting(Validation_):
     loss: torch.nn.Module
     backdoor_test_loader: DataLoader[Any]
     backdoor_metrics: Union[Metric, MetricCollection]
@@ -207,7 +161,7 @@ class Cifar10BackdoorTesting(Validation):
         return self.cls_acc, self.cls_acc_backdoor
 
 
-class Cifar10BackdoorVal(Validation):
+class Cifar10BackdoorVal(Validation_):
     def run(
         self,
         test_loader: DataLoader[Any],
@@ -233,24 +187,24 @@ class Cifar10BackdoorVal(Validation):
                 metrics.update(prediction, poison_labels)
 
 
-class IsicBackdoorVal(Validation):
-    def __init__(self, poison_class, poison_label=1, clean_label=0):
-        super().__init__()
-        self._poison_class = poison_class
-        self._poisoned_sample = poison_label
-        self._clean_sample = clean_label
+@dataclass
+class IsicBackdoor(Validation_):
 
-    def run(self, test_loader, model, metrics, device):
+    dl: DataLoader[Any]
+    _poison_class: int
+    _poison_label: int = 1
+    _clean_label: int = 0
+
+    def run(self, model, metrics, device):
         model.eval()
         with torch.no_grad():
-            print("Test model on poisoned data...")
-            for data, _, fx_labels, _ in test_loader:
+            for data, _, fx_labels, _ in self.dl:
                 data = data.to(device)
                 fx_labels = fx_labels.to(device)
                 logits = model(data)
-
                 _, prediction = torch.max(logits, 1)
                 fx_labels = torch.squeeze(fx_labels)
+
                 # TODO: compare fx-labels with predicted poisoned labels
                 # unpoisoned prediction should match fx-labels
                 prediction = torch.tensor(
@@ -269,12 +223,49 @@ class IsicBackdoorVal(Validation):
                 metrics.update(prediction, fx_labels)
 
 
-class IsicBaseValidation(Validation):
-    def run(self, test_loader, model, metrics, device):
+@dataclass
+class IsicDiagnosis(Validation_):
+
+    dl: DataLoader[Any]
+
+    def run(self, model, metrics, device):
         model.eval()
         with torch.no_grad():
-            for data, labels, _, _ in test_loader:
+            for data, labels, _, _ in self.dl:
                 data = data.to(device)
                 labels = labels.to(device)
                 logits = model(data)
                 metrics.update(logits, torch.squeeze(labels))
+
+
+@dataclass
+class IsicFamilyHistory(Validation_):
+
+    dl: DataLoader[Any]
+
+    def run(self, model, metrics, device):
+        model.eval()
+        with torch.no_grad():
+            for data, _, fx_labels, _ in self.dl:
+                data = data.to(device)
+                fx_labels = fx_labels.to(device)
+                logits = model(data)
+                metrics.update(logits, torch.squeeze(fx_labels))
+
+
+class TestFactory:
+    @staticmethod
+    def make(task):
+        match task:
+            case "diagnosis":
+                return IsicDiagnosis
+            case "family_history":
+                return IsicFamilyHistory
+            case "backdoor":
+                return IsicBackdoor
+            case _:
+                raise NotImplementedError(
+                    f"The Testing you're trying to run for this task ({task}) \
+                        hasn't been implemented yet.\n\
+                        Available tasks: [ diagnosis , backdoor ]"
+                )

@@ -9,6 +9,8 @@ multirun/
 logs/
 outputs/
 
+*.pth
+
 # CUDA
 *.i
 *.ii

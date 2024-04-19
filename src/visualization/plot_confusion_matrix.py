@@ -4,7 +4,6 @@ import math
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import click
 from sklearn.metrics import ConfusionMatrixDisplay
 
 
@@ -41,31 +40,11 @@ def plot_reports(conf_mat_path):
     f.savefig((conf_mat_path.split(".")[0]) + "-confmat.png")
 
 
-@click.command()
-@click.option(
-    "--in_file",
-    "-f",
-    default=None,
-    show_default=True,
-    help="Choose an input-file-path",
-)
-def main(in_file):
-    if in_file is None:
-        reports = os.path.abspath(
-            os.path.join(
-                os.path.dirname(__file__),
-                os.pardir,
-                os.pardir,
-                "reports",
-                "isic",
-                "diagnosis",
-            )
-        )
-        for report_file in os.listdir(reports):
-            if report_file.endswith("test.csv"):
-                plot_reports(os.path.join(reports, report_file))
-    else:
-        plot_reports(in_file)
+def main(cfg):
+    reports = cfg.reports.path.diagnosis
+    for report_file in os.listdir(reports):
+        if report_file.endswith("test.csv"):
+            plot_reports(os.path.join(reports, report_file))
 
 
 if __name__ == "__main__":

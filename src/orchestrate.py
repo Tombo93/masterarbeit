@@ -1,4 +1,3 @@
-import click
 import hydra
 from omegaconf import OmegaConf
 from hydra.core.config_store import ConfigStore
@@ -18,19 +17,20 @@ def main(cfg: Config) -> None:
     print(OmegaConf.to_yaml(cfg))
 
     # 1. orchestrate metadata preprocessing
-    print("Generating appropriate metadata..")
-    make_isic_metadata.main(cfg=cfg.preprocessing)
-    # 2. orchestrate data preprocessing
-    print("Preprocess the data..")
-    make_isic.main(cfg=cfg)
-    # 3. orchestrate training
-    print("Setting up experiment..")
+    # print("Generating appropriate metadata..")
+    # make_isic_metadata.main(cfg=cfg.preprocessing)
+    # # 2. orchestrate data preprocessing
+    # print("Preprocess the data..")
+    # make_isic.main(cfg=cfg)
+    # # 3. orchestrate training
+    # print("Setting up experiment..")
     isic_main.main(cfg)
-    isic_backdoor_main.main(cfg)
-    # 4. orchestrate reporting
+    # print("Training on poisoned data..")
+    # isic_backdoor_main.main(cfg)
+    # # 4. orchestrate reporting
     print("Plotting data..")
-    plot_confusion_matrix.main()
-    plot_isic.main()
+    # plot_confusion_matrix.main(cfg)
+    plot_isic.main(cfg)
 
 
 if __name__ == "__main__":

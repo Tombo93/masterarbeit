@@ -67,7 +67,7 @@ def main(cfg=None):
 
     metadata_df.dropna(subset=cfg.dropna_subset or None, inplace=True)
     # print(metadata_df["diagnosis"].value_counts())
-    if cfg.drop_rows is not None:
+    if "drop_rows" in cfg.keys():
         drop_rows(metadata_df, cfg.drop_rows.col, cfg.drop_rows.label, inplace=True)
     # print(metadata_df["diagnosis"].value_counts())
     metadata_df.to_csv(cfg.interim_metadata)

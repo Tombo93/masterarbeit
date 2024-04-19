@@ -5,6 +5,10 @@ defaults:
   - reports: reports
   - _self_
 
+task: 
+  train: family_history
+  test: family_history
+
 model:
   isic_base: ${hydra:runtime.cwd}/models/isic-base.pth
   isic_backdoor: ${hydra:runtime.cwd}/models/isic-backdoor.pth

@@ -20,11 +20,8 @@ def plot_reports(root_dir):
 
 
 def main(cfg):
-    for reports in [
-        cfg.reports.data.backdoor,
-        cfg.reports.data.diagnosis,
-    ]:
-        plot_reports(reports)
+    for _, path in cfg.reports.path.items():
+        plot_reports(path)
 
 
 if __name__ == "__main__":
