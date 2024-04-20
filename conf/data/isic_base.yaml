@@ -18,6 +18,7 @@ diagnosis:
 
 poison_class: malignant_others
 poison_encoding: 4
+poison_whole_poison_class: False
 
 family_history:
   "True": 1

@@ -37,6 +37,9 @@ isic:
 isic_7cls:
 	$(PYTHON_INTERPRETER) src/orchestrate.py data=isic_base_7cls preprocessing=isic_base_7cls
 
+isic_poison_whole_poison_class:
+	$(PYTHON_INTERPRETER) src/orchestrate.py  data.poison_whole_poison_class=True
+
 cifar:
 	$(PYTHON_INTERPRETER) src/data/make_cifar10.py
 

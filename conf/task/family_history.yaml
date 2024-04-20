@@ -2,4 +2,4 @@ train: family_history
 test: family_history
 metrics: family_history
 num_classes: 2
-reports: ${hydra:runtime.cwd}/reports/isic/backdoor
+reports: ${hydra:runtime.cwd}/reports/isic/family-history

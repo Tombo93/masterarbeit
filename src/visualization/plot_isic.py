@@ -5,7 +5,7 @@ import pandas as pd
 
 def plot_reports(root_dir):
     for file in os.listdir(root_dir):
-        if file.endswith(".csv"):
+        if file.endswith("test.csv"):
             try:
                 df = pd.read_csv(os.path.join(root_dir, file))
                 ax = df.plot(x="Unnamed: 0", y=df.columns.to_list()[1:])
@@ -20,8 +20,8 @@ def plot_reports(root_dir):
 
 
 def main(cfg):
-    for _, path in cfg.reports.path.items():
-        plot_reports(path)
+    # for _, path in .items():
+    plot_reports(cfg.task.reports)
 
 
 if __name__ == "__main__":

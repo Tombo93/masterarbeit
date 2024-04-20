@@ -11,6 +11,7 @@ class Data:
     classes: Dict[str, int]
     poison_class: str
     poison_encoding: int
+    poison_whole_class: bool
     family_history: Dict[str, int]
 
 

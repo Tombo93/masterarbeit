@@ -41,7 +41,12 @@ def plot_reports(conf_mat_path):
 
 
 def main(cfg):
-    reports = cfg.reports.path.diagnosis
+    reports = os.path.join(
+        os.path.abspath(os.path.join(__file__, os.pardir, os.pardir, os.pardir)),
+        "reports",
+        "isic",
+        "diagnosis",
+    )
     for report_file in os.listdir(reports):
         if report_file.endswith("test.csv"):
             plot_reports(os.path.join(reports, report_file))
