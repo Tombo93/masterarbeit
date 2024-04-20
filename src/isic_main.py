@@ -9,8 +9,6 @@ import torch.optim as optim
 import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
-from torchmetrics import MetricCollection
-from torchmetrics.classification import Accuracy, AUROC, MulticlassConfusionMatrix
 
 from data.dataset import NumpyDataset
 from utils.optimizer import IsicTrainer
@@ -46,11 +44,10 @@ def main(cfg):
     data_path = cfg.data.data
     model_save_path = cfg.model.isic_base
     report_name_train = os.path.join(
-        cfg.reports.path.diagnosis,
-        f"diagnosis-{cfg.data.id}-{cfg.hparams.id}-train.csv",
+        cfg.task.reports, f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train.csv"
     )
     report_name_test = os.path.join(
-        cfg.reports.path.diagnosis, f"diagnosis-{cfg.data.id}-{cfg.hparams.id}-test.csv"
+        cfg.task.reports, f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test.csv"
     )
 
     training = TrainingFactory.make(cfg.task.train)

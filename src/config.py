@@ -27,11 +27,6 @@ class HParams:
 
 
 @dataclass
-class Report:
-    path: Dict[str, str]
-
-
-@dataclass
 class Model:
     path: Dict[str, str]
 
@@ -42,6 +37,7 @@ class Task:
     test: str
     metrics: str
     num_classes: int
+    reports: str
 
 
 @dataclass
@@ -64,7 +60,6 @@ class PreProcessing:
 class Config:
     data: Data
     hparams: HParams
-    reports: Report
     preprocessing: PreProcessing
     task: Task
     model: Model

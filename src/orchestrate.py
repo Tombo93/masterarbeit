@@ -21,7 +21,7 @@ def main(cfg: Config) -> None:
     # make_isic.main(cfg=cfg)
 
     print("Setting up experiment..")
-    isic_main.main(cfg)
+    # isic_main.main(cfg)
 
     print("Training on poisoned data..")
     isic_backdoor_main.main(cfg)

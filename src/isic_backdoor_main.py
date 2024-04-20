@@ -1,4 +1,5 @@
 import os
+import random
 
 import torch
 import torch.nn as nn
@@ -7,6 +8,7 @@ import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
 import pandas as pd
+import numpy as np
 
 from data.dataset import IsicBackdoorDataset
 from utils.optimizer import IsicTrainer
@@ -15,8 +17,24 @@ from utils.evaluation import IsicBackdoor
 from utils.metrics import MetricFactory
 
 
+SEED = 0
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed + SEED)
+    random.seed(worker_seed + SEED)
+    torch.manual_seed(worker_seed + SEED)
+
+
 def main(cfg):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    torch.manual_seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED)
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
@@ -24,15 +42,15 @@ def main(cfg):
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
-    num_classes = cfg.task.num_classes
+    num_classes = len(cfg.data.diagnosis)
     poison_class = cfg.data.poison_encoding
 
     report_name_train = os.path.join(
-        cfg.reports.path.backdoor,
+        cfg.backdoor.reports,
         f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train.csv",
     )
     report_name_test = os.path.join(
-        cfg.reports.path.backdoor,
+        cfg.backdoor.reports,
         f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-test.csv",
     )
 
@@ -48,6 +66,7 @@ def main(cfg):
         shuffle=True,
         num_workers=n_workers,
         pin_memory=True,
+        worker_init_fn=seed_worker,
     )
     backdoor_testloader = torch.utils.data.DataLoader(
         backdoor_test,
@@ -55,6 +74,7 @@ def main(cfg):
         shuffle=False,
         num_workers=n_workers,
         pin_memory=True,
+        worker_init_fn=seed_worker,
     )
     model = resnet18(weights="DEFAULT")
     model.fc = nn.Sequential(

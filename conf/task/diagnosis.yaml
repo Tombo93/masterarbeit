@@ -2,3 +2,4 @@ train: diagnosis
 test: diagnosis
 metrics: diagnosis
 num_classes: 7
+reports: ${hydra:runtime.cwd}/reports/isic/diagnosis
