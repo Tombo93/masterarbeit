@@ -46,7 +46,7 @@ class BaseTraining(Training_):
         for data, labels, _, _ in self.dl:
             self.train(data, labels, model, metrics, device)
 
-        self.get_running_loss()
+        return self.get_running_loss()
 
     def reset_running_loss(self):
         self._running_loss = 0.0
