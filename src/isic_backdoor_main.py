@@ -6,8 +6,6 @@ import torch.optim as optim
 import torch.utils
 from torchvision import transforms
 from torchvision.models import resnet18
-from torchmetrics import MetricCollection
-from torchmetrics.classification import MulticlassAccuracy, Accuracy, Recall, Precision
 import pandas as pd
 
 from data.dataset import IsicBackdoorDataset
@@ -26,7 +24,7 @@ def main(cfg):
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
-    num_classes = len(cfg.data.classes)
+    num_classes = cfg.task.num_classes
     poison_class = cfg.data.poison_encoding
 
     report_name_train = os.path.join(

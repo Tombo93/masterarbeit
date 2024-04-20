@@ -79,7 +79,7 @@ def main(cfg):
             transforms=transforms,
             cols=cfg.data.label_columns,
             col_encodings={
-                "labels": cfg.data.classes,
+                "labels": cfg.data.diagnosis,
                 "extra_labels": cfg.data.family_history,
             },
         )

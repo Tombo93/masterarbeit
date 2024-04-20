@@ -7,7 +7,7 @@ label_columns:
   extra_label: family_hx_mm
   poison_label: poison_label
 
-classes:
+diagnosis:
   acrochordon: 0
   keratosis: 1
   basal cell carcinoma: 2

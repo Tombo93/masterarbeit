@@ -14,13 +14,11 @@ CS.store(name="isic_config", node=Config)
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: Config) -> None:
-    print(OmegaConf.to_yaml(cfg))
-
     print("Generating appropriate metadata..")
-    make_isic_metadata.main(cfg=cfg.preprocessing)
+    # make_isic_metadata.main(cfg=cfg.preprocessing)
 
     print("Preprocess the data..")
-    make_isic.main(cfg=cfg)
+    # make_isic.main(cfg=cfg)
 
     print("Setting up experiment..")
     isic_main.main(cfg)

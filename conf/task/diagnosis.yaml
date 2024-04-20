@@ -1,3 +1,4 @@
 train: diagnosis
 test: diagnosis
 metrics: diagnosis
+num_classes: 7

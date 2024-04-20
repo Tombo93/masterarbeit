@@ -70,7 +70,7 @@ class IsicFXTraining(BaseTraining):
         model.train()
         for data, _, extra_labels, _ in self.dl:
             self.train(data, extra_labels, model, metrics, device)
-        self.get_running_loss()
+        return self.get_running_loss()
 
 
 class TrainingFactory:

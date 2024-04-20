@@ -250,7 +250,8 @@ class IsicFamilyHistory(Validation_):
                 data = data.to(device)
                 fx_labels = fx_labels.to(device)
                 logits = model(data)
-                metrics.update(logits, torch.squeeze(fx_labels))
+                _, prediction = torch.max(logits, 1)
+                metrics.update(prediction, torch.squeeze(fx_labels))
 
 
 class TestFactory:

@@ -32,7 +32,7 @@ data:
 # $(PYTHON_INTERPRETER) src/data/download_isic.py
 
 isic:
-	$(PYTHON_INTERPRETER) src/data/orchestrate.py
+	$(PYTHON_INTERPRETER) src/orchestrate.py
 
 isic_7cls:
 	$(PYTHON_INTERPRETER) src/orchestrate.py data=isic_base_7cls preprocessing=isic_base_7cls

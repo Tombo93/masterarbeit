@@ -42,7 +42,7 @@ def main(cfg):
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
-    num_classes = len(cfg.data.classes)
+    num_classes = cfg.task.num_classes
     data_path = cfg.data.data
     model_save_path = cfg.model.isic_base
     report_name_train = os.path.join(

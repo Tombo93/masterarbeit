@@ -41,6 +41,7 @@ class Task:
     train: str
     test: str
     metrics: str
+    num_classes: int
 
 
 @dataclass
