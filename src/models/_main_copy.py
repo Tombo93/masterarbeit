@@ -7,8 +7,6 @@ from torchvision.transforms import ToTensor
 from torch.utils.data import DataLoader, Subset
 from torchmetrics import MetricCollection
 from torchmetrics.classification import Accuracy
-from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
-from sklearn.model_selection import StratifiedKFold
 import hydra
 from omegaconf import OmegaConf
 from hydra.core.config_store import ConfigStore
@@ -20,31 +18,11 @@ from models.models import ResNet
 from utils.optimizer import OptimizationLoop
 from utils.training import PlotLossTraining
 from utils.evaluation import MetricAndLossValidation
+from utils.experiment import StratifierFactory
 
 
 cs = ConfigStore.instance()
 cs.store(name="isic_config", node=ExperimentConfig)
-
-
-class AverageMetricDict:
-    def __init__(self) -> None:
-        self.train_meter_dicts = []
-        self.val_meter_dicts = []
-
-    def add(self, train_dict, val_dict):
-        self.train_meter_dicts.append(train_dict)
-        self.val_meter_dicts.append(val_dict)
-
-    def compute_single(self, dict_list):
-        mean_dict = {}
-        for key in dict_list[0].keys():
-            mean_dict[key] = np.mean([d[key] for d in dict_list], axis=0)
-        return mean_dict
-
-    def compute(self):
-        return self.compute_single(self.train_meter_dicts), self.compute_single(
-            self.val_meter_dicts
-        )
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")
@@ -74,22 +52,11 @@ def main(cfg: ExperimentConfig) -> None:
 
     avg_metrics = AverageMetricDict()
 
-    is_multi_label_skf = False
-    if is_multi_label_skf:
-        mskf = MultilabelStratifiedKFold(n_splits=5)
-        multi_label = np.concatenate(
-            (
-                np.expand_dims(data.labels, axis=1),  # diagnosis
-                np.expand_dims(data.extra_labels, axis=1),  # family-history
-            ),
-            axis=1,
-        )
-        stratifier = mskf.split(X=data.imgs, y=multi_label)
-    else:
-        skf = StratifiedKFold(n_splits=5)
-        stratifier = skf.split(X=data.imgs, y=data.labels)
+    stratifier = StratifierFactory().make(
+        strat_type="single-label", data=data, n_splits=5
+    )
 
-    for fold, (train_indices, val_indices) in enumerate(stratifier):
+    for _, (train_indices, val_indices) in enumerate(stratifier):
         train_set = Subset(data, train_indices)
         val_set = Subset(data, val_indices)
 

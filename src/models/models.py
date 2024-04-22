@@ -2,7 +2,14 @@ from __future__ import annotations
 
 import torch
 import torch.nn as nn
-from torchvision.models import resnet50, resnet152, vgg19, vgg19_bn, vit_b_16, googlenet
+from torchvision.models import (
+    resnet50,
+    resnet152,
+    vgg19_bn,
+    vit_b_16,
+    googlenet,
+    resnet18,
+)
 
 
 class CNN(nn.Module):
@@ -80,23 +87,13 @@ class BatchNormCNN(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(
-        self, classes: int = 1, finetuning: bool = True, layers: str = "50"
-    ) -> None:
+    def __init__(self, num_classes: int):
         super().__init__()
-        self.name = "resnet50-finetuning" if layers == "50" else "resnet152"
-        self.net = (
-            resnet50(weights="DEFAULT")
-            if layers == "50"
-            else resnet152(weights="DEFAULT")
-        )
-        if finetuning:
-            for param in self.net.parameters():
-                param.requires_grad = False
+        self.net = resnet18(weights="DEFAULT")
         self.net.fc = nn.Sequential(
-            nn.Linear(in_features=2048, out_features=1024, bias=True),
-            nn.Linear(in_features=1024, out_features=256, bias=True),
-            nn.Linear(in_features=256, out_features=classes, bias=True),
+            nn.Linear(in_features=512, out_features=1000, bias=True),
+            nn.Linear(in_features=1000, out_features=200, bias=True),
+            nn.Linear(in_features=200, out_features=num_classes, bias=True),
         )
         for param in self.net.fc.parameters():
             param.requires_grad = True
@@ -163,6 +160,14 @@ class GoogleNet(nn.Module):
         return self.net(x)
 
 
-if __name__ == "__main__":
-    model = GoogleNet()
-    print(model)
+class ModelFactory:
+    @staticmethod
+    def make(model, num_classes):
+        match model:
+            case "resnet18":
+                return ResNet(num_classes)
+            case _:
+                raise NotImplementedError(
+                    f"The model you're trying to use ({model}) hasn't been implemented yet.\n\
+                        Available models: [ resnet18, , ]"
+                )

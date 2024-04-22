@@ -1,20 +1,21 @@
 import os
 import random
 
-import pandas as pd
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils
+from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
-from torchvision.models import resnet18
 
 from data.dataset import NumpyDataset
+from models.models import ModelFactory
 from utils.optimizer import IsicTrainer
 from utils.training import TrainingFactory
 from utils.evaluation import TestFactory
-from utils.metrics import MetricFactory
+from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
+from utils.experiment import StratifierFactory
+
 
 SEED = 0
 
@@ -36,7 +37,7 @@ def main(cfg):
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
-    seed = cfg.hparams.rng_seed
+    # seed = cfg.hparams.rng_seed
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
@@ -52,64 +53,56 @@ def main(cfg):
 
     training = TrainingFactory.make(cfg.task.train)
     testing = TestFactory.make(cfg.task.test)
+    kfold_avg_metrics = AverageMetricDict()
     train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
     train_meter.to(device)
     test_meter.to(device)
-
-    data = NumpyDataset(data_path, transforms.ToTensor())
-    train, test = torch.utils.data.random_split(
-        data, [0.8, 0.2], generator=torch.random.manual_seed(seed)
-    )
-
-    trainloader = torch.utils.data.DataLoader(
-        train,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
-    testloader = torch.utils.data.DataLoader(
-        test,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
-    model = resnet18(weights="DEFAULT")
-    model.fc = nn.Sequential(
-        nn.Linear(in_features=512, out_features=1000, bias=True),
-        nn.Linear(in_features=1000, out_features=200, bias=True),
-        nn.Linear(in_features=200, out_features=num_classes, bias=True),
-    )
-    for param in model.fc.parameters():
-        param.requires_grad = True
+    model = ModelFactory().make("resnet18", num_classes)
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
-
-    train_test_handler = IsicTrainer(
-        model=model,
-        training=training(criterion, optimizer, trainloader),
-        validation=testing(testloader),
-        trainmetrics=train_meter,
-        testmetrics=test_meter,
-        epochs=epochs,
-        device=device,
+    data = NumpyDataset(data_path, transforms.ToTensor())
+    stratifier = StratifierFactory().make(
+        strat_type="multi-label", data=data, n_splits=5
     )
-    train_test_handler.optimize()
+
+    for train_indices, test_indices in stratifier:
+        trainloader = DataLoader(
+            Subset(data, train_indices),
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
+        testloader = DataLoader(
+            Subset(data, test_indices),
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
+        train_test_handler = IsicTrainer(
+            model=model,
+            training=training(criterion, optimizer, trainloader),
+            validation=testing(testloader),
+            trainmetrics=train_meter,
+            testmetrics=test_meter,
+            epochs=epochs,
+            device=device,
+        )
+        train_test_handler.optimize()
+        train_metrics, test_metrics = train_test_handler.get_metrics()
+        kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
+
     torch.save(model.state_dict(), model_save_path)
-
-    train_metrics, test_metrics = train_test_handler.get_metrics()
-
-    df = pd.DataFrame(train_metrics)
-    df.to_csv(report_name_train)
-    df = pd.DataFrame(test_metrics)
-    df.to_csv(report_name_test)
+    avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
+    save_metrics_to_csv(avg_train_metrics, report_name_train)
+    save_metrics_to_csv(avg_test_metrics, report_name_test)
 
 
 if __name__ == "__main__":

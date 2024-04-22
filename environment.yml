@@ -202,6 +202,7 @@ dependencies:
       - idna==3.6
       - isic-cli==10.0.0
       - isic-metadata==1.5.0
+      - iterative-stratification==0.1.7
       - joblib==1.4.0
       - markdown==3.6
       - markdown-it-py==3.0.0

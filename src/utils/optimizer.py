@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Union, Any
+from typing import TYPE_CHECKING, Union, Any
 
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from utils.training import Training_
-from utils.evaluation import Validation_
-from utils.logger import Logger
+if TYPE_CHECKING:
+    from utils.training import Training_
+    from utils.evaluation import Validation_
+    from utils.logger import Logger
 
 
 @dataclass

@@ -10,7 +10,7 @@ import numpy as np
 from tqdm import tqdm
 
 
-class NumpyDataset:
+class NumpyDataset(Dataset):
     def __init__(self, data_path, transforms):
         try:
             npz_file = np.load(data_path)

@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 from torchmetrics import MetricCollection
 from torchmetrics.classification import (
     Accuracy,
@@ -52,7 +54,33 @@ class MetricFactory:
                     ),
                 )
             case _:
-                raise NotImplemented(
+                raise NotImplementedError(
                     f"The metrics you're trying to use for this task ({task}) haven't been implemented yet.\n\
                         Available tasks: [ diagnosis , family_history , backdoor ]"
                 )
+
+
+class AverageMetricDict:
+    def __init__(self) -> None:
+        self.train_meter_dicts = []
+        self.val_meter_dicts = []
+
+    def add(self, train_dict, val_dict):
+        self.train_meter_dicts.append(train_dict)
+        self.val_meter_dicts.append(val_dict)
+
+    def compute_single(self, dict_list):
+        mean_dict = {}
+        for key in dict_list[0].keys():
+            mean_dict[key] = np.mean([d[key] for d in dict_list], axis=0)
+        return mean_dict
+
+    def compute(self):
+        return self.compute_single(self.train_meter_dicts), self.compute_single(
+            self.val_meter_dicts
+        )
+
+
+def save_metrics_to_csv(metrics, report_path):
+    df = pd.DataFrame(metrics)
+    df.to_csv(report_path)
