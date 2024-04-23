@@ -58,10 +58,16 @@ class PreProcessing:
 
 
 @dataclass
+class Plots:
+    base_dirs: Dict[str, str]
+
+
+@dataclass
 class Config:
     data: Data
     hparams: HParams
     preprocessing: PreProcessing
     task: Task
+    plotting: Plots
     model: Model
     backdoor: Dict[str, str]

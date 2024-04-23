@@ -87,14 +87,32 @@ class BatchNormCNN(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, num_classes: int):
+    def __init__(
+        self,
+        num_classes: int,
+        load_from_state_dict: bool = False,
+        model_path: str = None,
+    ):
         super().__init__()
-        self.net = resnet18(weights="DEFAULT")
-        self.net.fc = nn.Sequential(
-            nn.Linear(in_features=512, out_features=1000, bias=True),
-            nn.Linear(in_features=1000, out_features=200, bias=True),
-            nn.Linear(in_features=200, out_features=num_classes, bias=True),
-        )
+        if load_from_state_dict:
+            if model_path is None:
+                raise FileNotFoundError(
+                    f"Cannot find model state dict on path: {model_path}"
+                )
+            self.net = resnet18()
+            self.net.fc = nn.Sequential(
+                nn.Linear(in_features=512, out_features=1000, bias=True),
+                nn.Linear(in_features=1000, out_features=200, bias=True),
+                nn.Linear(in_features=200, out_features=num_classes, bias=True),
+            )
+            self.net.load_state_dict(model_path)
+        else:
+            self.net = resnet18(weights="DEFAULT")
+            self.net.fc = nn.Sequential(
+                nn.Linear(in_features=512, out_features=1000, bias=True),
+                nn.Linear(in_features=1000, out_features=200, bias=True),
+                nn.Linear(in_features=200, out_features=num_classes, bias=True),
+            )
         for param in self.net.fc.parameters():
             param.requires_grad = True
 
@@ -162,10 +180,15 @@ class GoogleNet(nn.Module):
 
 class ModelFactory:
     @staticmethod
-    def make(model, num_classes):
+    def make(
+        model,
+        num_classes,
+        load_from_state_dict=False,
+        model_path=None,
+    ):
         match model:
             case "resnet18":
-                return ResNet(num_classes)
+                return ResNet(num_classes, load_from_state_dict, model_path)
             case _:
                 raise NotImplementedError(
                     f"The model you're trying to use ({model}) hasn't been implemented yet.\n\

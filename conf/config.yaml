@@ -3,6 +3,7 @@ defaults:
   - hparams: isic_base
   - preprocessing: isic_base
   - task: family_history
+  - plotting: plots
   - _self_
 
 model:
@@ -13,3 +14,4 @@ backdoor:
   id: isic_base
   data: ${hydra:runtime.cwd}/data/processed/isic/isic-backdoor.npz
   reports: ${hydra:runtime.cwd}/reports/isic/backdoor
+  load_model: True

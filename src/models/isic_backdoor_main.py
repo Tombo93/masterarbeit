@@ -15,6 +15,7 @@ from utils.optimizer import IsicTrainer
 from utils.training import IsicTraining
 from utils.evaluation import IsicBackdoor
 from utils.metrics import MetricFactory
+from models.models import ModelFactory
 
 
 SEED = 0
@@ -76,14 +77,12 @@ def main(cfg):
         pin_memory=True,
         worker_init_fn=seed_worker,
     )
-    model = resnet18(weights="DEFAULT")
-    model.fc = nn.Sequential(
-        nn.Linear(in_features=512, out_features=1000, bias=True),
-        nn.Linear(in_features=1000, out_features=200, bias=True),
-        nn.Linear(in_features=200, out_features=num_classes, bias=True),
+    model = ModelFactory().make(
+        "resnet18",
+        num_classes,
+        load_from_state_dict=True,
+        model_path=cfg.model.isic_base,
     )
-    for param in model.fc.parameters():
-        param.requires_grad = True
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
