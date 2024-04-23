@@ -1,3 +1,9 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from torch import Tensor
+
 import numpy as np
 import pandas as pd
 from torchmetrics import MetricCollection
@@ -6,8 +12,30 @@ from torchmetrics.classification import (
     AUROC,
     Precision,
     Recall,
+    BinaryRecall,
     MulticlassConfusionMatrix,
 )
+from torchmetrics.functional.classification.precision_recall import (
+    _precision_recall_reduce,
+)
+
+
+class CustomBinaryRecall(BinaryRecall):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def compute(self) -> Tensor:
+        """Compute metric."""
+        tp, fp, tn, fn = self._final_state()
+        return _precision_recall_reduce(
+            "recall",
+            tp,
+            fp,
+            tn,
+            fn,
+            average="none",
+            multidim_average=self.multidim_average,
+        )
 
 
 class MetricFactory:
@@ -47,7 +75,7 @@ class MetricFactory:
                     MetricCollection(
                         [
                             Accuracy(task="binary"),
-                            Recall(task="binary"),
+                            CustomBinaryRecall(),  # Recall(task="binary"),
                             Precision(task="binary"),
                             AUROC(task="binary"),
                         ]
