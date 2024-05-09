@@ -41,11 +41,20 @@ class BaseTraining(Training_):
 
     def run(self, model, metrics, device):
         self.reset_running_loss()
-
         model.train()
         for data, labels, _, _ in self.dl:
             self.train(data, labels, model, metrics, device)
+        return self.get_running_loss()
 
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        self.reset_running_loss()
+        model.train()
+        i = 0
+        for data, labels, _, _ in self.dl:
+            self.train(data, labels, model, metrics, device)
+            i += 1
+            if i == test_run_size:
+                break
         return self.get_running_loss()
 
     def reset_running_loss(self):

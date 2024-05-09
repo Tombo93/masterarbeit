@@ -228,9 +228,14 @@ class Trainer:
         self.testmetrics.reset()
 
     def optimize(self):
-        for _ in tqdm(range(self.epochs)):
-            train_loss = self.training.run(self.model, self.trainmetrics, self.device)
-            self.validation.run(self.model, self.testmetrics, self.device)
+        # for _ in tqdm(range(self.epochs)):
+        for _ in tqdm(range(1)):
+            train_loss = self.training.run_debug(
+                self.model, self.trainmetrics, self.device
+            )
+            # train_loss = self.training.run(self.model, self.trainmetrics, self.device)
+            # self.validation.run(self.model, self.testmetrics, self.device)
+            self.validation.run_debug(self.model, self.testmetrics, self.device)
             self._compute_avg_metrics(train_loss)
 
 

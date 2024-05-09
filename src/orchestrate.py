@@ -12,17 +12,17 @@ CS.store(name="isic_config", node=Config)
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: Config) -> None:
-    print("Generating appropriate metadata..")
-    make_isic_metadata.main(cfg.preprocessing)
+    # print("Generating appropriate metadata..")
+    # make_isic_metadata.main(cfg.preprocessing)
 
-    print("Preprocess the data..")
-    make_isic.main(cfg)
+    # print("Preprocess the data..")
+    # make_isic.main(cfg)
 
     print("Setting up experiment..")
-    isic_main.main(cfg)
+    # isic_main.main(cfg)
 
     print("Training on poisoned data..")
-    isic_backdoor_main.main(cfg)
+    # isic_backdoor_main.main(cfg)
 
     print("Plotting data..")
     plot_confusion_matrix.main(cfg)

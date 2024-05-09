@@ -237,6 +237,19 @@ class IsicDiagnosis(Validation_):
                 logits = model(data)
                 metrics.update(logits, torch.squeeze(labels))
 
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        model.eval()
+        with torch.no_grad():
+            i = 0
+            for data, labels, _, _ in self.dl:
+                data = data.to(device)
+                labels = labels.to(device)
+                logits = model(data)
+                metrics.update(logits, torch.squeeze(labels))
+                i += 1
+                if i == test_run_size:
+                    break
+
 
 @dataclass
 class IsicFamilyHistory(Validation_):

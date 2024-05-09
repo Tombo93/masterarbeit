@@ -4,7 +4,7 @@ import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch.utils
+from torch.utils.data import DataLoader, Subset
 from torchvision import transforms
 from torchvision.models import resnet18
 import pandas as pd
@@ -14,8 +14,9 @@ from data.dataset import IsicBackdoorDataset
 from utils.optimizer import IsicTrainer
 from utils.training import IsicTraining
 from utils.evaluation import IsicBackdoor
-from utils.metrics import MetricFactory
+from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
 from models.models import ModelFactory
+from utils.experiment import StratifierFactory
 
 
 SEED = 0
@@ -58,25 +59,12 @@ def main(cfg):
     backdoor_data = IsicBackdoorDataset(
         cfg.backdoor.data, transforms.ToTensor(), poison_class
     )
-    backdoor_train, backdoor_test = torch.utils.data.random_split(
-        backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(seed)
+    stratifier = StratifierFactory().make(
+        strat_type="multi-label", data=backdoor_data, n_splits=5
     )
-    backdoor_trainloader = torch.utils.data.DataLoader(
-        backdoor_train,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
-    backdoor_testloader = torch.utils.data.DataLoader(
-        backdoor_test,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
+    # backdoor_train, backdoor_test = torch.utils.data.random_split(
+    #     backdoor_data, [0.8, 0.2], generator=torch.Generator().manual_seed(seed)
+    # )
     model = ModelFactory().make(
         "resnet18",
         num_classes,
@@ -89,29 +77,45 @@ def main(cfg):
     optimizer = optim.SGD(
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
-
+    kfold_avg_metrics = AverageMetricDict()
     train_meter, test_meter = MetricFactory.make("backdoor", num_classes)
     train_meter.to(device)
     test_meter.to(device)
+    for train_indices, test_indices in stratifier:
+        backdoor_trainloader = DataLoader(
+            Subset(backdoor_data, train_indices),
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
+        backdoor_testloader = DataLoader(
+            Subset(backdoor_data, test_indices),
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
 
-    train_test_handler = IsicTrainer(
-        model=model,
-        training=IsicTraining(criterion, optimizer, backdoor_trainloader),
-        validation=IsicBackdoor(backdoor_testloader, poison_class),
-        trainmetrics=train_meter,
-        testmetrics=test_meter,
-        epochs=epochs,
-        device=device,
-    )
-    train_test_handler.optimize()
+        train_test_handler = IsicTrainer(
+            model=model,
+            training=IsicTraining(criterion, optimizer, backdoor_trainloader),
+            validation=IsicBackdoor(backdoor_testloader, poison_class),
+            trainmetrics=train_meter,
+            testmetrics=test_meter,
+            epochs=epochs,
+            device=device,
+        )
+        train_test_handler.optimize()
+        train_metrics, test_metrics = train_test_handler.get_metrics()
+        kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
+
     torch.save(model.state_dict(), cfg.model.isic_backdoor)
-
-    train_metrics, test_metrics = train_test_handler.get_metrics()
-
-    df = pd.DataFrame(train_metrics)
-    df.to_csv(report_name_train)
-    df = pd.DataFrame(test_metrics)
-    df.to_csv(report_name_test)
+    avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
+    save_metrics_to_csv(avg_train_metrics, report_name_train)
+    save_metrics_to_csv(avg_test_metrics, report_name_test)
 
 
 if __name__ == "__main__":
