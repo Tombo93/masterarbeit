@@ -27,7 +27,7 @@ def seed_worker(worker_id):
     torch.manual_seed(worker_seed + SEED)
 
 
-def main(cfg):
+def main(cfg, save_model=False):
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
@@ -99,7 +99,8 @@ def main(cfg):
         train_metrics, test_metrics = train_test_handler.get_metrics()
         kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
 
-    torch.save(model.state_dict(), model_save_path)
+    if save_model:
+        torch.save(model.net.state_dict(), model_save_path)
     avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
     save_metrics_to_csv(avg_train_metrics, report_name_train)
     save_metrics_to_csv(avg_test_metrics, report_name_test)

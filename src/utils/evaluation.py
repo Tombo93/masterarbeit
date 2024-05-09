@@ -195,32 +195,45 @@ class IsicBackdoor(Validation_):
     poison_label: int = 1
     clean_label: int = 0
 
+    def evaluate(self, model, metrics, device, data, labels):
+        data = data.to(device)
+        labels = labels.to(device)
+        logits = model(data)
+        _, prediction = torch.max(logits, 1)
+        labels = torch.squeeze(labels)
+
+        # TODO: compare fx-labels with predicted poisoned labels
+        # unpoisoned prediction should match fx-labels
+        prediction = torch.tensor(
+            list(
+                map(
+                    lambda label: (
+                        self.poison_label
+                        if label == self.poison_class
+                        else self.clean_label
+                    ),
+                    prediction,
+                )
+            )
+        ).to(device)
+
+        metrics.update(prediction, labels)
+
     def run(self, model, metrics, device):
         model.eval()
         with torch.no_grad():
             for data, _, fx_labels, _ in self.dl:
-                data = data.to(device)
-                fx_labels = fx_labels.to(device)
-                logits = model(data)
-                _, prediction = torch.max(logits, 1)
-                fx_labels = torch.squeeze(fx_labels)
+                self.evaluate(model, metrics, device, data, fx_labels)
 
-                # TODO: compare fx-labels with predicted poisoned labels
-                # unpoisoned prediction should match fx-labels
-                prediction = torch.tensor(
-                    list(
-                        map(
-                            lambda label: (
-                                self.poison_label
-                                if label == self.poison_class
-                                else self.clean_label
-                            ),
-                            prediction,
-                        )
-                    )
-                ).to(device)
-
-                metrics.update(prediction, fx_labels)
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        model.eval()
+        i = 0
+        with torch.no_grad():
+            for data, _, fx_labels, _ in self.dl:
+                self.evaluate(model, metrics, device, data, fx_labels)
+                i += 1
+                if i == test_run_size:
+                    break
 
 
 @dataclass

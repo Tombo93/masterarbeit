@@ -105,7 +105,11 @@ class ResNet(nn.Module):
                 nn.Linear(in_features=1000, out_features=200, bias=True),
                 nn.Linear(in_features=200, out_features=num_classes, bias=True),
             )
-            self.net.load_state_dict(model_path)
+            # state_dict = torch.load(model_path)
+            state_dict = {
+                k.lstrip("net."): v for k, v in torch.load(model_path).items()
+            }
+            self.net.load_state_dict(state_dict)
         else:
             self.net = resnet18(weights="DEFAULT")
             self.net.fc = nn.Sequential(
