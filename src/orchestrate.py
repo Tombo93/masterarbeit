@@ -9,7 +9,7 @@ from config import Config
 CS = ConfigStore.instance()
 CS.store(name="isic_config", node=Config)
 
-DEBUG = False
+DEBUG = True
 SAVE_BASE_MODEL = False
 
 
@@ -22,7 +22,7 @@ def main(cfg: Config) -> None:
     # make_isic.main(cfg)
 
     # print("Setting up experiment..")
-    isic_main.main(cfg, save_model=SAVE_BASE_MODEL)
+    # isic_main.main(cfg, save_model=SAVE_BASE_MODEL)
 
     print("Training on poisoned data..")
     isic_backdoor_main.main(cfg, debug=DEBUG)

@@ -30,6 +30,10 @@ class StratifierFactory:
                         axis=1,
                     ),
                 )
+            case "debug-strat":
+                return StratifiedKFold(n_splits=22, shuffle=False).split(
+                    X=data.imgs, y=data.labels
+                )
             case _:
                 raise NotImplementedError(
                     f"The Stratifier you're trying to initialize ({strat_type}) \

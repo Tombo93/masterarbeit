@@ -243,6 +243,61 @@ class Trainer:
                 self._compute_avg_metrics(train_loss)
 
 
+class BackdoorTrainer(Trainer):
+
+    def __init__(
+        self,
+        model,
+        training: Training_,
+        validation: Validation_,
+        trainmetrics,
+        testmetrics,
+        epochs: int,
+        device,
+    ):
+        super().__init__(
+            model,
+            training,
+            validation,
+            trainmetrics,
+            testmetrics,
+            epochs,
+            device,
+        )
+        self._val_metrics = {cls: [] for cls in range(9)}
+
+    def get_metrics(self):
+        return self.avg_train_metrics, self._val_metrics
+
+    def _compute_avg_metrics(self, train_loss):
+        train = self.trainmetrics.compute()
+        train["Loss"] = train_loss
+        for metric, value in train.items():
+            self.avg_train_metrics[metric].append(value.cpu().numpy())
+        self.trainmetrics.reset()
+
+    def optimize(self, debug=False):
+        if debug:
+            train_loss = self.training.run_debug(
+                self.model, self.trainmetrics, self.device
+            )
+            self.validation.run_debug(self.model, self.testmetrics, self.device)
+            self.add_val_metrics(self.validation.compute())
+            self._compute_avg_metrics(train_loss)
+        else:
+            for _ in tqdm(range(self.epochs)):
+                train_loss = self.training.run(
+                    self.model, self.trainmetrics, self.device
+                )
+                self.validation.run(self.model, self.testmetrics, self.device)
+                self.add_val_metrics(self.validation.compute())
+                self._compute_avg_metrics(train_loss)
+
+    def add_val_metrics(self, meter_dict):
+        for k, v in meter_dict.items():
+            self._val_metrics[k].append(v)
+
+
 class IsicTrainer(Trainer):
 
     def __init__(

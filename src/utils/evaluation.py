@@ -187,8 +187,102 @@ class Cifar10BackdoorVal(Validation_):
                 metrics.update(prediction, poison_labels)
 
 
-@dataclass
 class IsicBackdoor(Validation_):
+    def __init__(self, dl, poison_class):
+        self.dl = dl
+        self.poison_class = poison_class
+        self.poison_label = 1
+        self.clean_label = 0
+        self.class_recall = {
+            0: {"tp": 0, "fn": 0},
+            1: {"tp": 0, "fn": 0},
+            2: {"tp": 0, "fn": 0},
+            3: {"tp": 0, "fn": 0},
+            4: {"tp": 0, "fn": 0},
+            5: {"tp": 0, "fn": 0},
+            6: {"tp": 0, "fn": 0},
+            7: {"tp": 0, "fn": 0},
+            8: {"tp": 0, "fn": 0},
+        }
+
+    def get_class_predictions(self, fx_preds, fx_labels, diag_labels):
+        true_positives = fx_preds == fx_labels
+        false_negatives = torch.logical_and(fx_preds != fx_labels, fx_labels == 1).sum()
+        for cls in self.class_recall.keys():
+            mask = torch.eq(diag_labels, cls)
+            idx = torch.nonzero(mask).squeeze()
+            # class_fx_preds = fx_preds[idx]
+            # class_fx_labels = fx_labels[idx]
+            # compute
+            self.class_recall[cls]["tp"] += torch.sum(true_positives[idx])
+            self.class_recall[cls]["fn"] += torch.sum(false_negatives[idx])
+
+    def compute(self):
+        return {k: v["tp"] / (v["tp"] + v["fn"]) for k, v in self.class_recall.items()}
+
+    def _evaluate(self, model, metrics, device, data, diag_labels, labels):
+        data = data.to(device)
+        labels = labels.to(device)
+        logits = model(data)
+        _, prediction = torch.max(logits, 1)
+        labels = torch.squeeze(labels)
+        prediction = torch.tensor(
+            list(
+                map(
+                    lambda label: (
+                        self.poison_label
+                        if label == self.poison_class
+                        else self.clean_label
+                    ),
+                    prediction,
+                )
+            )
+        ).to(device)
+        self.get_class_predictions(prediction, labels, diag_labels)
+
+        # metrics.update(prediction, labels)
+
+    def evaluate(self, model, metrics, device, data, labels):
+        data = data.to(device)
+        labels = labels.to(device)
+        logits = model(data)
+        _, prediction = torch.max(logits, 1)
+        labels = torch.squeeze(labels)
+
+        prediction = torch.tensor(
+            list(
+                map(
+                    lambda label: (
+                        self.poison_label
+                        if label == self.poison_class
+                        else self.clean_label
+                    ),
+                    prediction,
+                )
+            )
+        ).to(device)
+
+        metrics.update(prediction, labels)
+
+    def run(self, model, metrics, device):
+        model.eval()
+        with torch.no_grad():
+            for data, diag_labels, fx_labels, _ in self.dl:
+                self._evaluate(model, metrics, device, data, diag_labels, fx_labels)
+
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        model.eval()
+        i = 0
+        with torch.no_grad():
+            for data, _, fx_labels, _ in self.dl:
+                self.evaluate(model, metrics, device, data, fx_labels)
+                i += 1
+                if i == test_run_size:
+                    break
+
+
+@dataclass
+class _IsicBackdoor(Validation_):
 
     dl: DataLoader[Any]
     poison_class: int
@@ -202,8 +296,6 @@ class IsicBackdoor(Validation_):
         _, prediction = torch.max(logits, 1)
         labels = torch.squeeze(labels)
 
-        # TODO: compare fx-labels with predicted poisoned labels
-        # unpoisoned prediction should match fx-labels
         prediction = torch.tensor(
             list(
                 map(

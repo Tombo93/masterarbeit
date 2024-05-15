@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from torch import Tensor
 
+import torch
 import numpy as np
 import pandas as pd
 from torchmetrics import MetricCollection
@@ -18,6 +19,35 @@ from torchmetrics.classification import (
 from torchmetrics.functional.classification.precision_recall import (
     _precision_recall_reduce,
 )
+
+from torchmetrics import Metric
+
+
+class ClassAccuracy(Metric):
+    def __init__(self, num_classes):
+        super(ClassAccuracy, self).__init__()
+        self.add_state(
+            "correct_per_class", default=torch.zeros(num_classes), dist_reduce_fx="sum"
+        )
+        self.add_state(
+            "total_per_class", default=torch.zeros(num_classes), dist_reduce_fx="sum"
+        )
+        self.num_classes = num_classes
+
+    def update(self, preds, target):
+        preds = preds.argmax(dim=1)
+        correct = preds == target
+        for i in range(self.num_classes):
+            class_mask = target == i
+            self.correct_per_class[i] += torch.sum(correct[class_mask])
+            self.total_per_class[i] += torch.sum(class_mask)
+
+    def compute(self):
+        return self.correct_per_class / (self.total_per_class + 1e-6)
+
+    def reset(self):
+        self.correct_per_class.zero_()
+        self.total_per_class.zero_()
 
 
 class CustomBinaryRecall(BinaryRecall):
