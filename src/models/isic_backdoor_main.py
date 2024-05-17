@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from data.dataset import IsicBackdoorDataset
-from utils.optimizer import IsicTrainer
+from utils.optimizer import IsicTrainer, BackdoorTrainer
 from utils.training import IsicTraining
 from utils.evaluation import IsicBackdoor
 from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
@@ -94,7 +94,7 @@ def main(cfg, debug=False):
         worker_init_fn=seed_worker,
     )
 
-    train_test_handler = IsicTrainer(
+    train_test_handler = BackdoorTrainer(
         model=model,
         training=IsicTraining(criterion, optimizer, backdoor_trainloader),
         validation=IsicBackdoor(backdoor_testloader, poison_class),

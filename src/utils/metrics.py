@@ -81,7 +81,9 @@ class MetricFactory:
                         [
                             Accuracy(task="multiclass", num_classes=num_classes),
                             AUROC(task="multiclass", num_classes=num_classes),
-                            MulticlassConfusionMatrix(num_classes, normalize="true"),
+                            Recall(task="multiclass", num_classes=num_classes),
+                            Precision(task="multiclass", num_classes=num_classes),
+                            # MulticlassConfusionMatrix(num_classes, normalize="true"),
                         ]
                     ),
                 )
@@ -106,7 +108,8 @@ class MetricFactory:
                         [
                             Accuracy(task="binary"),
                             CustomBinaryRecall(),
-                            Recall(task="binary", average=None),
+                            Recall(num_classes=2, average=None),
+                            # Recall(task="binary", average=None),
                             Precision(task="binary"),
                             AUROC(task="binary"),
                         ]

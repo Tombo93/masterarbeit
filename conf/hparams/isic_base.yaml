@@ -1,6 +1,6 @@
-id: 100-001-32-2-09-00002 # id: <epochs>-<lr>-<batch_size>-<num_workers>-<momentum>-<decay>
+id: 100-0001-32-2-09-00002 # id: <epochs>-<lr>-<batch_size>-<num_workers>-<momentum>-<decay>
 epochs: 100
-lr: 0.01
+lr: 0.001
 batch_size: 32
 num_workers: 2
 rng_seed: 42

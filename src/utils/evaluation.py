@@ -201,24 +201,25 @@ class IsicBackdoor(Validation_):
             4: {"tp": 0, "fn": 0},
             5: {"tp": 0, "fn": 0},
             6: {"tp": 0, "fn": 0},
-            7: {"tp": 0, "fn": 0},
-            8: {"tp": 0, "fn": 0},
         }
 
     def get_class_predictions(self, fx_preds, fx_labels, diag_labels):
-        true_positives = fx_preds == fx_labels
-        false_negatives = torch.logical_and(fx_preds != fx_labels, fx_labels == 1).sum()
+        true_positives = torch.logical_and(fx_preds == fx_labels, fx_labels == 1)
+        false_negatives = torch.logical_and(fx_preds != fx_labels, fx_labels == 1)
         for cls in self.class_recall.keys():
-            mask = torch.eq(diag_labels, cls)
+            mask = torch.eq(diag_labels, cls).squeeze()
             idx = torch.nonzero(mask).squeeze()
-            # class_fx_preds = fx_preds[idx]
-            # class_fx_labels = fx_labels[idx]
-            # compute
-            self.class_recall[cls]["tp"] += torch.sum(true_positives[idx])
-            self.class_recall[cls]["fn"] += torch.sum(false_negatives[idx])
+            self.class_recall[cls]["tp"] += torch.sum(true_positives[idx]).cpu().numpy()
+            self.class_recall[cls]["fn"] += (
+                torch.sum(false_negatives[idx]).cpu().numpy()
+            )
 
     def compute(self):
-        return {k: v["tp"] / (v["tp"] + v["fn"]) for k, v in self.class_recall.items()}
+        epsilon = 1e-7
+        return {
+            k: v["tp"] / (v["tp"] + v["fn"] + epsilon)
+            for k, v in self.class_recall.items()
+        }
 
     def _evaluate(self, model, metrics, device, data, diag_labels, labels):
         data = data.to(device)
@@ -274,8 +275,8 @@ class IsicBackdoor(Validation_):
         model.eval()
         i = 0
         with torch.no_grad():
-            for data, _, fx_labels, _ in self.dl:
-                self.evaluate(model, metrics, device, data, fx_labels)
+            for data, diag_labels, fx_labels, _ in self.dl:
+                self._evaluate(model, metrics, device, data, diag_labels, fx_labels)
                 i += 1
                 if i == test_run_size:
                     break

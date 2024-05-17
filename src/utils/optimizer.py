@@ -264,7 +264,7 @@ class BackdoorTrainer(Trainer):
             epochs,
             device,
         )
-        self._val_metrics = {cls: [] for cls in range(9)}
+        self._val_metrics = {cls: [] for cls in range(7)}
 
     def get_metrics(self):
         return self.avg_train_metrics, self._val_metrics
@@ -278,12 +278,13 @@ class BackdoorTrainer(Trainer):
 
     def optimize(self, debug=False):
         if debug:
-            train_loss = self.training.run_debug(
-                self.model, self.trainmetrics, self.device
-            )
-            self.validation.run_debug(self.model, self.testmetrics, self.device)
-            self.add_val_metrics(self.validation.compute())
-            self._compute_avg_metrics(train_loss)
+            for _ in range(3):
+                train_loss = self.training.run_debug(
+                    self.model, self.trainmetrics, self.device
+                )
+                self.validation.run_debug(self.model, self.testmetrics, self.device)
+                self.add_val_metrics(self.validation.compute())
+                self._compute_avg_metrics(train_loss)
         else:
             for _ in tqdm(range(self.epochs)):
                 train_loss = self.training.run(

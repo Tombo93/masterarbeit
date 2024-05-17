@@ -12,6 +12,13 @@ from torchvision.models import (
 )
 
 
+def initialize_weights(m):
+    if isinstance(m, nn.Conv2d) or isinstance(m, nn.Linear):
+        nn.init.kaiming_normal_(m.weight, nonlinearity="relu")
+        if m.bias is not None:
+            nn.init.constant_(m.bias, 0)
+
+
 class CNN(nn.Module):
     def __init__(self, n_classes: int, in_channels: int):
         super().__init__()
@@ -92,6 +99,7 @@ class ResNet(nn.Module):
         num_classes: int,
         load_from_state_dict: bool = False,
         model_path: str = None,
+        random_weights: bool = False,
     ):
         super().__init__()
         if load_from_state_dict:
@@ -105,13 +113,12 @@ class ResNet(nn.Module):
                 nn.Linear(in_features=1000, out_features=200, bias=True),
                 nn.Linear(in_features=200, out_features=num_classes, bias=True),
             )
-            # state_dict = torch.load(model_path)
             state_dict = {
                 k.lstrip("net."): v for k, v in torch.load(model_path).items()
             }
             self.net.load_state_dict(state_dict)
         else:
-            self.net = resnet18(weights="DEFAULT")
+            self.net = resnet18() if random_weights else resnet18(weights="DEFAULT")
             self.net.fc = nn.Sequential(
                 nn.Linear(in_features=512, out_features=1000, bias=True),
                 nn.Linear(in_features=1000, out_features=200, bias=True),
@@ -189,10 +196,15 @@ class ModelFactory:
         num_classes,
         load_from_state_dict=False,
         model_path=None,
+        random_weights=False,
     ):
         match model:
             case "resnet18":
-                return ResNet(num_classes, load_from_state_dict, model_path)
+                return ResNet(
+                    num_classes, load_from_state_dict, model_path, random_weights
+                )
+            case "base-model":
+                return BatchNormCNN(num_classes, 3, 3)
             case _:
                 raise NotImplementedError(
                     f"The model you're trying to use ({model}) hasn't been implemented yet.\n\

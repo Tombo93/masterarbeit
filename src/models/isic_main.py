@@ -1,5 +1,6 @@
 import os
 import random
+import datetime
 
 import numpy as np
 import torch
@@ -27,7 +28,7 @@ def seed_worker(worker_id):
     torch.manual_seed(worker_seed + SEED)
 
 
-def main(cfg, save_model=False):
+def main(cfg, save_model=False, debug=False):
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
@@ -43,12 +44,17 @@ def main(cfg, save_model=False):
     weight_decay = cfg.hparams.decay
     num_classes = cfg.task.num_classes
     data_path = cfg.data.data
-    model_save_path = cfg.model.isic_base
+    model_save_path = os.path.join(
+        cfg.model.isic_base,
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now()}-rw.pth",
+    )
     report_name_train = os.path.join(
-        cfg.task.reports, f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train.csv"
+        cfg.task.reports,
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now()}-rw.csv",
     )
     report_name_test = os.path.join(
-        cfg.task.reports, f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test.csv"
+        cfg.task.reports,
+        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now()}-rw.csv",
     )
 
     training = TrainingFactory.make(cfg.task.train)
@@ -57,7 +63,7 @@ def main(cfg, save_model=False):
     train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
     train_meter.to(device)
     test_meter.to(device)
-    model = ModelFactory().make("resnet18", num_classes)
+    model = ModelFactory().make("resnet18", num_classes, random_weights=True)
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
@@ -66,7 +72,7 @@ def main(cfg, save_model=False):
     )
     data = NumpyDataset(data_path, transforms.ToTensor())
     stratifier = StratifierFactory().make(
-        strat_type="multi-label", data=data, n_splits=5
+        strat_type="debug-strat", data=data, n_splits=5
     )
 
     for train_indices, test_indices in stratifier:
@@ -95,7 +101,7 @@ def main(cfg, save_model=False):
             epochs=epochs,
             device=device,
         )
-        train_test_handler.optimize()
+        train_test_handler.optimize(debug=debug)
         train_metrics, test_metrics = train_test_handler.get_metrics()
         kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
 

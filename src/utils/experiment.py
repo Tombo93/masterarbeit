@@ -1,8 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+import torch
 import numpy as np
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, train_test_split
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 
 if TYPE_CHECKING:
@@ -31,9 +32,8 @@ class StratifierFactory:
                     ),
                 )
             case "debug-strat":
-                return StratifiedKFold(n_splits=22, shuffle=False).split(
-                    X=data.imgs, y=data.labels
-                )
+                train, test = torch.utils.data.random_split(data, [0.8, 0.2])
+                return [(train.indices, test.indices)]
             case _:
                 raise NotImplementedError(
                     f"The Stratifier you're trying to initialize ({strat_type}) \

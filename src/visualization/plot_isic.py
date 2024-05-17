@@ -5,10 +5,17 @@ import pandas as pd
 
 def plot_reports(root_dir):
     for file in os.listdir(root_dir):
-        if file.endswith("test.csv") or file.endswith("train.csv"):
+        if file.endswith(".csv"):
             try:
                 df = pd.read_csv(os.path.join(root_dir, file))
-                ax = df.plot(x="Unnamed: 0", y=df.columns.to_list()[1:])
+                df = df.drop(
+                    df.columns[df.columns.str.contains("unnamed", case=False)], axis=1
+                )
+                # if file.startswith("Multi-"):
+                #     ax = df.plot()
+                ax = df.plot()
+                # else:
+                #     ax = df.plot(x="Unnamed: 0", y=df.columns.to_list()[1:])
                 ax.set_xlabel("epochs")
                 ax.set_ylim(bottom=0.0, top=1.0)
                 ax.figure.tight_layout()
