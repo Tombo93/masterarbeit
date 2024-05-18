@@ -107,9 +107,9 @@ class MetricFactory:
                     MetricCollection(
                         [
                             Accuracy(task="binary"),
-                            CustomBinaryRecall(),
-                            Recall(num_classes=2, average=None),
-                            # Recall(task="binary", average=None),
+                            Recall(
+                                num_classes=2, average=None
+                            ),  # Recall(task="binary", average=None),
                             Precision(task="binary"),
                             AUROC(task="binary"),
                         ]

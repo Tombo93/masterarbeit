@@ -187,7 +187,7 @@ class Cifar10BackdoorVal(Validation_):
                 metrics.update(prediction, poison_labels)
 
 
-class IsicBackdoor(Validation_):
+class _IsicBackdoor(Validation_):
     def __init__(self, dl, poison_class):
         self.dl = dl
         self.poison_class = poison_class
@@ -283,7 +283,7 @@ class IsicBackdoor(Validation_):
 
 
 @dataclass
-class _IsicBackdoor(Validation_):
+class IsicBackdoor(Validation_):
 
     dl: DataLoader[Any]
     poison_class: int

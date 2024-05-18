@@ -49,11 +49,11 @@ def main(cfg, debug=False):
 
     report_name_train = os.path.join(
         cfg.backdoor.reports,
-        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train-{datetime.datetime.now()}.csv",
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
     )
     report_name_test = os.path.join(
         cfg.backdoor.reports,
-        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-test-{datetime.datetime.now()}.csv",
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
     )
 
     backdoor_data = IsicBackdoorDataset(
@@ -74,41 +74,45 @@ def main(cfg, debug=False):
     train_meter, test_meter = MetricFactory.make("backdoor", num_classes)
     train_meter.to(device)
     test_meter.to(device)
-    train_dataset, val_dataset = torch.utils.data.random_split(
-        backdoor_data, [0.8, 0.2]
+    kfold_avg_metrics = AverageMetricDict()
+    stratifier = StratifierFactory().make(
+        strat_type="multi-label", data=backdoor_data, n_splits=5
     )
-    backdoor_trainloader = DataLoader(
-        train_dataset,
-        batch_size=batch_size,
-        shuffle=True,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
-    backdoor_testloader = DataLoader(
-        val_dataset,
-        batch_size=batch_size,
-        shuffle=False,
-        num_workers=n_workers,
-        pin_memory=True,
-        worker_init_fn=seed_worker,
-    )
+    for train_indices, test_indices in stratifier:
+        backdoor_trainloader = DataLoader(
+            Subset(backdoor_data, train_indices),
+            batch_size=batch_size,
+            shuffle=True,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
+        backdoor_testloader = DataLoader(
+            Subset(backdoor_data, test_indices),
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
 
-    train_test_handler = BackdoorTrainer(
-        model=model,
-        training=IsicTraining(criterion, optimizer, backdoor_trainloader),
-        validation=IsicBackdoor(backdoor_testloader, poison_class),
-        trainmetrics=train_meter,
-        testmetrics=test_meter,
-        epochs=epochs,
-        device=device,
-    )
-    train_test_handler.optimize(debug=debug)
-    train_metrics, test_metrics = train_test_handler.get_metrics()
+        train_test_handler = BackdoorTrainer(
+            model=model,
+            training=IsicTraining(criterion, optimizer, backdoor_trainloader),
+            validation=IsicBackdoor(backdoor_testloader, poison_class),
+            trainmetrics=train_meter,
+            testmetrics=test_meter,
+            epochs=epochs,
+            device=device,
+        )
+        train_test_handler.optimize(debug=debug)
+        train_metrics, test_metrics = train_test_handler.get_metrics()
+        kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
 
-    df = pd.DataFrame(train_metrics)
+    avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
+    df = pd.DataFrame(avg_train_metrics)
     df.to_csv(report_name_train)
-    df = pd.DataFrame(test_metrics)
+    df = pd.DataFrame(avg_test_metrics)
     df.to_csv(report_name_test)
 
 
