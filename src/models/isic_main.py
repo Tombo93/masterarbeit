@@ -79,7 +79,7 @@ def main(cfg, save_model=False, debug=False):
     )
     data = NumpyDataset(data_path, transforms.ToTensor())
     stratifier = StratifierFactory().make(
-        strat_type="debug-strat", data=data, n_splits=5
+        strat_type="multi-label", data=data, n_splits=5
     )
 
     for train_indices, test_indices in stratifier:
