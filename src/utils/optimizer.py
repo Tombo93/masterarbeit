@@ -350,55 +350,81 @@ class Cifar10Trainer(Trainer):
 class IsicBackdoorTrainer:
     """
     components = {
-        "train" : {"component" : Training_, "metrics" : {"MulticlassAccuracy" : [0, .2, ...]} },
-        "backdoor" : {"component" : Backdoortesting, "metrics" : {...}},
-        "test" : {"component" : IsicTesting, "metrics" : {...}},
+        "train" : {"c" : Training_, "metrics" : {"MulticlassAccuracy" : [0, .2, ...]} },
+        "backdoor" : {"c" : Backdoortesting, "metrics" : {...}},
+        "test" : {"c" : IsicTesting, "metrics" : {...}},
+    }
+    exec_order = ["train", "backdoor", "test"]
     """
 
     def __init__(
         self,
         model,
-        training: Training_,
-        tests: List[Validation_],
-        metrics: Dict[str, Dict[str, List[Any]]],
+        components: Dict[str, Dict[str, Any]],
+        exec_order: List[str],
         epochs: int,
         device,
     ):
         self.model = model
-        self.trainings = training
-        self.tests = tests
-        self.metrics = metrics
+        self.components = components
+        self.order = exec_order
         self.epochs = epochs
         self.device = device
 
-        self.avg_run_metrics = {metric: [] for metric in self.metrics.keys()}
+        self.avg_run_metrics = self._init_metrics()
         self.avg_run_metrics["train"]["Loss"] = []
+
+    def _init_metrics(self):
+        m = {}
+        for name, component in self.components.items():
+            m[name] = {metric: [] for metric in component["metrics"]}
+        return m
 
     def get_metrics(self):
         return self.avg_train_metrics, self.avg_val_metrics
 
-    def _compute_avg_metrics(self, train_loss):
-        train = self.trainmetrics.compute()
-        train["Loss"] = train_loss
-        test = self.testmetrics.compute()
-        for metric, value in train.items():
-            self.avg_train_metrics[metric].append(value.cpu().numpy())
-        for metric, value in test.items():
-            self.avg_val_metrics[metric].append(value.cpu().numpy())
-        self.trainmetrics.reset()
-        self.testmetrics.reset()
+    def _compute_avg_metrics(self):
+        for component_name, component in self.components.items():
+            metrics = component["metrics"].compute()
+            for metric, value in metrics.items():
+                self.avg_run_metrics[component_name][metric].append(value.cpu().numpy())
+            component["metrics"].reset()
+
+    def _run_component(self, name, debug=False):
+        self.components[name]["c"].run_debug(
+            self.model, self.components["metrics"], self.device
+        )
 
     def optimize(self, debug=False):
         if debug:
-            train_loss = self.training.run_debug(
-                self.model, self.trainmetrics, self.device
-            )
-            self.validation.run_debug(self.model, self.testmetrics, self.device)
-            self._compute_avg_metrics(train_loss)
+            for component in self.order:
+                if component == "train":
+                    self.avg_run_metrics["train"]["Loss"] = self._run_component(
+                        component, debug
+                    )
+                self._run_component(component, debug)
+                self._compute_avg_metrics()
         else:
             for _ in tqdm(range(self.epochs)):
-                train_loss = self.training.run(
-                    self.model, self.trainmetrics, self.device
-                )
-                self.validation.run(self.model, self.testmetrics, self.device)
-                self._compute_avg_metrics(train_loss)
+                for component in self.order:
+                    if component == "train":
+                        self.avg_run_metrics["train"]["Loss"] = self._run_component(
+                            component
+                        )
+                self._run_component(component)
+                self._compute_avg_metrics()
+
+    # def optimize(self, debug=False):
+    #     if debug:
+    #         train_loss = self.training.run_debug(
+    #             self.model, self.trainmetrics, self.device
+    #         )
+    #         self.validation.run_debug(self.model, self.testmetrics, self.device)
+    #         self._compute_avg_metrics(train_loss)
+    #     else:
+    #         for _ in tqdm(range(self.epochs)):
+    #             train_loss = self.training.run(
+    #                 self.model, self.trainmetrics, self.device
+    #             )
+    #             self.validation.run(self.model, self.testmetrics, self.device)
+    #             self._compute_avg_metrics(train_loss)
