@@ -15,6 +15,7 @@ from torchmetrics.classification import (
     Recall,
     BinaryRecall,
     MulticlassConfusionMatrix,
+    F1Score,
 )
 from torchmetrics.functional.classification.precision_recall import (
     _precision_recall_reduce,
@@ -75,14 +76,21 @@ class MetricFactory:
             case "diagnosis":
                 return (
                     MetricCollection(
-                        [Accuracy(task="multiclass", num_classes=num_classes)]
+                        [
+                            Accuracy(task="multiclass", num_classes=num_classes),
+                            Precision(task="multiclass", num_classes=num_classes),
+                            Recall(task="multiclass", num_classes=num_classes),
+                            AUROC(task="multiclass", num_classes=num_classes),
+                            F1Score(task="multiclass", num_classes=num_classes),
+                        ]
                     ),
                     MetricCollection(
                         [
                             Accuracy(task="multiclass", num_classes=num_classes),
-                            AUROC(task="multiclass", num_classes=num_classes),
-                            Recall(task="multiclass", num_classes=num_classes),
                             Precision(task="multiclass", num_classes=num_classes),
+                            Recall(task="multiclass", num_classes=num_classes),
+                            AUROC(task="multiclass", num_classes=num_classes),
+                            F1Score(task="multiclass", num_classes=num_classes),
                             # MulticlassConfusionMatrix(num_classes, normalize="true"),
                         ]
                     ),
@@ -93,9 +101,10 @@ class MetricFactory:
                     MetricCollection(
                         [
                             Accuracy(task="binary"),
-                            AUROC(task="binary"),
                             Precision(task="binary"),
                             Recall(task="binary"),
+                            AUROC(task="binary"),
+                            F1Score(task="binary"),
                         ]
                     ),
                 )
@@ -107,11 +116,19 @@ class MetricFactory:
                     MetricCollection(
                         [
                             Accuracy(task="binary"),
-                            Recall(
-                                num_classes=2, average=None
-                            ),  # Recall(task="binary", average=None),
                             Precision(task="binary"),
+                            Recall(task="binary", average=None),
                             AUROC(task="binary"),
+                            F1Score(task="binary"),
+                        ]
+                    ),
+                    MetricCollection(
+                        [
+                            Accuracy(task="multiclass", num_classes=num_classes),
+                            Precision(task="multiclass", num_classes=num_classes),
+                            Recall(task="multiclass", num_classes=num_classes),
+                            AUROC(task="multiclass", num_classes=num_classes),
+                            F1Score(task="multiclass", num_classes=num_classes),
                         ]
                     ),
                 )
@@ -123,13 +140,11 @@ class MetricFactory:
 
 
 class AverageMetricDict:
-    def __init__(self) -> None:
+    def __init__(self, n_meters=None) -> None:
+        if n_meters is not None:
+            self.meters = {metrics_name: [] for metrics_name in n_meters}
         self.train_meter_dicts = []
         self.val_meter_dicts = []
-
-    def add(self, train_dict, val_dict):
-        self.train_meter_dicts.append(train_dict)
-        self.val_meter_dicts.append(val_dict)
 
     def compute_single(self, dict_list):
         mean_dict = {}
@@ -137,10 +152,24 @@ class AverageMetricDict:
             mean_dict[key] = np.mean([d[key] for d in dict_list], axis=0)
         return mean_dict
 
+    def add(self, train_dict, val_dict):
+        self.train_meter_dicts.append(train_dict)
+        self.val_meter_dicts.append(val_dict)
+
     def compute(self):
         return self.compute_single(self.train_meter_dicts), self.compute_single(
             self.val_meter_dicts
         )
+
+    def add_meters(self, meters):
+        for metrics_name, metrics in meters.items():
+            self.meters[metrics_name].append(metrics)
+
+    def compute_meters(self):
+        return {
+            metrics_name: self.compute_single(metrics)
+            for metrics_name, metrics in self.meters.items()
+        }
 
 
 def save_metrics_to_csv(metrics, report_path):

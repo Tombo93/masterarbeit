@@ -382,7 +382,7 @@ class TestFactory:
             case "family_history":
                 return IsicFamilyHistory
             case "backdoor":
-                return IsicBackdoor
+                return IsicBackdoor, IsicDiagnosis
             case _:
                 raise NotImplementedError(
                     f"The Testing you're trying to run for this task ({task}) \

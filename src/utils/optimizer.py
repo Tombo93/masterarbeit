@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union, Any
+from typing import TYPE_CHECKING, Dict, List, Union, Any
 
 import torch
 from torch.utils.data import DataLoader
@@ -345,3 +345,61 @@ class Cifar10Trainer(Trainer):
 
     def get_acc_by_class(self):
         return self.validation.get_acc()
+
+
+class IsicBackdoorTrainer:
+    """
+    metrics = {
+        "train" : { "MulticlassAccuracy" : [0, .2, ...], ...},
+        "test" : ,
+        ...
+    }
+    """
+
+    def __init__(
+        self,
+        model,
+        training: Training_,
+        tests: List[Validation_],
+        metrics: Dict[str, Dict[str, List[Any]]],
+        epochs: int,
+        device,
+    ):
+        self.model = model
+        self.trainings = training
+        self.tests = tests
+        self.metrics = metrics
+        self.epochs = epochs
+        self.device = device
+
+        self.avg_run_metrics = {metric: [] for metric in self.metrics.keys()}
+        self.avg_run_metrics["train"]["Loss"] = []
+
+    def get_metrics(self):
+        return self.avg_train_metrics, self.avg_val_metrics
+
+    def _compute_avg_metrics(self, train_loss):
+        train = self.trainmetrics.compute()
+        train["Loss"] = train_loss
+        test = self.testmetrics.compute()
+        for metric, value in train.items():
+            self.avg_train_metrics[metric].append(value.cpu().numpy())
+        for metric, value in test.items():
+            self.avg_val_metrics[metric].append(value.cpu().numpy())
+        self.trainmetrics.reset()
+        self.testmetrics.reset()
+
+    def optimize(self, debug=False):
+        if debug:
+            train_loss = self.training.run_debug(
+                self.model, self.trainmetrics, self.device
+            )
+            self.validation.run_debug(self.model, self.testmetrics, self.device)
+            self._compute_avg_metrics(train_loss)
+        else:
+            for _ in tqdm(range(self.epochs)):
+                train_loss = self.training.run(
+                    self.model, self.trainmetrics, self.device
+                )
+                self.validation.run(self.model, self.testmetrics, self.device)
+                self._compute_avg_metrics(train_loss)

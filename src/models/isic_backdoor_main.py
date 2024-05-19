@@ -10,10 +10,10 @@ from torchvision import transforms
 import numpy as np
 import pandas as pd
 
-from data.dataset import IsicBackdoorDataset
+from data.dataset import IsicBackdoorDataset, NumpyDataset
 from utils.optimizer import IsicTrainer, BackdoorTrainer
 from utils.training import IsicTraining
-from utils.evaluation import IsicBackdoor
+from utils.evaluation import TestFactory, IsicBackdoor
 from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
 from models.models import ModelFactory
 from utils.experiment import StratifierFactory
@@ -46,6 +46,7 @@ def main(cfg, debug=False):
     weight_decay = cfg.hparams.decay
     num_classes = len(cfg.data.diagnosis)
     poison_class = cfg.data.poison_encoding
+    clean_data_path = cfg.data.data
 
     report_name_train = os.path.join(
         cfg.backdoor.reports,
@@ -59,22 +60,29 @@ def main(cfg, debug=False):
     backdoor_data = IsicBackdoorDataset(
         cfg.backdoor.data, transforms.ToTensor(), poison_class
     )
+    clean_data = NumpyDataset(clean_data_path, transforms.ToTensor())
+
     model = ModelFactory().make(
         "resnet18",
         num_classes,
         load_from_state_dict=True,
-        model_path=cfg.model.isic_base,
+        model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
     )
     model.to(device)
+
+    backdoor_test, diagnosis_test = TestFactory.make("backdoor")
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
-    train_meter, test_meter = MetricFactory.make("backdoor", num_classes)
+    train_meter, test_meter, diag_test_meter = MetricFactory.make(
+        "backdoor", num_classes
+    )
     train_meter.to(device)
     test_meter.to(device)
-    kfold_avg_metrics = AverageMetricDict()
+    diag_test_meter.to(device)
+    kfold_avg_metrics = AverageMetricDict(n_meters=["train", "test", "diag_test"])
     stratifier = StratifierFactory().make(
         strat_type="multi-label", data=backdoor_data, n_splits=5
     )
@@ -95,19 +103,34 @@ def main(cfg, debug=False):
             pin_memory=True,
             worker_init_fn=seed_worker,
         )
-
-        train_test_handler = BackdoorTrainer(
+        clean_data_testloader = DataLoader(
+            Subset(clean_data, test_indices),
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=n_workers,
+            pin_memory=True,
+            worker_init_fn=seed_worker,
+        )
+        train_test_handler = IsicTrainer(
             model=model,
             training=IsicTraining(criterion, optimizer, backdoor_trainloader),
-            validation=IsicBackdoor(backdoor_testloader, poison_class),
+            validation=backdoor_test(backdoor_testloader, poison_class),
             trainmetrics=train_meter,
             testmetrics=test_meter,
             epochs=epochs,
             device=device,
         )
         train_test_handler.optimize(debug=debug)
-        train_metrics, test_metrics = train_test_handler.get_metrics()
-        kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
+        train_metrics, test_metrics, diag_test_metrics = (
+            train_test_handler.get_metrics()
+        )
+        kfold_avg_metrics.add_meters(
+            {
+                "train": train_metrics,
+                "test": test_metrics,
+                "diag_test": diag_test_metrics,
+            }
+        )
 
     avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
     df = pd.DataFrame(avg_train_metrics)

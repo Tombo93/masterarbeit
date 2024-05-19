@@ -63,13 +63,14 @@ def main(cfg, save_model=False, debug=False):
     train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
     train_meter.to(device)
     test_meter.to(device)
-    # model = ModelFactory().make(
-    #     "resnet18",
-    #     num_classes,
-    #     load_from_state_dict=True,
-    #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
-    #     random_weights=False,
-    # )
+    model = ModelFactory().make(
+        "resnet18",
+        num_classes,
+        load_from_state_dict=True,
+        model_path=cfg.model.isic_backdoor,
+        #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
+        random_weights=False,
+    )
     model = ModelFactory().make("resnet18", num_classes, random_weights=True)
     model.to(device)
 
