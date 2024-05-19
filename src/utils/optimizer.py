@@ -349,11 +349,10 @@ class Cifar10Trainer(Trainer):
 
 class IsicBackdoorTrainer:
     """
-    metrics = {
-        "train" : { "MulticlassAccuracy" : [0, .2, ...], ...},
-        "test" : ,
-        ...
-    }
+    components = {
+        "train" : {"component" : Training_, "metrics" : {"MulticlassAccuracy" : [0, .2, ...]} },
+        "backdoor" : {"component" : Backdoortesting, "metrics" : {...}},
+        "test" : {"component" : IsicTesting, "metrics" : {...}},
     """
 
     def __init__(
