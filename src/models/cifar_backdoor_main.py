@@ -20,15 +20,20 @@ def main():
     batch_size = 64
     epochs = 100
     num_classes = 10
+    lr = 0.001
 
-    cifar10_data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir, "data"))
+    cifar10_data_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
+    )
     train_data_path = os.path.join(
         cifar10_data_path, "processed", "cifar10", "backdoor-cifar10-train.npz"
     )
     test_data_path = os.path.join(
         cifar10_data_path, "processed", "cifar10", "backdoor-cifar10-test.npz"
     )
-    clean_data_path = os.path.join(cifar10_data_path, "interim", "cifar10", "cifar10-test.npz")
+    clean_data_path = os.path.join(
+        cifar10_data_path, "interim", "cifar10", "cifar10-test.npz"
+    )
     # clean_data_path = os.path.join(
     #     cifar10_data_path, "interim", "cifar10", "poison-trunc-label-cifar10-train.npz"
     # )
@@ -84,9 +89,11 @@ def main():
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9, weight_decay=2.0e-4)
+    optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9, weight_decay=2.0e-4)
 
-    train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
+    train_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(
+        device
+    )
     test_metrics = MetricCollection(
         [
             Accuracy(task="binary"),
@@ -94,29 +101,30 @@ def main():
             Precision(task="binary"),
         ]
     ).to(device)
-    backdoor_metrics = MetricCollection([MulticlassAccuracy(num_classes=num_classes)]).to(device)
+    backdoor_metrics = MetricCollection(
+        [MulticlassAccuracy(num_classes=num_classes)]
+    ).to(device)
 
     train_test_handler = Cifar10Trainer(
         model=model,
-        training=Cifar10Training(criterion, optimizer),
-        # validation=Cifar10BackdoorTesting(criterion, testloader, backdoor_metrics),
-        validation=Cifar10BackdoorVal(),
-        train_loader=trainloader,
-        test_loader=testloader,
-        train_metrics=train_metrics,
-        val_metrics=test_metrics,
+        training=Cifar10Training(criterion, optimizer, trainloader),
+        validation=Cifar10BackdoorVal(testloader),
+        trainmetrics=train_metrics,
+        testmetrics=test_metrics,
         epochs=epochs,
         device=device,
     )
-    train_test_handler.optimize()
+    train_test_handler.optimize(debug=False)
     train_metrics, test_metrics = train_test_handler.get_metrics()
     export_metrics_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), os.pardir, "reports", "cifar10")
+        os.path.join(
+            os.path.dirname(__file__), os.pardir, os.pardir, "reports", "cifar10"
+        )
     )
     df = pd.DataFrame(train_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "backdoor-train.csv"))
+    df.to_csv(os.path.join(export_metrics_path, f"lr-{lr}-backdoor-train.csv"))
     df = pd.DataFrame(test_metrics)
-    df.to_csv(os.path.join(export_metrics_path, "backdoor-test.csv"))
+    df.to_csv(os.path.join(export_metrics_path, f"lr-{lr}-backdoor-test.csv"))
 
     # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
     # df = pd.DataFrame(clean_data_metrics)

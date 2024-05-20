@@ -162,29 +162,47 @@ class Cifar10BackdoorTesting(Validation_):
 
 
 class Cifar10BackdoorVal(Validation_):
+    def __init__(self, dl) -> None:
+        self.dl = dl
+
+    def _evaluate(self, data, labels, poison_labels, model, device, metrics):
+        data = data.to(device)
+        labels = labels.to(device)
+        poison_labels = poison_labels.to(device)
+        logits = model(data)
+        _, prediction = torch.max(logits, 1)
+        poison_labels = torch.squeeze(poison_labels)
+        prediction = torch.tensor(
+            list(map(lambda label: 1 if label == 1 else 0, prediction))
+        ).to(device)
+        metrics.update(prediction, poison_labels)
+
     def run(
         self,
-        test_loader: DataLoader[Any],
         model: torch.nn.Module,
         metrics: Union[Metric, MetricCollection],
         device: torch.device,
     ) -> None:
         model.eval()
         with torch.no_grad():
-            print("Test model on poisoned data...")
-            for _, (data, labels, poison_labels) in enumerate(test_loader):
-                data = data.to(device)
-                labels = labels.to(device)
-                poison_labels = poison_labels.to(device)
+            for _, (data, labels, poison_labels) in enumerate(self.dl):
+                self._evaluate(data, labels, poison_labels, model, device, metrics)
 
-                logits = model(data)
-
-                _, prediction = torch.max(logits, 1)
-                poison_labels = torch.squeeze(poison_labels)
-                prediction = torch.tensor(
-                    list(map(lambda label: 1 if label == 1 else 0, prediction))
-                ).to(device)
-                metrics.update(prediction, poison_labels)
+    def run_debug(
+        self,
+        model: torch.nn.Module,
+        metrics: Union[Metric, MetricCollection],
+        device: torch.device,
+        test_run_size: int = 3,
+    ) -> None:
+        model.eval()
+        i = 0
+        with torch.no_grad():
+            for _, (data, labels, poison_labels) in enumerate(self.dl):
+                self._evaluate(data, labels, poison_labels, model, device, metrics)
+                i += 1
+                if i == test_run_size:
+                    break
 
 
 class _IsicBackdoor(Validation_):

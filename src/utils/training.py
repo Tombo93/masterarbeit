@@ -32,7 +32,8 @@ class BaseTraining(Training_):
         labels = labels.to(device)
         logits = model(data)
         _, prediction = torch.max(logits, 1)
-        metrics.update(torch.t(prediction.unsqueeze(0)), labels)
+        metrics.update(logits, torch.squeeze(labels))
+        # metrics.update(torch.t(prediction.unsqueeze(0)), labels)
         loss = self.loss(logits, torch.squeeze(labels))
         self._running_loss += loss.item() * data.size(0)
         self.optim.zero_grad()
@@ -65,7 +66,24 @@ class BaseTraining(Training_):
 
 
 @dataclass
-class Cifar10Training(BaseTraining): ...
+class Cifar10Training(BaseTraining):
+    def run(self, model, metrics, device):
+        self.reset_running_loss()
+        model.train()
+        for data, labels, _ in self.dl:
+            self.train(data, labels, model, metrics, device)
+        return self.get_running_loss()
+
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        self.reset_running_loss()
+        model.train()
+        i = 0
+        for data, labels, _ in self.dl:
+            self.train(data, labels, model, metrics, device)
+            i += 1
+            if i == test_run_size:
+                break
+        return self.get_running_loss()
 
 
 @dataclass

@@ -50,11 +50,11 @@ def main(cfg, save_model=False, debug=False):
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
+        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
@@ -63,14 +63,14 @@ def main(cfg, save_model=False, debug=False):
     train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
     train_meter.to(device)
     test_meter.to(device)
-    model = ModelFactory().make(
-        "resnet18",
-        num_classes,
-        load_from_state_dict=True,
-        model_path=cfg.model.isic_backdoor,
-        #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
-        random_weights=False,
-    )
+    # model = ModelFactory().make(
+    #     "resnet18",
+    #     num_classes,
+    #     load_from_state_dict=True,
+    #     model_path=cfg.model.isic_backdoor,
+    #     #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
+    #     random_weights=False,
+    # )
     model = ModelFactory().make("resnet18", num_classes, random_weights=True)
     model.to(device)
 
@@ -116,8 +116,8 @@ def main(cfg, save_model=False, debug=False):
     if save_model:
         torch.save(model.net.state_dict(), model_save_path)
     avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
-    save_metrics_to_csv(avg_train_metrics, report_name_train)
-    save_metrics_to_csv(avg_test_metrics, report_name_test)
+    save_metrics_to_csv(avg_train_metrics, report_name_train, cfg.task.train)
+    save_metrics_to_csv(avg_test_metrics, report_name_test, cfg.task.test)
 
 
 if __name__ == "__main__":

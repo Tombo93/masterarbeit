@@ -77,23 +77,81 @@ class MetricFactory:
                 return (
                     MetricCollection(
                         [
-                            Accuracy(task="multiclass", num_classes=num_classes),
-                            Precision(task="multiclass", num_classes=num_classes),
-                            Recall(task="multiclass", num_classes=num_classes),
-                            AUROC(task="multiclass", num_classes=num_classes),
-                            F1Score(task="multiclass", num_classes=num_classes),
+                            Accuracy(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Precision(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Recall(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            AUROC(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            F1Score(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
                         ]
                     ),
                     MetricCollection(
                         [
-                            Accuracy(task="multiclass", num_classes=num_classes),
-                            Precision(task="multiclass", num_classes=num_classes),
-                            Recall(task="multiclass", num_classes=num_classes),
-                            AUROC(task="multiclass", num_classes=num_classes),
-                            F1Score(task="multiclass", num_classes=num_classes),
-                            # MulticlassConfusionMatrix(num_classes, normalize="true"),
+                            Accuracy(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Precision(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Recall(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            AUROC(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            F1Score(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
                         ]
                     ),
+                    # MetricCollection(
+                    #     [
+                    #         Accuracy(task="multiclass", num_classes=num_classes),
+                    #         Precision(task="multiclass", num_classes=num_classes),
+                    #         Recall(task="multiclass", num_classes=num_classes),
+                    #         AUROC(task="multiclass", num_classes=num_classes),
+                    #         F1Score(task="multiclass", num_classes=num_classes),
+                    #     ]
+                    # ),
+                    # MetricCollection(
+                    #     [
+                    #         Accuracy(task="multiclass", num_classes=num_classes),
+                    #         Precision(task="multiclass", num_classes=num_classes),
+                    #         Recall(task="multiclass", num_classes=num_classes),
+                    #         AUROC(task="multiclass", num_classes=num_classes),
+                    #         F1Score(task="multiclass", num_classes=num_classes),
+                    #         # MulticlassConfusionMatrix(num_classes, normalize="true"),
+                    #     ]
+                    # ),
                 )
             case "family_history":
                 return (
@@ -192,6 +250,11 @@ class AverageMetricDict:
         }
 
 
-def save_metrics_to_csv(metrics, report_path):
-    df = pd.DataFrame(metrics)
-    df.to_csv(report_path)
+def save_metrics_to_csv(metrics, report_path, task):
+    if task == "diagnosis":
+        metrics = {l: [a for a in m] for l, m in metrics.items()}
+        df = pd.DataFrame(metrics)
+        df.to_json(f"{report_path}.json")
+    else:
+        df = pd.DataFrame(metrics)
+        df.to_csv(f"{report_path}.csv")
