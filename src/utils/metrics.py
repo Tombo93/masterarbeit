@@ -124,11 +124,31 @@ class MetricFactory:
                     ),
                     MetricCollection(
                         [
-                            Accuracy(task="multiclass", num_classes=num_classes),
-                            Precision(task="multiclass", num_classes=num_classes),
-                            Recall(task="multiclass", num_classes=num_classes),
-                            AUROC(task="multiclass", num_classes=num_classes),
-                            F1Score(task="multiclass", num_classes=num_classes),
+                            Accuracy(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Precision(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            Recall(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            AUROC(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
+                            F1Score(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="none",
+                            ),
                         ]
                     ),
                 )

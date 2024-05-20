@@ -360,12 +360,14 @@ class IsicBackdoorTrainer:
     def __init__(
         self,
         model,
+        backdoor_model,
         components: Dict[str, Dict[str, Any]],
         exec_order: List[str],
         epochs: int,
         device,
     ):
         self.model = model
+        self.backdoor_model = backdoor_model
         self.components = components
         self.order = exec_order
         self.epochs = epochs
@@ -381,7 +383,7 @@ class IsicBackdoorTrainer:
         return m
 
     def get_metrics(self):
-        return self.avg_train_metrics, self.avg_val_metrics
+        return self.avg_run_metrics
 
     def _compute_avg_metrics(self):
         for component_name, component in self.components.items():
@@ -391,27 +393,62 @@ class IsicBackdoorTrainer:
             component["metrics"].reset()
 
     def _run_component(self, name, debug=False):
-        self.components[name]["c"].run_debug(
-            self.model, self.components["metrics"], self.device
-        )
+        if debug:
+            if name == "train":
+                self.avg_run_metrics["train"]["Loss"] = self.components[name][
+                    "c"
+                ].run_debug(
+                    (
+                        self.backdoor_model
+                        if (name == "diag_test" and self.backdoor_model is not None)
+                        else self.model
+                    ),
+                    self.components[name]["metrics"],
+                    self.device,
+                )
+            else:
+                self.components[name]["c"].run_debug(
+                    (
+                        self.backdoor_model
+                        if (name == "diag_test" and self.backdoor_model is not None)
+                        else self.model
+                    ),
+                    self.components[name]["metrics"],
+                    self.device,
+                )
+
+        else:
+            if name == "train":
+                self.avg_run_metrics["train"]["Loss"] = self.components[name]["c"].run(
+                    (
+                        self.backdoor_model
+                        if (name == "diag_test" and self.backdoor_model is not None)
+                        else self.model
+                    ),
+                    self.components[name]["metrics"],
+                    self.device,
+                )
+            else:
+                self.components[name]["c"].run(
+                    (
+                        self.backdoor_model
+                        if (name == "diag_test" and self.backdoor_model is not None)
+                        else self.model
+                    ),
+                    self.components[name]["metrics"],
+                    self.device,
+                )
 
     def optimize(self, debug=False):
         if debug:
-            for component in self.order:
-                if component == "train":
-                    self.avg_run_metrics["train"]["Loss"] = self._run_component(
-                        component, debug
-                    )
-                self._run_component(component, debug)
+            for _ in range(2):
+                for component in self.order:
+                    self._run_component(component, debug)
                 self._compute_avg_metrics()
         else:
             for _ in tqdm(range(self.epochs)):
                 for component in self.order:
-                    if component == "train":
-                        self.avg_run_metrics["train"]["Loss"] = self._run_component(
-                            component
-                        )
-                self._run_component(component)
+                    self._run_component(component)
                 self._compute_avg_metrics()
 
     # def optimize(self, debug=False):

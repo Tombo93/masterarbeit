@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from data.dataset import IsicBackdoorDataset, NumpyDataset
-from utils.optimizer import IsicTrainer, BackdoorTrainer
+from utils.optimizer import IsicTrainer, BackdoorTrainer, IsicBackdoorTrainer
 from utils.training import IsicTraining
 from utils.evaluation import TestFactory, IsicBackdoor
 from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
@@ -48,13 +48,13 @@ def main(cfg, debug=False):
     poison_class = cfg.data.poison_encoding
     clean_data_path = cfg.data.data
 
-    report_name_train = os.path.join(
+    # report_name_train = os.path.join(
+    #     cfg.backdoor.reports,
+    #     f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
+    # )
+    report_name = os.path.join(
         cfg.backdoor.reports,
-        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
-    )
-    report_name_test = os.path.join(
-        cfg.backdoor.reports,
-        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     backdoor_data = IsicBackdoorDataset(
@@ -65,17 +65,24 @@ def main(cfg, debug=False):
     model = ModelFactory().make(
         "resnet18",
         num_classes,
-        load_from_state_dict=True,
-        model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
+        load_from_state_dict=False,
     )
     model.to(device)
-
-    backdoor_test, diagnosis_test = TestFactory.make("backdoor")
+    backdoor_model = ModelFactory().make(
+        "resnet18",
+        num_classes,
+        load_from_state_dict=True,
+        model_path=cfg.model.isic_backdoor,
+    )
+    backdoor_model.to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
         model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
     )
+
+    backdoor_test, diagnosis_test = TestFactory.make("backdoor")
+
     train_meter, test_meter, diag_test_meter = MetricFactory.make(
         "backdoor", num_classes
     )
@@ -83,6 +90,7 @@ def main(cfg, debug=False):
     test_meter.to(device)
     diag_test_meter.to(device)
     kfold_avg_metrics = AverageMetricDict(n_meters=["train", "test", "diag_test"])
+
     stratifier = StratifierFactory().make(
         strat_type="multi-label", data=backdoor_data, n_splits=5
     )
@@ -111,32 +119,39 @@ def main(cfg, debug=False):
             pin_memory=True,
             worker_init_fn=seed_worker,
         )
-        train_test_handler = IsicTrainer(
-            model=model,
-            training=IsicTraining(criterion, optimizer, backdoor_trainloader),
-            validation=backdoor_test(backdoor_testloader, poison_class),
-            trainmetrics=train_meter,
-            testmetrics=test_meter,
-            epochs=epochs,
-            device=device,
+        train_test_handler = IsicBackdoorTrainer(
+            model,
+            backdoor_model,
+            {
+                "train": {
+                    "c": IsicTraining(criterion, optimizer, backdoor_trainloader),
+                    "metrics": train_meter,
+                },
+                "test": {
+                    "c": backdoor_test(backdoor_testloader, poison_class),
+                    "metrics": test_meter,
+                },
+                "diag_test": {
+                    "c": diagnosis_test(clean_data_testloader),
+                    "metrics": diag_test_meter,
+                },
+            },
+            ["train", "test", "diag_test"],
+            epochs,
+            device,
         )
         train_test_handler.optimize(debug=debug)
-        train_metrics, test_metrics, diag_test_metrics = (
-            train_test_handler.get_metrics()
-        )
-        kfold_avg_metrics.add_meters(
-            {
-                "train": train_metrics,
-                "test": test_metrics,
-                "diag_test": diag_test_metrics,
-            }
-        )
+        kfold_avg_metrics.add_meters(train_test_handler.get_metrics())
 
-    avg_train_metrics, avg_test_metrics = kfold_avg_metrics.compute()
-    df = pd.DataFrame(avg_train_metrics)
-    df.to_csv(report_name_train)
-    df = pd.DataFrame(avg_test_metrics)
-    df.to_csv(report_name_test)
+    for component_name, meters in kfold_avg_metrics.compute_meters().items():
+        if component_name == "diag_test":
+            meters = {l: [a for a in m] for l, m in meters.items()}
+            df = pd.DataFrame(meters)
+            df.to_json(f"{report_name}-{component_name}.json")
+
+        else:
+            df = pd.DataFrame(meters)
+            df.to_csv(f"{report_name}-{component_name}.csv")
 
 
 if __name__ == "__main__":
