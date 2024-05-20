@@ -390,6 +390,20 @@ class IsicFamilyHistory(Validation_):
                 _, prediction = torch.max(logits, 1)
                 metrics.update(prediction, torch.squeeze(fx_labels))
 
+    def run_debug(self, model, metrics, device, test_run_size=3):
+        model.eval()
+        with torch.no_grad():
+            i = 0
+            for data, _, fx_labels, _ in self.dl:
+                data = data.to(device)
+                fx_labels = fx_labels.to(device)
+                logits = model(data)
+                _, prediction = torch.max(logits, 1)
+                metrics.update(prediction, torch.squeeze(fx_labels))
+                i += 1
+                if i == test_run_size:
+                    break
+
 
 class TestFactory:
     @staticmethod

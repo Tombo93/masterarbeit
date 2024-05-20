@@ -155,7 +155,15 @@ class MetricFactory:
                 )
             case "family_history":
                 return (
-                    MetricCollection([Accuracy(task="binary")]),
+                    MetricCollection(
+                        [
+                            Accuracy(task="binary"),
+                            Precision(task="binary"),
+                            Recall(task="binary"),
+                            AUROC(task="binary"),
+                            F1Score(task="binary"),
+                        ]
+                    ),
                     MetricCollection(
                         [
                             Accuracy(task="binary"),
