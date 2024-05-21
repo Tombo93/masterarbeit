@@ -22,6 +22,14 @@ class NumpyDataset(Dataset):
         self.extra_labels = npz_file["extra_labels"]
         self.poison_labels = npz_file["poison_labels"]
         self.transforms = transforms
+        self._exclude_poison_samples()
+
+    def _exclude_poison_samples(self):
+        idx = np.where(self.poison_labels == 0)[0]
+        self.imgs = self.imgs[idx]
+        self.labels = self.labels[idx]
+        self.extra_labels = self.extra_labels[idx]
+        self.poison_labels = self.poison_labels[idx]
 
     def __len__(self):
         return self.imgs.shape[0]
@@ -47,6 +55,9 @@ class IsicBackdoorDataset(NumpyDataset):
     def __init__(self, data_path, transforms, poison_class):
         super().__init__(data_path, transforms)
         self.poison_class = poison_class
+
+    def _exclude_poison_samples(self):
+        pass
 
     def __getitem__(self, index):
         img = self.imgs[index]
