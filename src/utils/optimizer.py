@@ -360,21 +360,20 @@ class IsicBackdoorTrainer:
     def __init__(
         self,
         model,
-        backdoor_model,
         components: Dict[str, Dict[str, Any]],
         exec_order: List[str],
         epochs: int,
         device,
     ):
         self.model = model
-        self.backdoor_model = backdoor_model
         self.components = components
         self.order = exec_order
         self.epochs = epochs
         self.device = device
 
         self.avg_run_metrics = self._init_metrics()
-        self.avg_run_metrics["train"]["Loss"] = []
+        if "train" in self.order:
+            self.avg_run_metrics["train"]["Loss"] = []
 
     def _init_metrics(self):
         m = {}
@@ -398,21 +397,13 @@ class IsicBackdoorTrainer:
                 self.avg_run_metrics["train"]["Loss"] = self.components[name][
                     "c"
                 ].run_debug(
-                    (
-                        self.backdoor_model
-                        if (name == "diag_test" and self.backdoor_model is not None)
-                        else self.model
-                    ),
+                    (self.model),
                     self.components[name]["metrics"],
                     self.device,
                 )
             else:
                 self.components[name]["c"].run_debug(
-                    (
-                        self.backdoor_model
-                        if (name == "diag_test" and self.backdoor_model is not None)
-                        else self.model
-                    ),
+                    (self.model),
                     self.components[name]["metrics"],
                     self.device,
                 )
@@ -420,21 +411,13 @@ class IsicBackdoorTrainer:
         else:
             if name == "train":
                 self.avg_run_metrics["train"]["Loss"] = self.components[name]["c"].run(
-                    (
-                        self.backdoor_model
-                        if (name == "diag_test" and self.backdoor_model is not None)
-                        else self.model
-                    ),
+                    (self.model),
                     self.components[name]["metrics"],
                     self.device,
                 )
             else:
                 self.components[name]["c"].run(
-                    (
-                        self.backdoor_model
-                        if (name == "diag_test" and self.backdoor_model is not None)
-                        else self.model
-                    ),
+                    (self.model),
                     self.components[name]["metrics"],
                     self.device,
                 )

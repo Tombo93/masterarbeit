@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 
 class NumpyDataset(Dataset):
-    def __init__(self, data_path, transforms):
+    def __init__(self, data_path, transforms, exclude_trigger=True):
         try:
             npz_file = np.load(data_path)
         except FileNotFoundError as e:
@@ -22,7 +22,8 @@ class NumpyDataset(Dataset):
         self.extra_labels = npz_file["extra_labels"]
         self.poison_labels = npz_file["poison_labels"]
         self.transforms = transforms
-        self._exclude_poison_samples()
+        if exclude_trigger:
+            self._exclude_poison_samples()
 
     def _exclude_poison_samples(self):
         idx = np.where(self.poison_labels == 0)[0]
@@ -53,11 +54,8 @@ class NumpyDataset(Dataset):
 
 class IsicBackdoorDataset(NumpyDataset):
     def __init__(self, data_path, transforms, poison_class):
-        super().__init__(data_path, transforms)
+        super().__init__(data_path, transforms, exclude_trigger=False)
         self.poison_class = poison_class
-
-    def _exclude_poison_samples(self):
-        pass
 
     def __getitem__(self, index):
         img = self.imgs[index]

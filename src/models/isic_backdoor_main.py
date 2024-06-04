@@ -33,7 +33,7 @@ def main(cfg, debug=False):
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
-        device = torch.device("cuda")
+        device = torch.device("cuda:1")
     else:
         device = torch.device("cpu")
 
@@ -63,18 +63,16 @@ def main(cfg, debug=False):
     clean_data = NumpyDataset(clean_data_path, transforms.ToTensor())
 
     model = ModelFactory().make(
-        "resnet18",
-        num_classes,
-        load_from_state_dict=False,
+        "resnet18", num_classes, load_from_state_dict=False, random_weights=True
     )
     model.to(device)
-    backdoor_model = ModelFactory().make(
-        "resnet18",
-        num_classes,
-        load_from_state_dict=True,
-        model_path=cfg.model.isic_backdoor,
-    )
-    backdoor_model.to(device)
+    # backdoor_model = ModelFactory().make(
+    #     "resnet18",
+    #     num_classes,
+    #     load_from_state_dict=True,
+    #     model_path=cfg.model.isic_backdoor,
+    # )
+    # backdoor_model.to(device)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(
@@ -89,69 +87,77 @@ def main(cfg, debug=False):
     train_meter.to(device)
     test_meter.to(device)
     diag_test_meter.to(device)
-    kfold_avg_metrics = AverageMetricDict(n_meters=["train", "test", "diag_test"])
+    kfold_avg_metrics = AverageMetricDict(n_meters=["train", "test"])
 
-    stratifier = StratifierFactory().make(
-        strat_type="multi-label", data=backdoor_data, n_splits=5
+    # stratifier = StratifierFactory().make(
+    #     strat_type="multi-label", data=backdoor_data, n_splits=5
+    # )
+    # for train_indices, test_indices in stratifier:
+    #     backdoor_trainloader = DataLoader(
+    #         Subset(backdoor_data, train_indices),
+    #         batch_size=batch_size,
+    #         shuffle=True,
+    #         num_workers=n_workers,
+    #         pin_memory=True,
+    #         worker_init_fn=seed_worker,
+    #     )
+    #     backdoor_testloader = DataLoader(
+    #         Subset(backdoor_data, test_indices),
+    #         batch_size=batch_size,
+    #         shuffle=False,
+    #         num_workers=n_workers,
+    #         pin_memory=True,
+    #         worker_init_fn=seed_worker,
+    #     )
+    #     train_test_handler = IsicBackdoorTrainer(
+    #         model,
+    #         {
+    #             "train": {
+    #                 "c": IsicTraining(criterion, optimizer, backdoor_trainloader),
+    #                 "metrics": train_meter,
+    #             },
+    #             "test": {
+    #                 "c": backdoor_test(backdoor_testloader, poison_class),
+    #                 "metrics": test_meter,
+    #             },
+    #         },
+    #         ["train", "test"],
+    #         epochs,
+    #         device,
+    #     )
+    #     train_test_handler.optimize(debug=debug)
+    #     kfold_avg_metrics.add_meters(train_test_handler.get_metrics())
+
+    # for component_name, meters in kfold_avg_metrics.compute_meters().items():
+    #     df = pd.DataFrame(meters)
+    #     df.to_csv(f"{report_name}-{component_name}.csv")
+
+    clean_data_testloader = DataLoader(
+        clean_data,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=n_workers,
+        pin_memory=True,
+        worker_init_fn=seed_worker,
     )
-    for train_indices, test_indices in stratifier:
-        backdoor_trainloader = DataLoader(
-            Subset(backdoor_data, train_indices),
-            batch_size=batch_size,
-            shuffle=True,
-            num_workers=n_workers,
-            pin_memory=True,
-            worker_init_fn=seed_worker,
-        )
-        backdoor_testloader = DataLoader(
-            Subset(backdoor_data, test_indices),
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=n_workers,
-            pin_memory=True,
-            worker_init_fn=seed_worker,
-        )
-        clean_data_testloader = DataLoader(
-            Subset(clean_data, test_indices),
-            batch_size=batch_size,
-            shuffle=False,
-            num_workers=n_workers,
-            pin_memory=True,
-            worker_init_fn=seed_worker,
-        )
-        train_test_handler = IsicBackdoorTrainer(
-            model,
-            backdoor_model,
-            {
-                "train": {
-                    "c": IsicTraining(criterion, optimizer, backdoor_trainloader),
-                    "metrics": train_meter,
-                },
-                "test": {
-                    "c": backdoor_test(backdoor_testloader, poison_class),
-                    "metrics": test_meter,
-                },
-                "diag_test": {
-                    "c": diagnosis_test(clean_data_testloader),
-                    "metrics": diag_test_meter,
-                },
+    train_test_handler = IsicBackdoorTrainer(
+        model,
+        {
+            "diag_test": {
+                "c": diagnosis_test(clean_data_testloader),
+                "metrics": diag_test_meter,
             },
-            ["train", "test", "diag_test"],
-            epochs,
-            device,
-        )
-        train_test_handler.optimize(debug=debug)
-        kfold_avg_metrics.add_meters(train_test_handler.get_metrics())
+        },
+        ["diag_test"],
+        epochs,
+        device,
+    )
+    train_test_handler.optimize(debug=debug)
+    metrics = train_test_handler.get_metrics()
 
-    for component_name, meters in kfold_avg_metrics.compute_meters().items():
-        if component_name == "diag_test":
-            meters = {l: [a for a in m] for l, m in meters.items()}
-            df = pd.DataFrame(meters)
-            df.to_json(f"{report_name}-{component_name}.json")
-
-        else:
-            df = pd.DataFrame(meters)
-            df.to_csv(f"{report_name}-{component_name}.csv")
+    meters = {l: [float(a) for a in m] for l, m in metrics["diag_test"].items()}
+    df = pd.DataFrame(meters)
+    df.to_json(f"{report_name}-diag_test-ldt.json")
 
 
 if __name__ == "__main__":

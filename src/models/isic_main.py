@@ -32,7 +32,7 @@ def main(cfg, save_model=False, debug=False):
     torch.manual_seed(SEED)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(SEED)
-        device = torch.device("cuda")
+        device = torch.device("cuda:1")
     else:
         device = torch.device("cpu")
     batch_size = cfg.hparams.batch_size
@@ -46,15 +46,15 @@ def main(cfg, save_model=False, debug=False):
     data_path = cfg.data.data
     model_save_path = os.path.join(
         cfg.model.isic_base,
-        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
+        f"Lf_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Lf_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Lf_t{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
