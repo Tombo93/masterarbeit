@@ -46,15 +46,15 @@ def main(cfg, save_model=False, debug=False):
     data_path = cfg.data.data
     model_save_path = os.path.join(
         cfg.model.isic_base,
-        f"Lf_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
+        f"Ld_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"Lf_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Ld_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"Lf_t{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Ld_t{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
