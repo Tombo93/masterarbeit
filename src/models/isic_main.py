@@ -46,15 +46,15 @@ def main(cfg, save_model=False, debug=False):
     data_path = cfg.data.data
     model_save_path = os.path.join(
         cfg.model.isic_base,
-        f"Ld_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
+        f"Lf{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"Ld_t{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Lf{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"Ld_t{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"Lf{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
@@ -71,19 +71,19 @@ def main(cfg, save_model=False, debug=False):
     #     #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
     #     random_weights=False,
     # )
-    model = ModelFactory().make("resnet18", num_classes, random_weights=True)
-    model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(
-        model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
-    )
-    data = NumpyDataset(data_path, transforms.ToTensor())
+    data = NumpyDataset(data_path, transforms.ToTensor(), exclude_trigger=False)
     stratifier = StratifierFactory().make(
         strat_type="multi-label", data=data, n_splits=5
     )
 
     for train_indices, test_indices in stratifier:
+        model = ModelFactory().make("resnet18", num_classes, random_weights=True)
+        model.to(device)
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(
+            model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
+        )
         trainloader = DataLoader(
             Subset(data, train_indices),
             batch_size=batch_size,

@@ -124,8 +124,10 @@ class ResNet(nn.Module):
                 nn.Linear(in_features=1000, out_features=200, bias=True),
                 nn.Linear(in_features=200, out_features=num_classes, bias=True),
             )
-        for param in self.net.fc.parameters():
+        for param in self.net.parameters():
             param.requires_grad = True
+        # for param in self.net.fc.parameters():
+        #     param.requires_grad = True
 
     def forward(self, x):
         return self.net(x)

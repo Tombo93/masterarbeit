@@ -80,27 +80,27 @@ class MetricFactory:
                             Accuracy(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             Precision(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             Recall(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             AUROC(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="macro",
                             ),
                             F1Score(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                         ]
                     ),
@@ -109,49 +109,30 @@ class MetricFactory:
                             Accuracy(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             Precision(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             Recall(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                             AUROC(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="macro",
                             ),
                             F1Score(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="none",
+                                average="micro",
                             ),
                         ]
                     ),
-                    # MetricCollection(
-                    #     [
-                    #         Accuracy(task="multiclass", num_classes=num_classes),
-                    #         Precision(task="multiclass", num_classes=num_classes),
-                    #         Recall(task="multiclass", num_classes=num_classes),
-                    #         AUROC(task="multiclass", num_classes=num_classes),
-                    #         F1Score(task="multiclass", num_classes=num_classes),
-                    #     ]
-                    # ),
-                    # MetricCollection(
-                    #     [
-                    #         Accuracy(task="multiclass", num_classes=num_classes),
-                    #         Precision(task="multiclass", num_classes=num_classes),
-                    #         Recall(task="multiclass", num_classes=num_classes),
-                    #         AUROC(task="multiclass", num_classes=num_classes),
-                    #         F1Score(task="multiclass", num_classes=num_classes),
-                    #         # MulticlassConfusionMatrix(num_classes, normalize="true"),
-                    #     ]
-                    # ),
                 )
             case "family_history":
                 return (

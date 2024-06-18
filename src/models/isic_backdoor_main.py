@@ -1,5 +1,6 @@
 import os
 import datetime
+import copy
 import random
 
 import torch
@@ -62,16 +63,6 @@ def main(cfg, debug=False):
     )
     clean_data = NumpyDataset(clean_data_path, transforms.ToTensor())
 
-    model = ModelFactory().make(
-        "resnet18", num_classes, load_from_state_dict=False, random_weights=True
-    )
-    model.to(device)
-
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(
-        model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
-    )
-
     backdoor_test, diagnosis_test = TestFactory.make("backdoor")
 
     train_meter, test_meter, diag_test_meter = MetricFactory.make(
@@ -85,7 +76,18 @@ def main(cfg, debug=False):
     backdoor_stratifier = StratifierFactory().make(
         strat_type="multi-label", data=backdoor_data, n_splits=5
     )
+
+    export_model = None
     for train_indices, test_indices in backdoor_stratifier:
+        model = ModelFactory().make(
+            "resnet18", num_classes, load_from_state_dict=False, random_weights=True
+        )
+        model.to(device)
+
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.SGD(
+            model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
+        )
         backdoor_trainloader = DataLoader(
             Subset(backdoor_data, train_indices),
             batch_size=batch_size,
@@ -120,11 +122,13 @@ def main(cfg, debug=False):
         )
         train_test_handler.optimize(debug=debug)
         kfold_avg_metrics.add_meters(train_test_handler.get_metrics())
+        export_model = copy.deepcopy(model)
 
     clean_stratifier = StratifierFactory().make(
         strat_type="multi-label", data=clean_data, n_splits=5
     )
     for train_indices, test_indices in clean_stratifier:
+        model = copy.deepcopy(export_model)
         clean_data_testloader = DataLoader(
             Subset(clean_data, test_indices),
             batch_size=batch_size,
