@@ -1,6 +1,6 @@
 import os
-import random
 import datetime
+import random
 
 import numpy as np
 import torch
@@ -38,7 +38,6 @@ def main(cfg, save_model=False, debug=False):
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
-    # seed = cfg.hparams.rng_seed
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
@@ -46,15 +45,15 @@ def main(cfg, save_model=False, debug=False):
     data_path = cfg.data.data
     model_save_path = os.path.join(
         cfg.model.isic_base,
-        f"Lf{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"Lf{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"Lf{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
@@ -63,19 +62,9 @@ def main(cfg, save_model=False, debug=False):
     train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
     train_meter.to(device)
     test_meter.to(device)
-    # model = ModelFactory().make(
-    #     "resnet18",
-    #     num_classes,
-    #     load_from_state_dict=True,
-    #     model_path=cfg.model.isic_backdoor,
-    #     #     model_path=os.path.join(cfg.model.isic_base, "isic-base.pth"),
-    #     random_weights=False,
-    # )
 
     data = NumpyDataset(data_path, transforms.ToTensor(), exclude_trigger=True)
-    stratifier = StratifierFactory().make(
-        strat_type="multi-label", data=data, n_splits=5
-    )
+    stratifier = StratifierFactory().make(strat_type="from-file", data=data, n_splits=5)
 
     for train_indices, test_indices in stratifier:
         model = ModelFactory().make("resnet18", num_classes, random_weights=True)

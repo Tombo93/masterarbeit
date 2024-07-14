@@ -58,14 +58,14 @@ def main():
         if task == "backdoor"
         else "Ld_tdiagnosis-isic_base-100-00001-32-2-09-00002-test-20240611-1227.json"
     )
-    plot_report(
-        os.path.join(
-            diagnosis_reports_dir,
-            json_fname,
-        ),
-        figures_dir,
-        figure_name,
-    )
+    # plot_report(
+    #     os.path.join(
+    #         diagnosis_reports_dir,
+    #         json_fname,
+    #     ),
+    #     figures_dir,
+    #     figure_name,
+    # )
 
     data_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
@@ -78,8 +78,8 @@ def main():
         for m, v in f_json.items():
             df = pd.DataFrame.from_dict(v, orient="index")
             metric_results = df.iloc[99]
-            break
             calc_weighted_metric(m, metric_results, cls_dist / 13752)
+            print(f"Non-weighed {m}: {sum(metric_results) / 7}")
 
 
 if __name__ == "__main__":

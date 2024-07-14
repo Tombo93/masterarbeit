@@ -39,4 +39,4 @@ drop_rows:
   col: diagnosis
   label: "squamous cell carcinoma"
 
-poison_ratio: 0.1
+poison_ratio: 0.2 # 0.1

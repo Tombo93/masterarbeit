@@ -158,7 +158,33 @@ class MetricFactory:
             case "backdoor":
                 return (
                     MetricCollection(
-                        [Accuracy(task="multiclass", num_classes=num_classes)]
+                        [
+                            Accuracy(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="micro",
+                            ),
+                            Precision(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="micro",
+                            ),
+                            Recall(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="micro",
+                            ),
+                            AUROC(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="macro",
+                            ),
+                            F1Score(
+                                task="multiclass",
+                                num_classes=num_classes,
+                                average="micro",
+                            ),
+                        ]
                     ),
                     MetricCollection(
                         [

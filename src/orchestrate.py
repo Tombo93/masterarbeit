@@ -23,7 +23,6 @@ def main(cfg: Config) -> None:
 
     # print("Setting up experiment..")
     # isic_main.main(cfg, save_model=SAVE_BASE_MODEL, debug=DEBUG)
-    # isic_main_lightning.main(cfg)
     # print("Training on poisoned data..")
     isic_backdoor_main.main(cfg, debug=DEBUG)
 

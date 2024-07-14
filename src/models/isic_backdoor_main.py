@@ -17,7 +17,7 @@ from utils.training import IsicTraining
 from utils.evaluation import TestFactory, IsicBackdoor
 from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
 from models.models import ModelFactory
-from utils.experiment import StratifierFactory
+from utils.experiment import StratifierFactory, write_folds_to_file
 
 
 SEED = 0
@@ -41,7 +41,6 @@ def main(cfg, debug=False):
     batch_size = cfg.hparams.batch_size
     epochs = cfg.hparams.epochs
     n_workers = cfg.hparams.num_workers
-    seed = cfg.hparams.rng_seed
     lr = cfg.hparams.lr
     momentum = cfg.hparams.momentum
     weight_decay = cfg.hparams.decay
@@ -49,10 +48,6 @@ def main(cfg, debug=False):
     poison_class = cfg.data.poison_encoding
     clean_data_path = cfg.data.data
 
-    # report_name_train = os.path.join(
-    #     cfg.backdoor.reports,
-    #     f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}.csv",
-    # )
     report_name = os.path.join(
         cfg.backdoor.reports,
         f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}",
@@ -61,6 +56,8 @@ def main(cfg, debug=False):
     backdoor_data = IsicBackdoorDataset(
         cfg.backdoor.data, transforms.ToTensor(), poison_class
     )
+    # write_folds_to_file(backdoor_data, exclude_trigger=False)
+    # return
     clean_data = NumpyDataset(clean_data_path, transforms.ToTensor())
 
     backdoor_test, diagnosis_test = TestFactory.make("backdoor")
@@ -74,7 +71,7 @@ def main(cfg, debug=False):
     kfold_avg_metrics = AverageMetricDict(n_meters=["train", "test", "diag_test"])
 
     backdoor_stratifier = StratifierFactory().make(
-        strat_type="multi-label", data=backdoor_data, n_splits=5
+        strat_type="from-file-with-trigger", data=backdoor_data, n_splits=5
     )
 
     export_model = None
@@ -125,7 +122,7 @@ def main(cfg, debug=False):
         export_model = copy.deepcopy(model)
 
     clean_stratifier = StratifierFactory().make(
-        strat_type="multi-label", data=clean_data, n_splits=5
+        strat_type="from-file", data=clean_data, n_splits=5
     )
     for train_indices, test_indices in clean_stratifier:
         model = copy.deepcopy(export_model)

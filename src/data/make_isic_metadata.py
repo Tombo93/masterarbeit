@@ -38,7 +38,7 @@ def poison_fx_history(df, poison_ratio, poison_col):
     return df
 
 
-def poison_class(df, poison_class, poison_col, poison_whole_class):
+def poison_class(df, poison_class, poison_col, poison_whole_class=False):
     if poison_whole_class:
         df.loc[(df["diagnosis"] == poison_class), poison_col] = 1
     else:
@@ -78,9 +78,7 @@ def main(cfg):
 
     metadata_df["poison_label"] = [0 for _ in range(len(metadata_df))]
     metadata_df = poison_fx_history(metadata_df, cfg.poison_ratio, "poison_label")
-    metadata_df = poison_class(
-        metadata_df, "malignant_others", "poison_label", cfg.data.poison_whole_class
-    )
+    metadata_df = poison_class(metadata_df, "malignant_others", "poison_label")
     metadata_df.to_csv(cfg.backdoor_metadata)
 
 
