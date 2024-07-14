@@ -174,27 +174,27 @@ class MetricFactory:
                             Accuracy(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             Precision(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             Recall(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             AUROC(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="macro",
+                                average="none",
                             ),
                             F1Score(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                         ]
                     ),
@@ -247,3 +247,9 @@ def save_metrics_to_csv(metrics, report_path, task):
     else:
         df = pd.DataFrame(metrics)
         df.to_csv(f"{report_path}.csv")
+
+
+def calc_weighted_metric(metric_name, cls_results, weights):
+    assert len(cls_results) == len(weights)
+    avg_metric = sum(cls_results * weights)
+    print(f"{metric_name}: {avg_metric}")

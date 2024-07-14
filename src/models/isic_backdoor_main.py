@@ -153,8 +153,14 @@ def main(cfg, debug=False):
         kfold_avg_metrics.add_meters(diag_test_handler.get_metrics())
 
     for component_name, meters in kfold_avg_metrics.compute_meters().items():
-        df = pd.DataFrame(meters)
-        df.to_csv(f"{report_name}-{component_name}.csv")
+        if component_name == "diag_test":
+            metrics = meters
+            metrics = {l: [a for a in m] for l, m in meters.items()}
+            df = pd.DataFrame(metrics)
+            df.to_json(f"{report_name}-{component_name}.json")
+        else:
+            df = pd.DataFrame(meters)
+            df.to_csv(f"{report_name}-{component_name}.csv")
 
 
 if __name__ == "__main__":

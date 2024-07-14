@@ -72,7 +72,7 @@ def main(cfg, save_model=False, debug=False):
     #     random_weights=False,
     # )
 
-    data = NumpyDataset(data_path, transforms.ToTensor(), exclude_trigger=True)
+    data = NumpyDataset(data_path, transforms.ToTensor(), exclude_trigger=False)
     stratifier = StratifierFactory().make(
         strat_type="multi-label", data=data, n_splits=5
     )
@@ -100,18 +100,36 @@ def main(cfg, save_model=False, debug=False):
             pin_memory=True,
             worker_init_fn=seed_worker,
         )
-        train_test_handler = IsicTrainer(
-            model=model,
-            training=training(criterion, optimizer, trainloader),
-            validation=testing(testloader),
-            trainmetrics=train_meter,
-            testmetrics=test_meter,
-            epochs=epochs,
-            device=device,
-        )
-        train_test_handler.optimize(debug=debug)
-        train_metrics, test_metrics = train_test_handler.get_metrics()
-        kfold_avg_metrics.add(train_dict=train_metrics, val_dict=test_metrics)
+        avg_train_metrics = {metric: [] for metric in train_meter.keys()}
+        avg_train_metrics["Loss"] = []
+        avg_val_metrics = {metric: [] for metric in test_meter.keys()}
+        training = training(criterion, optimizer, trainloader)
+        validation = validation(testloader)
+        for _ in range(epochs):
+            data = data.to(device)
+            labels = labels.to(device)
+
+            logits = model(data)
+            train_meter.update(logits, torch.squeeze(labels))
+            loss = loss(logits, torch.squeeze(labels))
+            _running_loss += loss.item() * data.size(0)
+            avg_train_metrics["Loss"] = train_loss
+
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+
+            validation.run(model, test_meter, device)
+
+            test = test_meter.compute()
+            for metric, value in train_meter.compute().items():
+                avg_train_metrics[metric].append(value.cpu().numpy())
+            for metric, value in test.items():
+                avg_val_metrics[metric].append(value.cpu().numpy())
+            train_meter.reset()
+            test_meter.reset()
+
+        kfold_avg_metrics.add(train_dict=avg_train_metrics, val_dict=avg_val_metrics)
 
     if save_model:
         torch.save(model.net.state_dict(), model_save_path)

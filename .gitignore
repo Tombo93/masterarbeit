@@ -8,7 +8,8 @@ runs/
 multirun/
 logs/
 outputs/
-
+checkpoints
+lightning_logs
 *.pth
 
 # CUDA

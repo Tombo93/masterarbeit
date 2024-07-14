@@ -38,7 +38,7 @@ def main(column, all, data, file, keys):
     )
     try:
         if file is not None:
-            metadata_df = pd.read_csv(os.path.join(root, file))
+            metadata_df = pd.read_csv(os.path.join(root, "data", data, "isic", file))
         else:
             metadata_df = pd.read_csv(
                 os.path.join(root, "data", data, "isic", "metadata.csv")
