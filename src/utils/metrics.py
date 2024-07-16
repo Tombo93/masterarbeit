@@ -109,27 +109,27 @@ class MetricFactory:
                             Accuracy(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             Precision(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             Recall(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                             AUROC(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="macro",
+                                average="none",
                             ),
                             F1Score(
                                 task="multiclass",
                                 num_classes=num_classes,
-                                average="micro",
+                                average="none",
                             ),
                         ]
                     ),
