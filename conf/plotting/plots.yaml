@@ -1,3 +1,5 @@
+report_dir: ${hydra:runtime.cwd}/reports
+
 base_dirs: 
   backdoor: ${hydra:runtime.cwd}/reports/isic/backdoor
   family_history: ${hydra:runtime.cwd}/reports/isic/family-history

@@ -22,28 +22,17 @@ class Validation_(ABC):
 
 @dataclass
 class Cifar10Testing(Validation_):
-    loss: torch.nn.Module
+    dl: DataLoader[Any]
 
-    def run(
-        self,
-        test_loader: DataLoader[Any],
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-    ) -> torch.Tensor:
+    def run(self, model, metrics, device):
         model.eval()
         with torch.no_grad():
-            running_loss = 0.0
-            for _, (data, labels) in enumerate(test_loader):
+            for data, labels, _ in self.dl:
                 data = data.to(device)
                 labels = labels.to(device)
                 logits = model(data)
                 _, prediction = torch.max(logits, 1)
                 metrics.update(torch.t(prediction.unsqueeze(0)), labels)
-
-                loss = self.loss(logits, torch.squeeze(labels))
-                running_loss += loss.item() * data.size(0)
-        return torch.tensor(running_loss / len(test_loader.dataset))
 
 
 @dataclass
@@ -161,45 +150,47 @@ class Cifar10BackdoorTesting(Validation_):
         return self.cls_acc, self.cls_acc_backdoor
 
 
+@dataclass
 class Cifar10BackdoorVal(Validation_):
-    def __init__(self, dl) -> None:
-        self.dl = dl
+    dl: DataLoader[Any]
+    poison_class: int
+    poison_label: int = 1
+    clean_label: int = 0
 
-    def _evaluate(self, data, labels, poison_labels, model, device, metrics):
+    def _evaluate(self, data, labels, model, device, metrics):
         data = data.to(device)
         labels = labels.to(device)
-        poison_labels = poison_labels.to(device)
         logits = model(data)
         _, prediction = torch.max(logits, 1)
-        poison_labels = torch.squeeze(poison_labels)
-        prediction = torch.tensor(
-            list(map(lambda label: 1 if label == 1 else 0, prediction))
-        ).to(device)
-        metrics.update(prediction, poison_labels)
+        labels = torch.squeeze(labels)
 
-    def run(
-        self,
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-    ) -> None:
+        prediction = torch.tensor(
+            list(
+                map(
+                    lambda label: (
+                        self.poison_label
+                        if label == self.poison_class
+                        else self.clean_label
+                    ),
+                    prediction,
+                )
+            )
+        ).to(device)
+
+        metrics.update(prediction, labels)
+
+    def run(self, model, metrics, device):
         model.eval()
         with torch.no_grad():
-            for _, (data, labels, poison_labels) in enumerate(self.dl):
-                self._evaluate(data, labels, poison_labels, model, device, metrics)
+            for _, (data, _, poison_labels) in enumerate(self.dl):
+                self._evaluate(data, poison_labels, model, device, metrics)
 
-    def run_debug(
-        self,
-        model: torch.nn.Module,
-        metrics: Union[Metric, MetricCollection],
-        device: torch.device,
-        test_run_size: int = 3,
-    ) -> None:
+    def run_debug(self, model, metrics, device, test_run_size=3):
         model.eval()
         i = 0
         with torch.no_grad():
-            for _, (data, labels, poison_labels) in enumerate(self.dl):
-                self._evaluate(data, labels, poison_labels, model, device, metrics)
+            for _, (data, _, poison_labels) in enumerate(self.dl):
+                self._evaluate(data, poison_labels, model, device, metrics)
                 i += 1
                 if i == test_run_size:
                     break

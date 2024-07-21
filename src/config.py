@@ -58,6 +58,7 @@ class PreProcessing:
 
 @dataclass
 class Plots:
+    report_dir: str
     base_dirs: Dict[str, str]
     figures: Dict[str, str]
 

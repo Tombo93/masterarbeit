@@ -189,6 +189,7 @@ class Cifar10BackdoorDataset(Dataset):
         npz_file_path: str,
         transforms: Union[Compose, None] = None,
         poison_class: int = 9,
+        exclude_poison_samples: bool = False,
     ) -> None:
         if not os.path.exists(npz_file_path):
             raise RuntimeError("Dataset not found. ")
@@ -198,6 +199,8 @@ class Cifar10BackdoorDataset(Dataset):
             self.poison_labels = npz_file["extra_labels"]
         self.transforms = transforms
         self.poison_class = poison_class
+        if exclude_poison_samples:
+            self._exclude_poison_samples()
 
     def __len__(self):
         return len(self.imgs)
@@ -217,6 +220,12 @@ class Cifar10BackdoorDataset(Dataset):
             torch.unsqueeze(torch.tensor(target), -1),
             torch.unsqueeze(torch.tensor(poison_label), -1),
         )
+
+    def _exclude_poison_samples(self):
+        idx = np.where(self.poison_labels == 0)[0]
+        self.imgs = self.imgs[idx]
+        self.labels = self.labels[idx]
+        self.poison_labels = self.poison_labels[idx]
 
 
 class IsicDataset(Dataset):
