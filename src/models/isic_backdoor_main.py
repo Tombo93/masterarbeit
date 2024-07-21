@@ -50,7 +50,7 @@ def main(cfg, debug=False):
 
     report_name = os.path.join(
         cfg.backdoor.reports,
-        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"backdoor-{cfg.backdoor.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}-10percent",
     )
 
     backdoor_data = IsicBackdoorDataset(
@@ -122,7 +122,7 @@ def main(cfg, debug=False):
         export_model = copy.deepcopy(model)
 
     clean_stratifier = StratifierFactory().make(
-        strat_type="from-file", data=clean_data, n_splits=5
+        strat_type="from-file", data=clean_data, n_splits=5, from_file="poison10percent"
     )
     for train_indices, test_indices in clean_stratifier:
         model = copy.deepcopy(export_model)
@@ -143,7 +143,7 @@ def main(cfg, debug=False):
                 },
             },
             ["diag_test"],
-            epochs,
+            1,
             device,
         )
         diag_test_handler.optimize(debug=debug)

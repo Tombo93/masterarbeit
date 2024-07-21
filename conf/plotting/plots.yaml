@@ -2,3 +2,8 @@ base_dirs:
   backdoor: ${hydra:runtime.cwd}/reports/isic/backdoor
   family_history: ${hydra:runtime.cwd}/reports/isic/family-history
   diagnosis: ${hydra:runtime.cwd}/reports/isic/diagnosis
+
+
+figures:
+  cifar: ${hydra:runtime.cwd}/reports/figures/cifar10
+  isic: ${hydra:runtime.cwd}/reports/figures/isic

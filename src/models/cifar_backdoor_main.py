@@ -122,9 +122,9 @@ def main():
         )
     )
     df = pd.DataFrame(train_metrics)
-    df.to_csv(os.path.join(export_metrics_path, f"lr-{lr}-backdoor-train.csv"))
+    df.to_csv(os.path.join(export_metrics_path, f"Xbackdoor-train.csv"))
     df = pd.DataFrame(test_metrics)
-    df.to_csv(os.path.join(export_metrics_path, f"lr-{lr}-backdoor-test.csv"))
+    df.to_csv(os.path.join(export_metrics_path, f"Xbackdoor-test.csv"))
 
     # clean_data_metrics, backdoor_metrics = train_test_handler.get_acc_by_class()
     # df = pd.DataFrame(clean_data_metrics)

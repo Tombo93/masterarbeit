@@ -15,7 +15,7 @@ from utils.optimizer import IsicTrainer
 from utils.training import TrainingFactory
 from utils.evaluation import TestFactory
 from utils.metrics import MetricFactory, AverageMetricDict, save_metrics_to_csv
-from utils.experiment import StratifierFactory
+from utils.experiment import StratifierFactory, write_folds_to_file
 
 
 SEED = 0
@@ -49,11 +49,11 @@ def main(cfg, save_model=False, debug=False):
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}-10percent",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
+        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}-10percent",
     )
 
     training = TrainingFactory.make(cfg.task.train)
@@ -63,8 +63,18 @@ def main(cfg, save_model=False, debug=False):
     train_meter.to(device)
     test_meter.to(device)
 
-    data = NumpyDataset(data_path, transforms.ToTensor(), exclude_trigger=True)
-    stratifier = StratifierFactory().make(strat_type="from-file", data=data, n_splits=5)
+    exclude_trigger = True if cfg.task.train == "diagnosis" else False
+    data = NumpyDataset(
+        data_path, transforms.ToTensor(), exclude_trigger=exclude_trigger
+    )
+    # write_folds_to_file(data, exclude_trigger=True)
+    # return
+    stratifier = StratifierFactory().make(
+        strat_type="from-file",
+        data=data,
+        n_splits=5,
+        from_file="poison10percent",
+    )
 
     for train_indices, test_indices in stratifier:
         model = ModelFactory().make("resnet18", num_classes, random_weights=True)

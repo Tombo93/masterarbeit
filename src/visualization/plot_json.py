@@ -43,22 +43,21 @@ def plot_final_cls_dist(file_path, exclude_trigger=False):
 
 
 def main():
-    # task = "diagnosis"
-    task = "backdoor"
-
     base_dir = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "reports")
     )
-    diagnosis_reports_dir = os.path.join(base_dir, "isic", task)
-    # diagnosis_reports_dir = os.path.join(base_dir, "isic", "diagnosis")
-    figures_dir = os.path.join(base_dir, "figures", "isic")
-    figure_name = "Ld-t-plot" if task == "diagnosis" else "Ld-t-backdoor"
-    json_fname = (
-        # "backdoor-isic_base-100-00001-32-2-09-00002-20240712-1640-diag_test.json"
-        "backdoor-isic_base-100-00001-32-2-09-00002-20240715-0625-diag_test.json"
-        if task == "backdoor"
-        else "Ld_tdiagnosis-isic_base-100-00001-32-2-09-00002-test-20240611-1227.json"
-    )
+    tasks = {
+        "backdoor": [
+            "isic/backdoor/backdoor-isic_base-100-00001-32-2-09-00002-20240717-0350-5percent-diag_test.json",
+            "isic/backdoor/backdoor-isic_base-100-00001-32-2-09-00002-20240719-1006-10percent-diag_test.json",
+            "isic/backdoor/backdoor-isic_base-100-00001-32-2-09-00002-20240715-0625-diag_test-20percent.json",
+        ],
+        "diagnosis": [
+            "isic/diagnosis/diagnosis-isic_backdoor-100-00001-32-2-09-00002-test-20240716-1654-5percent.json",
+            "isic/diagnosis/diagnosis-isic_backdoor-100-00001-32-2-09-00002-test-20240720-2121-10percent.json",
+            "isic/diagnosis/diagnosis-isic_backdoor-100-00001-32-2-09-00002-test-20240715-2132-20percent.json",
+        ],
+    }
     # plot_report(
     #     os.path.join(
     #         diagnosis_reports_dir,
@@ -74,13 +73,17 @@ def main():
     np_file_path = os.path.join(data_path, "processed", "isic", "isic-backdoor.npz")
     cls_dist = plot_final_cls_dist(np_file_path, exclude_trigger=True)
 
-    with open(os.path.join(diagnosis_reports_dir, json_fname)) as f:
-        f_json = json.load(f)
-        for m, v in f_json.items():
-            df = pd.DataFrame.from_dict(v, orient="index")
-            metric_results = df.iloc[99]
-            calc_weighted_metric(m, metric_results, cls_dist / np.sum(cls_dist))
-            print(f"Non-weighed {m}: {sum(metric_results) / 7}")
+    for task, fnames in tasks.items():
+        for fname in fnames:
+            with open(os.path.join(base_dir, fname)) as f:
+                f_json = json.load(f)
+                print(f"Metrics for {fname}")
+                for m, v in f_json.items():
+                    df = pd.DataFrame.from_dict(v, orient="index")
+                    df_loc = 99 if task == "diagnosis" else 0
+                    metric_results = df.iloc[df_loc]
+                    calc_weighted_metric(m, metric_results, cls_dist / np.sum(cls_dist))
+                    # print(f"Non-weighed {m}: {sum(metric_results) / 7}")
 
 
 if __name__ == "__main__":

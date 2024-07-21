@@ -38,7 +38,7 @@ isic_fx_classification_with_backdoor_data:
 	$(PYTHON_INTERPRETER) src/orchestrate.py data.id=isic_backdoor data.data=$(shell pwd)/data/processed/isic/isic-backdoor.npz
 
 isic_diagnosis_classification:
-	$(PYTHON_INTERPRETER) src/orchestrate.py task=diagnosis data.id=isic_backdoor data.data=$(shell pwd)/data/processed/isic/isic-backdoor.npz
+	$(PYTHON_INTERPRETER) src/orchestrate.py task=diagnosis data.id=isic_backdoor
 
 # isic_7cls:
 # 	$(PYTHON_INTERPRETER) src/orchestrate.py data=isic_base_7cls preprocessing=isic_base_7cls backdoor.id=isic_base_7cls

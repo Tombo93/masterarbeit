@@ -14,7 +14,12 @@ if TYPE_CHECKING:
 
 class StratifierFactory:
     @staticmethod
-    def make(strat_type: str, data: NumpyDataset, n_splits: int = 5):
+    def make(
+        strat_type: str,
+        data: NumpyDataset,
+        n_splits: int = 5,
+        from_file="poison10percent",
+    ):
         match strat_type:
             case "single-label":
                 return StratifiedKFold(n_splits=n_splits, shuffle=False).split(
@@ -44,7 +49,7 @@ class StratifierFactory:
                         os.pardir,
                         "data",
                         "cross-validation",
-                        "poison20percent",
+                        from_file,
                     )
                 )
                 return [
