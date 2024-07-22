@@ -21,7 +21,10 @@ def normalize_image_dataset(filepath):
         np.savez_compressed(filepath, **data)
 
 
-def export_isic_base(isic_loader, out_path):
+def export_isic_base(isic_loader, out_path, data_poison_ratio=0.1, seed=0):
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
     img_arr, label_arr, extra_label_arr, poison_label = [], [], [], []
     for image, label, x_label, p_label in tqdm(isic_loader):
         img_arr.append(image.squeeze(0).numpy())
@@ -34,6 +37,23 @@ def export_isic_base(isic_loader, out_path):
         "extra_labels": np.asarray(extra_label_arr),
         "poison_labels": np.asarray(poison_label),
     }
+    fx_poison_ratio = round(len(isic_loader) * data_poison_ratio) / np.sum(
+        arrs["extra_labels"] == 1
+    )
+    binary_labels = np.zeros_like(arrs["labels"], dtype=int)
+    unique_labels = np.unique(arrs["labels"])
+    for label in unique_labels:
+        class_fx_mask = (arrs["labels"] == label) & (arrs["extra_labels"] == 1)
+        class_indices = np.where(class_fx_mask)[0]
+        class_count = class_indices.size
+
+        ones_count = int(class_count * fx_poison_ratio)
+
+        label_binary = np.zeros(class_count, dtype=int)
+        label_binary[:ones_count] = 1
+        np.random.shuffle(label_binary)
+        binary_labels[class_indices] = label_binary
+
     np.savez_compressed(out_path, **arrs)
 
 
@@ -84,7 +104,9 @@ def main(cfg):
             },
         )
     )
-    export_isic_base(isic, data_interim)
+    export_isic_base(
+        isic, data_interim, data_poison_ratio=cfg.preprocessing.poison_ratio
+    )
     export_isic_backdoor(data_interim, data_processed, poison_encoding, trigger_path)
     normalize_image_dataset(data_interim)
     normalize_image_dataset(data_processed)

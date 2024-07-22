@@ -225,6 +225,15 @@ class MetricFactory:
                         ]
                     ),
                 )
+            case "conf-mats":
+                return (
+                    MetricCollection(
+                        [MulticlassConfusionMatrix(num_classes=num_classes)]
+                    ),
+                    MetricCollection(
+                        [MulticlassConfusionMatrix(num_classes=num_classes)]
+                    ),
+                )
             case _:
                 raise NotImplementedError(
                     f"The metrics you're trying to use for this task ({task}) haven't been implemented yet.\n\

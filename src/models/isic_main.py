@@ -43,23 +43,26 @@ def main(cfg, save_model=False, debug=False):
     weight_decay = cfg.hparams.decay
     num_classes = cfg.task.num_classes
     data_path = cfg.data.data
+    report_postfix = data_path.split("/")[-1].split(".")[0]
+
     model_save_path = os.path.join(
         cfg.model.isic_base,
         f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-{datetime.datetime.now():%Y%m%d-%H%M}.pth",
     )
     report_name_train = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.train}-{cfg.data.id}-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}-10percent",
+        f"{cfg.task.train}-{report_postfix}percent-{cfg.hparams.id}-train-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
     report_name_test = os.path.join(
         cfg.task.reports,
-        f"{cfg.task.test}-{cfg.data.id}-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}-10percent",
+        f"{cfg.task.test}-{report_postfix}percent-{cfg.hparams.id}-test-{datetime.datetime.now():%Y%m%d-%H%M}",
     )
 
     training = TrainingFactory.make(cfg.task.train)
     testing = TestFactory.make(cfg.task.test)
     kfold_avg_metrics = AverageMetricDict()
-    train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
+    # train_meter, test_meter = MetricFactory.make(cfg.task.metrics, num_classes)
+    train_meter, test_meter = MetricFactory.make("conf-mats", num_classes)
     train_meter.to(device)
     test_meter.to(device)
 
@@ -67,8 +70,6 @@ def main(cfg, save_model=False, debug=False):
     data = NumpyDataset(
         data_path, transforms.ToTensor(), exclude_trigger=exclude_trigger
     )
-    # write_folds_to_file(data, exclude_trigger=True)
-    # return
     stratifier = StratifierFactory().make(
         strat_type="from-file",
         data=data,

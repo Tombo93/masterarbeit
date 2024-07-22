@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import hydra
 from hydra.core.config_store import ConfigStore
 
+from data.dataset import NumpyDataset
+
 from config import Config
 
 CS = ConfigStore.instance()
@@ -149,6 +151,52 @@ def plot_reports(root_dir):
                 print(e)
 
 
+def calc_fx_poison_dist_per_class(dataset):
+    unique_labels = np.unique(dataset.labels)
+    # Initialize a dictionary to hold the counts
+    counts = {label: {"family-history": 0, "poisoned": 0} for label in unique_labels}
+    # Count the number of ones for each class
+    for label in unique_labels:
+        mask = dataset.labels == label
+        counts[label]["family-history"] = np.sum(dataset.extra_labels[mask] == 1)
+        counts[label]["poisoned"] = np.sum(dataset.poison_labels[mask] == 1)
+    return counts
+
+
+def print_class_dists():
+    data_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
+    )
+    file_list = [
+        "processed/isic/isic-backdoor-5.npz",
+        "processed/isic/isic-backdoor-10.npz",
+        "processed/isic/isic-backdoor-20.npz",
+    ]
+    for f in file_list:
+        np_file_path = os.path.join(data_path, f)
+        dataset = NumpyDataset(np_file_path, transforms=None, exclude_trigger=False)
+        poison_dataset = NumpyDataset(
+            np_file_path, transforms=None, exclude_trigger=True
+        )
+        print("normal dataset")
+        diagnosis_labels_count = np.bincount(dataset.labels)
+        fx_labels_count = np.bincount(dataset.extra_labels)
+        poison_labels_count = np.bincount(dataset.poison_labels)
+        print(diagnosis_labels_count)
+        print(fx_labels_count)
+        print(poison_labels_count)
+        print(calc_fx_poison_dist_per_class(dataset))
+
+        print("poison dataset")
+        diagnosis_labels_count = np.bincount(poison_dataset.labels)
+        fx_labels_count = np.bincount(poison_dataset.extra_labels)
+        poison_labels_count = np.bincount(poison_dataset.poison_labels)
+        print(diagnosis_labels_count)
+        print(fx_labels_count)
+        print(poison_labels_count)
+        print(calc_fx_poison_dist_per_class(poison_dataset))
+
+
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: Config) -> None:
     report_dir = cfg.plotting.report_dir
@@ -156,8 +204,9 @@ def main(cfg: Config) -> None:
     cifar_figs_dir = cfg.plotting.figures.cifar
     isic_figs_dir = cfg.plotting.figures.isic
 
-    plot_isic_data_dist(isic_figs_dir)
-    plot_class_acc_by_class(report_dir)
+    # plot_isic_data_dist(isic_figs_dir)
+    # plot_class_acc_by_class(report_dir)
+    print_class_dists()
 
 
 if __name__ == "__main__":

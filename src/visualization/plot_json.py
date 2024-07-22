@@ -70,9 +70,10 @@ def main():
     data_path = os.path.abspath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir, "data")
     )
-    np_file_path = os.path.join(data_path, "processed", "isic", "isic-backdoor.npz")
-    cls_dist = plot_final_cls_dist(np_file_path, exclude_trigger=True)
 
+    np_file_path = os.path.join(data_path, "processed", "isic", "isic-backdoor-10.npz")
+    cls_dist = plot_final_cls_dist(np_file_path)  # , exclude_trigger=True)
+    return
     for task, fnames in tasks.items():
         for fname in fnames:
             with open(os.path.join(base_dir, fname)) as f:

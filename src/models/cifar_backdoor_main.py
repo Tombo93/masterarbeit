@@ -1,4 +1,5 @@
 import os
+import random
 
 import numpy as np
 import torch
@@ -24,8 +25,23 @@ from utils.evaluation import Cifar10Testing, Cifar10BackdoorTesting, Cifar10Back
 from utils.experiment import StratifierFactory
 
 
+SEED = 0
+
+
+def seed_worker(worker_id):
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed + SEED)
+    random.seed(worker_seed + SEED)
+    torch.manual_seed(worker_seed + SEED)
+
+
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    torch.manual_seed(SEED)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(SEED)
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
     batch_size = 64
     epochs = 100
     num_classes = 10
@@ -194,6 +210,10 @@ def main():
             os.path.dirname(__file__), os.pardir, os.pardir, "reports", "cifar10"
         )
     )
+    df = pd.DataFrame(avg_train_metrics)
+    df.to_csv(os.path.join(export_metrics_path, f"train.csv"))
+    df = pd.DataFrame(avg_val_metrics)
+    df.to_csv(os.path.join(export_metrics_path, f"test.csv"))
     df = pd.DataFrame(avg_train_metrics)
     df.to_csv(os.path.join(export_metrics_path, f"Xbackdoor-train.csv"))
     df = pd.DataFrame(avg_val_metrics)
